@@ -1,13 +1,13 @@
 import express from "express";
 import dotenv from "dotenv";
 import { supabase, conectaDB } from "./config/supabase.js";
-import authRoutes from "./routes/authRoutes.js";
+import authRoutes from "./routers/auth.js"
 
 dotenv.config();
 conectaDB();
 
 const app = express();
-app.use.use(express.json());
+app.use(express.json());
 
 app.get('/',(req, res) => {
     res.json({ message: 'Bienvenido al backend de proyecto-Calzame',
