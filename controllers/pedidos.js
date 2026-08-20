@@ -17,7 +17,7 @@ export const postPedido = async (req, res) => {
         }
 
         return res.status(201).json({
-            mensaje: 'Pedido registrado con exito',
+            mensaje: 'Pedido registrado con exito ...',
             pedido: data[0]
         });
     } catch (error) {
