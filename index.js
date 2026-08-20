@@ -3,6 +3,9 @@ import dotenv from "dotenv";
 import { supabase, conectaDB } from "./config/supabase.js";
 import authRoutes from "./routers/auth.js"
 import userRouter from "./routers/user.js";
+import productosRouter from "./routers/productos.js";
+import pedidosRouter from "./routers/pedidos.js";
+
 
 dotenv.config();
 conectaDB();
@@ -18,8 +21,9 @@ app.get('/',(req, res) => {
 });
 
 app.use('/auth',authRoutes);
-
 app.use('/usuarios',userRouter);
+app.use('/productos',productosRouter);
+app.use('/pedidos',pedidosRouter);
 
 
 
