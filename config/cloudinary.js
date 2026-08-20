@@ -14,7 +14,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params:{
-        folder: 'heladeria/helados',
+        folder: 'Calzame/calzado',
         resource_type: 'auto',
         allowed_formats: ['jpg','png','jpeg','avif','webp','mp4','avi']
     }
