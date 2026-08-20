@@ -10,7 +10,7 @@ export const crearPedido = async (usuario_id, total, direccion_envio) => {
     return { data, error };
 };
 
-// Busca todos los pedidos hechos por una clienta especifica
+// Busca todos los pedidos del cliente que quiera uno buscar 
 export const obtenerPedidosPorUsuario = async (usuario_id) => {
     const { data, error } = await supabase
         .from('pedidos')
