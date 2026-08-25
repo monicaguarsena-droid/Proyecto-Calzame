@@ -1,12 +1,19 @@
-import express from 'express';
-import { getProductos, postProducto } from '../controllers/productos.js';
+import { Router } from 'express';
+import { getProductos, postProducto, putProducto, deleteProducto } from '../controllers/productos.js';
+import { verificarToken, verificarAdmin } from '../middlewares/authmiddleware.js';
 
-const router = express.Router();
+const router = Router();
 
-// Ruta para ver el catalogo de zapatos
+//obtener todos los productos 
 router.get('/', getProductos);
 
-// Ruta para guardar un zapato nuevo
-router.post('/crear', postProducto);
+// crea un producto admin
+router.post('/crear', verificarToken, verificarAdmin, postProducto);
+
+// actualiza producto admin
+router.put('/actualizar/:id', verificarToken, verificarAdmin, putProducto);
+
+// eliminar un producto admin
+router.delete('/eliminar/:id', verificarToken, verificarAdmin, deleteProducto);
 
 export default router;
