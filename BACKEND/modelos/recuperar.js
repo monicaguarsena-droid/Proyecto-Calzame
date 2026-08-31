@@ -5,7 +5,7 @@ export const crearCodigoRecuperar = async (usuarioId,codigo)=>{
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); //expira en 15 minutos
 
     const{data, error} = await supabase
-    .from('recovery_codes')
+    .from('recovery_code')
     .insert({
         usuario_id: usuarioId,
         codigo: codigo,
