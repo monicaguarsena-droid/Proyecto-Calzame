@@ -30,7 +30,7 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               // Imagen del tacón
               Image.asset(
-                'assets/img/tacon.png', // Verifica si es .png o .jpg
+                'assets/img/tacon.png', 
                 height: 180,
               ),
               const SizedBox(height: 20),
@@ -46,16 +46,6 @@ class WelcomeScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-
-              // Texto (ejemplo)
-              const Text(
-                '(ejemplo)',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFF880E4F),
-                ),
-              ),
-              const SizedBox(height: 20),
 
               // Botón de la flecha hacia la derecha
               IconButton(
