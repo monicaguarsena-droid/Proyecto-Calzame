@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/register', registro);
 router.post('/login', login);
 
-//ruta de olvido contraseña
+//ruta de olvido contrasaeña
 router.post('/forgot-password', forgotPassword);
 router.post('/verify-code', verifyCode);
 

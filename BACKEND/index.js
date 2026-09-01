@@ -8,6 +8,8 @@ import pedidosRouter from "./routers/pedidos.js";
 import favoritosRouter from "./routers/favoritos.js";
 import categoriasRouter from "./routers/categorias.js";
 import direccionesRouter from "./routers/direcciones.js";
+import recuperarRouter from "./routers/recuperar.js";
+import carritoRouter from "./routers/carrito.js"; // <--- Importado aquí
 
 dotenv.config();
 conectaDB();
@@ -30,6 +32,8 @@ app.use('/pedidos', pedidosRouter);
 app.use('/favoritos', favoritosRouter);
 app.use('/categorias', categoriasRouter);
 app.use('/direcciones', direccionesRouter);
+app.use('/recuperar', recuperarRouter);
+app.use('/carrito', carritoRouter); // <--- Registrado aquí
 
 const PORT = 3000;
 
