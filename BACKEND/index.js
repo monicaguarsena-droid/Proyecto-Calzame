@@ -5,6 +5,9 @@ import authRoutes from "./routers/auth.js";
 import userRouter from "./routers/user.js";
 import productosRouter from "./routers/productos.js";
 import pedidosRouter from "./routers/pedidos.js";
+import favoritosRouter from "./routers/favoritos.js";
+import categoriasRouter from "./routers/categorias.js";
+import direccionesRouter from "./routers/direcciones.js";
 
 dotenv.config();
 conectaDB();
@@ -24,6 +27,9 @@ app.use('/auth', authRoutes);
 app.use('/usuarios', userRouter);
 app.use('/productos', productosRouter);
 app.use('/pedidos', pedidosRouter);
+app.use('/favoritos', favoritosRouter);
+app.use('/categorias', categoriasRouter);
+app.use('/direcciones', direccionesRouter);
 
 const PORT = 3000;
 
