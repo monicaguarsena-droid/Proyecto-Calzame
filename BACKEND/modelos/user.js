@@ -1,17 +1,20 @@
 import { supabase } from '../config/supabase.js';
 
 
-export const crearUsuario = async (nombre, email, contrasena, rol) => {
+export const crearUsuario = async (cedula,nombre, email, contrasena, rol,codigoVerificacion,codigoVerificacionExpiracion) => {
     const { data, error } = await supabase
         .from('usuarios')
         .insert({ 
+            cedula,
             nombre, 
             email, 
             contrasena, 
             rol: rol || 'usuarios',
-            isverified: false 
+            isVerified: false,
+            codigoVerificacion,
+            codigoVerificacionExpiracion, 
         })
-        .select('id, nombre, email, rol, isverified');
+        .select('id, nombre, email, rol,isVerified');
     return { data, error };
 };
 
@@ -19,7 +22,7 @@ export const crearUsuario = async (nombre, email, contrasena, rol) => {
 export const obtenerUsuarios = async () => {
     const { data, error } = await supabase
         .from('usuarios')
-        .select('id, nombre, email, rol, isverified');
+        .select('id, cedula, nombre, email, rol,isVerified');
     return { data, error };
 };
 
@@ -37,7 +40,7 @@ export const obtenerPorEmail = async (email) => {
 export const obtenerUsuarioPorId = async (id) => {
     const { data, error } = await supabase
         .from('usuarios')
-        .select('id, nombre, email, rol, isverified')
+        .select('id, cedula, nombre, email, rol,isVerified')
         .eq('id', id)
         .single();
     return { data, error };
@@ -49,7 +52,7 @@ export const actualizarUsuario = async (id, campos) => {
         .from('usuarios')
         .update(campos)
         .eq('id', id)
-        .select('id, nombre, email, rol, isverified');
+        .select('id, cedula, nombre, email, rol,isVerified');
     return { data, error };
 };
 
