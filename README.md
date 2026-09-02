@@ -1,0 +1,1 @@
+Una plataforma tecnológica diseñada para administrar un negocio de calzado y sus pedidos Facilitar y automatizar la gestión integral de la tienda, optimizando el control de productos, la administración de usuarios y el procesamiento de pedidos de manera eficiente.
