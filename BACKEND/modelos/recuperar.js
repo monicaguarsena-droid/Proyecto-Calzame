@@ -1,39 +1,46 @@
-import {supabase} from "../config/supabase.js";
+import { supabase } from "../config/supabase.js";
 
-//crear codigo de recuperacion
-export const crearCodigoRecuperar = async (usuarioId,codigo)=>{
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); //expira en 15 minutos
+// Crear código de recuperación
+export const crearCodigoRecuperar = async (usuarioId, codigo) => {
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expira en 15 minutos
 
-    const{data, error} = await supabase
-    .from('recovery_code')
-    .insert({
-        usuario_id: usuarioId,
-        codigo: codigo,
-        expires_at: expiresAt.toISOString()
-    })
-    .select();
+    const { data, error } = await supabase
+        .from('recovery_code')
+        .insert({
+            Usuario_Id: usuarioId,
+            Codigo: codigo,
+            Expires: expiresAt.toISOString(),
+            usado: false
+        })
+        .select();
 
-    return {data, error};
+    if (error) throw error;
+    return data;
 };
-//obtener codigo no utilizado por usuario
-export const obtenerCodigoValido = async (usuarioId,codigo) =>{
-    const {data, error} = await supabase
-    .from('recovery_codes')
-    .select('*')
-    .eq('usuario_id', usuarioId)
-    .eq('codigo', codigo)
-    .eq('usado', false)
-    .gt('expires_at', new Date().toISOString())
-    .single();
 
-    return {data, error};
+// Obtener código no utilizado por usuario
+export const obtenerCodigoValido = async (usuarioId, codigo) => {
+    const { data, error } = await supabase
+        .from('recovery_code')
+        .select('*')
+        .eq('Usuario_Id', usuarioId)
+        .eq('Codigo', codigo)
+        .eq('usado', false)
+        .gt('Expires', new Date().toISOString())
+        .single();
+
+    if (error) throw error;
+    return data;
 };
-//marcar codigo como usado
-export const marcarCodigoUsado = async (codigoId) =>{
-    const {data, error} = await supabase
-    .from('recovery_codes')
-    .update({usado: true})
-    .eq('id', codigoId);
 
-    return {data, error};
+// Marcar código como usado
+export const marcarCodigoUsado = async (codigoId) => {
+    const { data, error } = await supabase
+        .from('recovery_code')
+        .update({ usado: true })
+        .eq('id', codigoId)
+        .select();
+
+    if (error) throw error;
+    return data;
 };
