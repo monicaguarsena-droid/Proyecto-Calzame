@@ -14,7 +14,7 @@ export const obtenerEstadisticasAdmin = async (req, res) => {
             .limit(5);
 
         res.json({
-            ventasHoy: 0, // Aquí luego conectaremos las ventas reales del día
+            ventasHoy: 0,
             pedidosPendientes: 12, 
             productosEnStock: stockTotal,
             usuariosActivos: totalUsuarios || 0,
@@ -60,6 +60,40 @@ export const obtenerClientesAdmin = async (req, res) => {
 
         if (error) return res.status(400).json({ error: error.message });
         res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Listar todos los pedidos de los clientes
+export const obtenerPedidosAdmin = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('Pedidos')
+            .select('*, usuarios(nombre, correo), Productos(nombre, precio)')
+            .order('created_at', { ascending: false });
+
+        if (error) return res.status(400).json({ error: error.message });
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Cambiar el estado de un pedido (Ej: Pendiente, Enviado, Entregado)
+export const actualizarEstadoPedidoAdmin = async (req, res) => {
+    const { id } = req.params;
+    const { estado } = req.body;
+
+    try {
+        const { data, error } = await supabase
+            .from('Pedidos')
+            .update({ estado })
+            .eq('id', id)
+            .select();
+
+        if (error) return res.status(400).json({ error: error.message });
+        res.json({ mensaje: 'Estado del pedido actualizado exitosamente', pedido: data });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
