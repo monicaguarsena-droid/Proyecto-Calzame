@@ -17,6 +17,57 @@ export const getProductos = async (req, res) => {
     }
 };
 
+
+// trae los zapatos por categoria
+export const getProductosPorCategoria = async (req, res) => {
+    try {
+        const { categoria } = req.params;
+        const { data, error } = await obtenerPorCategoria(categoria);
+
+        if (error) {
+            return res.status(500).json({ error: 'Error al obtener los productos por categoría' });
+        }
+
+        return res.status(200).json({ productos: data });
+    } catch (error) {
+        console.error('Error en getProductosPorCategoria:', error);
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+
+
+
+//actualizar un zapato
+export const putProducto = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const productoData = req.body;
+        const { data, error } = await actualizarproducto(id, productoData);
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+        return res.status(200).json({ mensaje: 'Producto actualizado exitosamente', producto: data[0] });
+    } catch (error) {
+        console.error('Error en putProducto:', error);
+        return res.status(500).json({ error: error.message });
+    }
+};
+//eliminar un zapato
+export const deleteProducto = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { data, error } = await eliminarProducto(id);
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+        return res.status(200).json({ mensaje: 'Producto eliminado exitosamente' });
+    } catch (error) {
+        console.error('Error en deleteProducto:', error);
+        return res.status(500).json({ error: error.message });
+    }
+};
+
 // guarda el producto nuevo 
 export const postProducto = async (req, res) => {
     try {
@@ -39,64 +90,6 @@ export const postProducto = async (req, res) => {
         });
     } catch (error) {
         console.error('Error en postProducto:', error);
-        return res.status(500).json({ error: error.message });
-    }
-};
-
-// edita un producto que ya existe por id 
-export const putProducto = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { nombre, descripcion, precio, talla, stock, imagen, categoria } = req.body;
-
-        const camposActualizar = {};
-        if (nombre !== undefined) camposActualizar.Nombre = nombre;
-        if (descripcion !== undefined) camposActualizar.Descripcion = descripcion;
-        if (precio !== undefined) camposActualizar.Precio = precio;
-        if (talla !== undefined) camposActualizar.Talla = talla;
-        if (stock !== undefined) camposActualizar.Stock = stock;
-        if (imagen !== undefined) camposActualizar.Imagen_url = imagen;
-        if (categoria !== undefined) camposActualizar.Categoria = categoria;
-
-        const { data, error } = await actualizarProducto(id, camposActualizar);
-
-        if (error) {
-            console.error('Error de Supabase al actualizar producto:', error);
-            return res.status(500).json({ error: 'Error al actualizar el producto', detalle: error.message });
-        }
-
-        if (!data || data.length === 0) {
-            return res.status(404).json({ error: 'Producto no encontrado' });
-        }
-
-        return res.status(200).json({
-            mensaje: 'Producto actualizado exitosamente',
-            producto: data[0]
-        });
-    } catch (error) {
-        console.error('Error en putProducto:', error);
-        return res.status(500).json({ error: error.message });
-    }
-};
-
-// borrar un producto por id
-export const deleteProducto = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { data, error } = await eliminarProducto(id);
-
-        if (error) {
-            console.error('Error de Supabase al eliminar producto:', error);
-            return res.status(500).json({ error: 'Error al eliminar el producto', detalle: error.message });
-        }
-
-        if (!data || data.length === 0) {
-            return res.status(404).json({ error: 'Producto no encontrado' });
-        }
-
-        return res.status(200).json({ mensaje: 'Producto eliminado exitosamente' });
-    } catch (error) {
-        console.error('Error en deleteProducto:', error);
         return res.status(500).json({ error: error.message });
     }
 };
