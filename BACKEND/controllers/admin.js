@@ -27,10 +27,10 @@ export const obtenerEstadisticasAdmin = async (req, res) => {
 
 // Crear un nuevo producto
 export const crearProductoAdmin = async (req, res) => {
-    const { nombre, precio, descripcion, stock, imagen_url, categoria_id } = req.body;
+    const { nombre, precio, descripcion, stock, imagen_url, Talla, Categoria } = req.body;
     const { data, error } = await supabase
         .from('Productos')
-        .insert([{ nombre, precio, descripcion, stock, imagen_url, categoria_id }])
+        .insert([{ nombre, precio, descripcion, stock, imagen_url, Talla, Categoria }])
         .select();
 
     if (error) return res.status(400).json({ error: error.message });
