@@ -53,10 +53,13 @@ export const registro = async (req,res)=>{
     if (!resultadoEnvio.exito) {
         return res.status(201).json({
             message:'Tu cuenta fue creada, pero hubo un problema enviando el codigo de verificacion a tu correo. Intenta registrarte de nuevo en unos minutos o contacta soporte.',
-        })
+            emailEnviado: false,
+            usuario: usuarioRespuesta
+        });
     }
     return res.status(201).json({
-        mensaje: 'Usuario registrado exitosamente',
+        mensaje: 'Usuario registrado exitosamente. Hemos enviado un codigo de 6 digitos a tu correo.',
+        emailEnviado: true,
         usuario: usuarioRespuesta
         });
 
@@ -93,16 +96,19 @@ export const login = async (req, res) => {
                 error: 'Contraseña incorrecta'
             });
         }
+        if (!usuario.isVerified){
+            return res.status(403).json({
+                error: 'Tu cuenta no ha sido veriificada. Por favor ingresa el codigo enviado a tu correo antes de iniciar sesion.'
+            });
+        }
         //generar el token jwt
         const token = jwt.sign(
             {
                 id: usuario.id,
-                nombre: usuario.nombre,
-                email: usuario.email,
                 rol: usuario.rol
             },
             process.env.JWT_SECRET,
-            { expiresIn: '1h' }
+            { expiresIn: '1d' }
         );
 
         return res.status(200).json({
@@ -123,4 +129,80 @@ export const login = async (req, res) => {
             error: error.message
         });
     }
-}
+};
+
+//verificar cuenta con codigo de 6 digitos 
+export const verificarCuenta = async (req, res) => {
+  try {
+    const { email, codigo } = req.body;
+
+    if (!email || !codigo) {
+      return res.status(400).json({
+        error: 'El email y el codigo de verificacion son requeridos'
+      });
+    }
+
+    // 1. Buscar al usuario en Supabase
+    const { data: usuario, error: errorUsuario } = await supabase
+      .from('usuarios')
+      .select('id, email, isVerified, codigoVerificacion, codigoVerificacionExpiracion')
+      .eq('email', email)
+      .single();
+
+    if (errorUsuario || !usuario) {
+      return res.status(404).json({
+        error: 'Usuario no encontrado'
+      });
+    }
+
+    // 2. Revisar si ya esta activo
+    if (usuario.isVerified) {
+      return res.status(400).json({
+        error: 'La cuenta ya se encuentra verificada'
+      });
+    }
+
+    // 3. Comparar el codigo
+    if (String(usuario.codigoVerificacion).trim() !== String(codigo).trim()) {
+      return res.status(400).json({
+        error: 'El codigo de verificacion es incorrecto'
+      });
+    }
+
+    // 4. Validar expiracion (15 minutos)
+    const ahora = new Date();
+    const expiracion = new Date(usuario.codigoVerificacionExpiracion);
+
+    if (ahora > expiracion) {
+      return res.status(400).json({
+        error: 'El codigo ha expirado. Por favor solicita uno nuevo'
+      });
+    }
+
+    // 5. Activar la cuenta
+    const { error: errorUpdate } = await supabase
+      .from('usuarios')
+      .update({
+        isVerified: true,
+        codigoVerificacion: null,
+        codigoVerificacionExpiracion: null
+      })
+      .eq('id', usuario.id);
+
+    if (errorUpdate) {
+      return res.status(500).json({
+        error: 'Error al actualizar el estado de verificacion'
+      });
+    }
+
+    return res.status(200).json({
+      message: 'Cuenta verificada exitosamente. Ya puedes iniciar sesion en Mimos.'
+    });
+
+  } catch (error) {
+    console.error('Error en verificarCuenta:', error);
+    return res.status(500).json({
+      error: error.message
+    });
+  }
+};
