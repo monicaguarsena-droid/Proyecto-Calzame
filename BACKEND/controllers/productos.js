@@ -67,11 +67,11 @@ export const putProducto = async (req, res) => {
     try {
         const { id } = req.params;
         const productoData = req.body;
-        const { data, error } = await actualizarproducto(id, productoData);
+        const { data, error } = await actualizarProducto(id, productoData);
         if (error) {
             return res.status(500).json({ error: error.message });
         }
-        return res.status(200).json({ mensaje: 'Producto actualizado exitosamente', producto: data[0] });
+        return res.status(200).json({ mensaje: 'Producto actualizado exitosamente', producto: data ? data[0] : null });
     } catch (error) {
         console.error('Error en putProducto:', error);
         return res.status(500).json({ error: error.message });
