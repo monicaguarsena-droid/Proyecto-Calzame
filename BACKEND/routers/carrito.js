@@ -9,7 +9,7 @@ router.post('/agregar', postItemCarrito);
 // Obtener carrito por ID de usuario
 router.get('/usuario/:usuario_id', getCarritoUsuario);
 
-// Eliminar un producto del carrito por su ID de item
+// Eliminar un producto del carrito por su ID 
 router.delete('/:id', deleteItemCarrito);
 
 export default router;
