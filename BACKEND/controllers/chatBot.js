@@ -15,7 +15,7 @@ export const chatearConMimos = async (req, res) => {
     // Si el cliente no manda sesion, creamos un identificador temporal
     const idSesionValido = sesionId || `Calzame_sesion_${Date.now()}`;
 
-    // 1. Obtener la carta desde tu tabla 'productos' en Supabase
+    // 1. Obtener el catalogo desde tu tabla 'productos' en Supabase
     const { data: productos, error: errorProductos } = await supabase
       .from("Calzame")
       .select("nombre, descripcion, precio");
@@ -31,7 +31,7 @@ export const chatearConMimos = async (req, res) => {
       });
     }
 
-    // 2. Armar catalogo para la IA
+    
     const catalogoTexto = productos.map(p => 
       `- **${p.nombre}**: $${Number(p.precio).toLocaleString("es-CO")} COP | Descripcion: ${p.descripcion}`
     ).join("\n");

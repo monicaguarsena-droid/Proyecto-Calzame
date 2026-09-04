@@ -11,7 +11,7 @@ import direccionesRouter from "./routers/direcciones.js";
 import recuperarRouter from "./routers/recuperar.js";
 import carritoRouter from "./routers/carrito.js";
 import adminRouter from "./routers/admin.js";
-import chatRoutes from "./routes/chatRoutes.js";
+import chatRoutes from "./routers/chatBot.js";
 
 dotenv.config();
 conectaDB();

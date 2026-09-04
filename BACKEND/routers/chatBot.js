@@ -1,8 +1,7 @@
+import { Router } from "express";
+import { chatearConMimos, obtenerHistorialMimos } from "../controllers/chatBot.js";
 
-import express from "express";
-import { chatearConMimos, obtenerHistorialMimos } from "../controllers/chatMimosController.js";
-
-const router = express.Router();
+const router = Router();
 
 router.post("/", chatearConMimos);
 router.get("/historial/:sesionId", obtenerHistorialMimos);
