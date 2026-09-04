@@ -2,7 +2,7 @@ import { supabase } from '../config/supabase.js';
 
 export const crearPedido = async (pedidoData) => {
     const { data, error } = await supabase
-        .from('Pedidos') // Asegúrate de respetar mayúsculas si tu tabla se llama así
+        .from('Pedidos') 
         .insert([
             {
                 Usuario_Cc: pedidoData.usuario_id,

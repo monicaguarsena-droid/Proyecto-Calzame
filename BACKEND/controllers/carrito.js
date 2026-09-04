@@ -1,6 +1,6 @@
 import { agregarAlCarrito, obtenerCarritoPorUsuario, eliminarItemCarrito, vaciarCarritoUsuario } from '../modelos/carrito.js';
 
-// POST: Agregar producto al carrito
+// Agregar producto al carrito
 export const postItemCarrito = async (req, res) => {
     try {
         const { usuario_id, producto_id, cantidad, precio } = req.body;
@@ -25,7 +25,7 @@ export const postItemCarrito = async (req, res) => {
     }
 };
 
-// GET: Obtener el carrito de un usuario
+// Obtener el carrito de un usuario
 export const getCarritoUsuario = async (req, res) => {
     try {
         const { usuario_id } = req.params;
@@ -43,7 +43,7 @@ export const getCarritoUsuario = async (req, res) => {
     }
 };
 
-// DELETE: Eliminar un item específico del carrito
+// Eliminar un item específico del carrito
 export const deleteItemCarrito = async (req, res) => {
     try {
         const { id } = req.params;
