@@ -1,6 +1,5 @@
 import { supabase } from '../config/supabase.js';
 
-// tener todos los productos de Supabase
 export const obtenerProductos = async () => {
     const { data, error } = await supabase
         .from('Productos')
@@ -8,7 +7,6 @@ export const obtenerProductos = async () => {
     return { data, error };
 };
 
-// colocar un nuevo producto
 export const crearProducto = async (nombre, descripcion, precio, talla, stock, imagen, categoria) => {
     const { data, error } = await supabase
         .from('Productos')
@@ -27,17 +25,26 @@ export const crearProducto = async (nombre, descripcion, precio, talla, stock, i
     return { data, error };
 };
 
-// actuakizar productos por id
 export const actualizarProducto = async (id, campos) => {
+    const camposMapeados = {};
+    if (campos.nombre !== undefined) camposMapeados.Nombre = campos.nombre;
+    if (campos.descripcion !== undefined) camposMapeados.Descripcion = campos.descripcion;
+    if (campos.precio !== undefined) camposMapeados.Precio = campos.precio;
+    if (campos.talla !== undefined) camposMapeados.Talla = campos.talla;
+    if (campos.stock !== undefined) camposMapeados.Stock = campos.stock;
+    if (campos.imagen !== undefined || campos.imagen_url !== undefined) {
+        camposMapeados.Imagen_url = campos.imagen !== undefined ? campos.imagen : campos.imagen_url;
+    }
+    if (campos.categoria !== undefined) camposMapeados.Categoria = campos.categoria;
+
     const { data, error } = await supabase
         .from('Productos')
-        .update(campos)
+        .update(camposMapeados)
         .eq('id', id)
         .select();
     return { data, error };
 };
 
-// eliminar producto por id 
 export const eliminarProducto = async (id) => {
     const { data, error } = await supabase
         .from('Productos')
