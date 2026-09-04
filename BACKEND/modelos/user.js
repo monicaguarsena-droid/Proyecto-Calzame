@@ -1,20 +1,19 @@
 import { supabase } from '../config/supabase.js';
 
-
-export const crearUsuario = async (cedula,nombre, email, contrasena, rol,codigoVerificacion,codigoVerificacionExpiracion) => {
+export const crearUsuario = async (nombre, email, contrasena, rol) => {
     const { data, error } = await supabase
         .from('usuarios')
         .insert({ 
-            cedula,
+            cedula: null,
             nombre, 
             email, 
             contrasena, 
-            rol: rol || 'usuarios',
+            rol: rol || 'usuario',
             isVerified: false,
-            codigoVerificacion,
-            codigoVerificacionExpiracion, 
+            codigoVerificacion: null,
+            codigoVerificacionExpiracion: null
         })
-        .select('id, nombre, email, rol,isVerified');
+        .select('id, cedula, nombre, email, rol, isVerified');
     return { data, error };
 };
 
