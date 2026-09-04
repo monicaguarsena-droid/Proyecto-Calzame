@@ -1,5 +1,5 @@
 import Grop from 'groq-sdk';
-import { supabase } from '../config/supabase';
+import { supabase } from '../config/supabase.js';
 
 const groq = new Grop({ apiKey: process.env.GROQ_API_KEY });
 
