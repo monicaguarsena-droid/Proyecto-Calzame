@@ -13,11 +13,11 @@ export const chatearConMimos = async (req, res) => {
     }
 
     // Si el cliente no manda sesion, creamos un identificador temporal
-    const idSesionValido = sesionId || `mimos_sesion_${Date.now()}`;
+    const idSesionValido = sesionId || `Calzame_sesion_${Date.now()}`;
 
     // 1. Obtener la carta desde tu tabla 'productos' en Supabase
     const { data: productos, error: errorProductos } = await supabase
-      .from("helados")
+      .from("Calzame")
       .select("nombre, descripcion, precio");
 
     if (errorProductos) {
@@ -27,7 +27,7 @@ export const chatearConMimos = async (req, res) => {
 
     if (!productos || productos.length === 0) {
       return res.status(200).json({
-        respuesta: "¡Hola! En este momento no tenemos helados registrados en la carta."
+        respuesta: "¡Hola! En este momento no tenemos productos registrados en el catalogo."
       });
     }
 
