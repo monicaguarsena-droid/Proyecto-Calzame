@@ -1,14 +1,17 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import {supabase} from '../config/supabase.js';
 import { crearUsuario,obtenerPorEmail} from '../modelos/user.js';
+import { enviarCodigoVerificacion } from '../utils/emailservices.js';
+
 
 //registro
 export const registro = async (req,res)=>{
     try{
-        const {nombre,email,contrasena}=req.body;
+        const {cedula, nombre,email,contrasena}=req.body;
         //validar datos
     
-    if(!nombre||!email||!contrasena){
+    if(!cedula||!nombre||!email||!contrasena){
         return res.status (400).json({
             error: 'faltan usuarios'
         });
@@ -24,23 +27,38 @@ export const registro = async (req,res)=>{
     const hashedPassword = await bcrypt.hash(contrasena, 10);
     //crear la constante  para rol por default
     const rolpordefecto = 'usuario';
+    //generar codigo de verificacion
+    const codigoVerificacion = Math.floor(100000 + Math.random() * 900000).toString();
+    const codigoVerificacionExpiracion = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
      //guardarmos la base de datos
-    const {data,error} = await crearUsuario(nombre,email,hashedPassword,rolpordefecto);
+    const {data,error} = await crearUsuario(cedula,nombre,email,hashedPassword,rolpordefecto,codigoVerificacion,codigoVerificacionExpiracion);
     
     if(error){
         return res.status(500).json({
             error: 'Error al registrar el usuario'
         });
     }
+
+    const resultadoEnvio = await enviarCodigoVerificacion(email, nombre, codigoVerificacion);
+
+    const usuarioCreado = Array.isArray(data) ? data[0] : data;
+
+    const  usuarioRespuesta = {
+        id: usuarioCreado.id,
+        cedula: usuarioCreado.cedula,
+        nombre: usuarioCreado.nombre,
+        email: usuarioCreado.email,
+        rol: usuarioCreado.rol
+    }
+    if (!resultadoEnvio.exito) {
+        return res.status(201).json({
+            message:'Tu cuenta fue creada, pero hubo un problema enviando el codigo de verificacion a tu correo. Intenta registrarte de nuevo en unos minutos o contacta soporte.',
+        })
+    }
     return res.status(201).json({
         mensaje: 'Usuario registrado exitosamente',
-        usuario: {
-            id: data[0].id,
-            nombre: data[0].nombre,
-            email: data[0].email,
-            rol: data[0].rol    
-        }
-    });
+        usuario: usuarioRespuesta
+        });
 
     }catch(error){
         console.error('Error en el registro:', error);
