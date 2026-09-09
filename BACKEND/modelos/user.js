@@ -1,10 +1,10 @@
 import { supabase } from '../config/supabase.js';
 
-export const crearUsuario = async (nombre, email, contrasena, rol, codigoVerificacion, codigoVerificacionExpiracion) => {
+export const crearUsuario = async (cedula,nombre, email, contrasena, rol, codigoVerificacion, codigoVerificacionExpiracion) => {
     const { data, error } = await supabase
         .from('usuarios')
         .insert({ 
-            cedula: null,
+            cedula:Number(cedula),
             nombre, 
             email, 
             contrasena, 
@@ -31,7 +31,7 @@ export const obtenerPorEmail = async (email) => {
         .from('usuarios')
         .select('*')
         .eq('email', email)
-        .single();
+        .maybeSingle();
     return { data, error };
 };
 
@@ -45,13 +45,38 @@ export const obtenerUsuarioPorId = async (id) => {
     return { data, error };
 };
 
+//funcion especifica para los usuarios autenticados con google
+export const crearUsuarioGoogle = async ({cedula,nombre,email,googleId, avatar = null, rol = 'cliente'}) => {
+    const {data,error} = await supabase
+    .from('usuarios')
+    .insert({
+        cedula,
+        nombre,
+        email,
+        contrasena: null, //no requiere contraseña
+        rol,
+        isVerified: true,
+        googleId,
+        avatar,
+        codigoVerificacion: null,
+        codigoVerificacionExpiracion:null
+    })
+    .select('id,cedula,nombre,rol,avatar')
+    .single();
+
+    return {data,error};
+};
+ 
+
 // Actualizar un usuario
 export const actualizarUsuario = async (id, campos) => {
     const { data, error } = await supabase
         .from('usuarios')
         .update(campos)
         .eq('id', id)
-        .select('id, cedula, nombre, email, rol,isVerified');
+        .select()
+        .single();
+
     return { data, error };
 };
 

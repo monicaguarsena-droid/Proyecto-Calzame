@@ -25,11 +25,15 @@ export const registro = async (req,res)=>{
     }
     //encriptar la contraseña
     const hashedPassword = await bcrypt.hash(contrasena, 10);
+
     //crear la constante  para rol por default
+
     const rolpordefecto = 'usuario';
+
     //generar codigo de verificacion
     const codigoVerificacion = Math.floor(100000 + Math.random() * 900000).toString();
     const codigoVerificacionExpiracion = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+    
      //guardarmos la base de datos
     const {data,error} = await crearUsuario(cedula,nombre,email,hashedPassword,rolpordefecto,codigoVerificacion,codigoVerificacionExpiracion);
     
