@@ -13,7 +13,7 @@ export const registro = async (req,res)=>{
     
     if(!cedula||!nombre||!email||!contrasena){
         return res.status (400).json({
-            error: 'faltan usuarios'
+            error: 'faltan datos'
         });
     }
     //verificamos el gmail si ya existe
@@ -200,7 +200,7 @@ export const verificarCuenta = async (req, res) => {
     }
 
     return res.status(200).json({
-      message: 'Cuenta verificada exitosamente. Ya puedes iniciar sesion en Mimos.'
+      message: 'Cuenta verificada exitosamente. Ya puedes iniciar sesion en Calzame.'
     });
 
   } catch (error) {
