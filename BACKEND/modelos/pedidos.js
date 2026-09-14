@@ -16,51 +16,48 @@ export const crearPedido = async (pedidoData) => {
     return { data, error };
 };
 
-export const obtenerPedidoConDetalles = async (id) => {
-  const { data, error } = await supabase
-    .from('Pedidos')
-    .select(`
-        *,
-        usuario:usuarios(id, nombre, email),
-        detalles:detalle_pedido(id, cantidad, precio_unitario, subtotal, productos:producto(id, nombre, imagen_url))
-    `)
-    .eq('id', id)
-    .single();
-    
-  return { data, error };
-};
-
 export const obtenerPedidosPorUsuario = async (usuario_id) => {
     const { data, error } = await supabase
         .from('Pedidos')
         .select('*')
         .eq('Usuario_Cc', usuario_id)
-        .order('Fecha_pedido', { ascending: false });
+        .order('created_at', { ascending: false });
 
     return { data, error };
 };
 
-export const actualizarEstadoPedido = async (id, estado) => {
-  const { data, error } = await supabase
-    .from('Pedidos')
-    .update({ Estado: estado })
-    .eq('id', id)
-    .select();
-  return { data, error };
+export const obtenerPedidoConDetalles = async (pedido_id) => {
+    const { data, error } = await supabase
+        .from('Pedidos')
+        .select(`*, detalle_pedido(*)`)
+        .eq('id', pedido_id)
+        .single();
+
+    return { data, error };
+};
+
+export const actualizarEstadoPedido = async (pedido_id, estado) => {
+    const { data, error } = await supabase
+        .from('Pedidos')
+        .update({ estado })
+        .eq('id', pedido_id)
+        .select();
+
+    return { data, error };
 };
 
 export const crearDetallePedido = async (detalleData) => {
-  const { data, error } = await supabase
-    .from('detalle_pedido')
-    .insert(detalleData)
-    .select();
-  return { data, error };
+    const { data, error } = await supabase
+        .from('detalle_pedido')
+        .insert(detalleData)
+        .select();
+    return { data, error };
 };
 
 export const eliminarPedidos = async (id) => {
-  const { data, error } = await supabase
-    .from('Pedidos')
-    .delete()
-    .eq('id', id);
-  return { data, error };
+    const { data, error } = await supabase
+        .from('Pedidos')
+        .delete()
+        .eq('id', id);
+    return { data, error };
 };

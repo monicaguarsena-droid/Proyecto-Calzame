@@ -7,6 +7,11 @@ export const obtenerEstadisticasAdmin = async (req, res) => {
         const { data: productos } = await supabase.from('Productos').select('stock');
         const stockTotal = productos ? productos.reduce((acc, p) => acc + (p.stock || 0), 0) : 0;
 
+        const { count: pedidosPendientesCount } = await supabase
+            .from('Pedidos')
+            .select('*', { count: 'exact', head: true })
+            .eq('Estado', 'Pendiente'); // Asegúrate que coincida si tu columna está como 'Estado' o 'estado'
+
         const { data: ultimosPedidos } = await supabase
             .from('Pedidos')
             .select('*, usuarios(nombre), Productos(nombre)')
@@ -15,7 +20,7 @@ export const obtenerEstadisticasAdmin = async (req, res) => {
 
         res.json({
             ventasHoy: 0,
-            pedidosPendientes: 12, 
+            pedidosPendientes: pedidosPendientesCount || 0, 
             productosEnStock: stockTotal,
             usuariosActivos: totalUsuarios || 0,
             ultimosPedidos: ultimosPedidos || []
@@ -25,25 +30,40 @@ export const obtenerEstadisticasAdmin = async (req, res) => {
     }
 };
 
+
 // Crear un nuevo producto
 export const crearProductoAdmin = async (req, res) => {
     const { nombre, precio, descripcion, stock, imagen_url, Talla, Categoria } = req.body;
     const { data, error } = await supabase
         .from('Productos')
-        .insert([{ nombre, precio, descripcion, stock, imagen_url, Talla, Categoria }])
+        .insert([{ 
+            Nombre: nombre, 
+            Precio: precio, 
+            Descripcion: descripcion, 
+            Stock: stock, 
+            Imagen_url: imagen_url, 
+            Talla, 
+            Categoria 
+        }])
         .select();
 
     if (error) return res.status(400).json({ error: error.message });
     res.status(201).json({ mensaje: 'Producto creado exitosamente', producto: data });
 };
-
 // Modificar un producto
 export const actualizarProductoAdmin = async (req, res) => {
     const { id } = req.params;
     const { nombre, precio, descripcion, stock, imagen_url } = req.body;
+    
     const { data, error } = await supabase
         .from('Productos')
-        .update({ nombre, precio, descripcion, stock, imagen_url })
+        .update({ 
+            Nombre: nombre, 
+            Precio: precio, 
+            Descripcion: descripcion, 
+            Stock: stock, 
+            Imagen_url: imagen_url 
+        })
         .eq('id', id)
         .select();
 
@@ -80,7 +100,7 @@ export const obtenerPedidosAdmin = async (req, res) => {
     }
 };
 
-// Cambiar el estado de un pedido (Ej: Pendiente, Enviado, Entregado)
+
 export const actualizarEstadoPedidoAdmin = async (req, res) => {
     const { id } = req.params;
     const { estado } = req.body;

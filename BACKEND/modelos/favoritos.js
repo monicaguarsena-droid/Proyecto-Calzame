@@ -1,17 +1,30 @@
 import { supabase } from '../config/supabase.js';
+
 export const obtenerFavoritosPorUsuario = async (usuario_id) => {
-    const { data, error } = await supabase
+    const { data: favoritos, error } = await supabase
         .from('favoritos')
-        .select(`
-            id,
-            producto_id,
-            Productos:producto_id (id, Nombre, Precio, Imagen_url, Descripcion, Talla, Categoria)
-        `)
+        .select('*')
         .eq('usuario_id', usuario_id);
-    return { data, error };
+
+    if (error) return { data: null, error };
+
+    const favoritosConDetalle = [];
+    for (let fav of favoritos) {
+        const { data: producto } = await supabase
+            .from('Productos')
+            .select('*')
+            .eq('id', fav.producto_id)
+            .single();
+        
+        favoritosConDetalle.push({
+            ...fav,
+            Productos: producto || null
+        });
+    }
+
+    return { data: favoritosConDetalle, error: null };
 };
 
-// Agregar un producto a favoritos
 export const agregarFavorito = async (usuario_id, producto_id) => {
     const { data, error } = await supabase
         .from('favoritos')
@@ -20,7 +33,6 @@ export const agregarFavorito = async (usuario_id, producto_id) => {
     return { data, error };
 };
 
-// Eliminar un producto de favoritos
 export const eliminarFavorito = async (usuario_id, producto_id) => {
     const { data, error } = await supabase
         .from('favoritos')
