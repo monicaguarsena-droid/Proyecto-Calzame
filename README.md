@@ -1,59 +1,91 @@
-👠 CALZAME 
+# 👟 CALZAME - SISTEMA DE PEDIDOS Y GESTIÓN DE CATÁLOGO
 
-Una plataforma tecnológica diseñada para administrar un negocio de calzado y sus pedidos Facilitar y automatizar la gestión integral de la tienda, optimizando el control de productos, la administración de usuarios y el procesamiento de pedidos de manera eficiente.
-                                          👠 CALZAME
+SISTEMA INTEGRAL RESTful PARA GESTIONAR EL CATÁLOGO DE PRODUCTOS, PEDIDOS, INVENTARIO Y ATENCIÓN DE CLIENTES, DESARROLLADO CON TECNOLOGÍA MODERNA.
 
+---
 
-Una aplicación para administrar una tienda de calzado, controlar los productos, los pedidos y las cuentas de los usuarios de forma rápida y sencilla.
+## 🛠️ Stack Tecnológico
 
+El proyecto utiliza una arquitectura moderna basada en un servidor backend API REST y una base de datos en la nube, integrando las siguientes tecnologías:
 
+* **Node.js + Express** (backend)
+* **Supabase** (base de datos y almacenamiento)
+* **Cloudinary** (gestión de imágenes de productos)
+* **Brevo** (envío de correos transaccionales)
+* **JWT & Bcrypt** (autenticación y encriptación)
 
-                                            HERAMIENTAS
-Servidor Backend: Hecho con Node.js y Express para manejar las conexiones y la seguridad con tokens.
+---
 
-Base de Datos: Supabase par guardar toda la información de los usuarios y la tienda.
+## 🚀 Características del Proyecto
 
-Correos: Nodemailer para enviar los códigos de verificación y las confirmaciones de compra.
+### 🔒 1. Autenticación y Seguridad
+* **Registro e Inicio de Sesión:** Autenticación segura para usuarios mediante tokens (JWT) y verificación de cuenta por código vía correo electrónico.
+* **Control de Acceso Basado en Roles (RBAC):** Vistas y permisos diferenciados para perfiles de Cliente y Administrador.
+* **Protección de Rutas:** Middlewares en el backend para restringir el acceso a endpoints sensibles según el rol.
+* **Gestión de Sesión:** Cierre de sesión seguro y expiración automática de credenciales.
 
+### 📦 2. Gestión Operativa y Comercial
+* **Gestión de Catálogo:** Control CRUD completo de productos (tallas, colores, stock) y categorías de calzado.
+* **Módulo de Pedidos:** Flujo completo de órdenes de compra, seguimiento de estados y transacciones de los clientes.
+* **Panel Administrativo:** Control de inventario y visualización de ventas en tiempo real.
+* **Mensajería y Soportes:** Sistema de retroalimentación de usuarios y chat interno de atención.
 
+---
 
+## ⚙️ Instalación y Configuración
 
-                                          QUE HACE EL PROYECTO
-Cuentas seguras: Los usuarios se registran, reciben un código de 6 dígitos en su correo para activar la cuenta y pueden iniciar sesión con seguridad.
+### 1. Clonar el repositorio
 
-Control de Pedidos: Permite registrar y confirmar compras, enviando avisos automáticos por correo.
+* Git clone https://github.com/monicaguarsena-droid/Proyecto-Calzame.git
+* Instalar en node.js
+* Ejecutar npm install
+* Instalar librerias de express y supabase
+  
+---
 
-Gestión de la Tienda: Administra el catálogo de zapatos y la información de los clientes desde la base de datos.
+## Ejecución del servidor 
 
+*  npm run dev
 
-                                          COMO INTALARLO Y EJECUTARLO
-Pasos para poner a funcionar el servidor en tu computadora:
+---
 
-Clona el repositorio
-Instalación de Node.
+## 📂Estructura del proyecto
 
-Instalar dependencias con
-Bash
-npm install
-Instalar librerías de Node (express y supabase).
+* Proyecto-Calzame/
+├── backend/
 
-Ejecutar el servidor
-Bash
-npm run dev
+│   ├── config/ # Configuración de Supabase y Cloudinary
 
-                                          📂 Organización de carpetas
-Plaintext
-BACKEND/
-├── config/         # Conexión con Supabase
-├── controllers/    # Lógica principal (como el registro y login)
-├── modelos/        # Consultas a la base de datos
-├── utils/          # Envío de correos
-└── index.js        # Archivo que arranca el servidor
+│   ├── controllers/        # Lógica para usuarios, productos, pedidos, etc.
 
+│   ├── middlewares/        # Validación de JWT y control de roles
 
-                                          ✍️ Autor
-Jimmy Alexander Lombana Rivera
+│   ├── models/             # Consultas y esquemas de base de datos en Supabase
 
-Ingeniero de Sistemas | Desarrollador Full-Stack
+│   ├── routes/             # Definición de rutas API REST
 
-Especialidad: Desarrollo de aplicaciones móviles y web, arquitecturas cliente-servidor e integración de APIs RESTful.
+│   └── utils/              # Servicios auxiliares (envío de emails, tokens, respuestas)
+
+├── node_modules/           # Dependencias instaladas
+
+├── .env                    # Variables de entorno
+
+├── .gitignore              # Archivos y carpetas ignorados por Git
+
+├── index.js                # Servidor principal Express
+
+├── package-lock.json       # Registro de versiones exactas de dependencias
+
+└── package.json            # Configuración del proyecto y dependencias
+
+---
+
+## Auctores/ Equipo de Desarrollo
+*  **Monica Molina**
+    * **Rol:** Desarrollador Backend
+    * **Especialidad:** Arquitectura de APIS REST, Node.js, Express Y gestión de bases de datos
+    
+*  **Evelyn Arrigui**
+    * **Rol:** Desarrollador Backend
+    * **Especialidad:** Arquitectura de APIS REST, Node.js, Express Y gestión de bases de datos
+
