@@ -47,10 +47,10 @@ El proyecto utiliza una arquitectura moderna basada en un servidor backend API R
 
 *  npm run dev
 
----
+
 
 ## 📂Estructura del proyecto
-``
+```
 Proyecto-Calzame/
 ├── backend/
 │   ├── config/
@@ -68,7 +68,7 @@ Proyecto-Calzame/
 ├── package-lock.json
 └── package.json
 
-``
+```
 
 ## Auctores/ Equipo de Desarrollo
 *  **Monica Molina**
