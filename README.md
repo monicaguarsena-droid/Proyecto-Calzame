@@ -50,7 +50,7 @@ El proyecto utiliza una arquitectura moderna basada en un servidor backend API R
 ---
 
 ## 📂Estructura del proyecto
-
+``
 * Proyecto-Calzame/
 ├── backend/
 
@@ -78,7 +78,7 @@ El proyecto utiliza una arquitectura moderna basada en un servidor backend API R
 
 └── package.json            # Configuración del proyecto y dependencias
 
----
+``
 
 ## Auctores/ Equipo de Desarrollo
 *  **Monica Molina**
