@@ -17,7 +17,7 @@ export const crearProducto = async (nombre, descripcion, precio, talla, stock, i
                 Precio: precio,
                 Talla: talla,
                 Stock: stock,
-                Imagen_url: imagen,
+                Imagen: imagen,
                 Categoria: categoria
             }
         ])
