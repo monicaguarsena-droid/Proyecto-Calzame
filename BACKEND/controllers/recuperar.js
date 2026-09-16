@@ -48,7 +48,7 @@ export const forgotPassword = async (req, res) => {
                 <h2>Recuperación de Contraseña</h2>
                 <p>Hola ${usuario.nombre || 'usuario'},</p>
                 <p>Tu código de recuperación es:</p>
-                <h1 style="color: #39a900; font-size: 36px;">${codigo}</h1>
+                <h1 style="color: #ff78fb; font-size: 36px;">${codigo}</h1>
                 <p>Este código es válido por 15 minutos. Si no solicitaste este código, por favor ignora este correo.</p>
                 <p>Gracias,</p>
                 <p>El equipo de soporte</p>
@@ -107,7 +107,7 @@ export const verifyCode = async (req, res) => {
                 <h2 style="color: #333;">Notificación de Cambio de Contraseña</h2>
                 <p>Hola ${usuario.nombre || 'usuario'},</p>
                 <p>Te informamos que tu contraseña ha sido cambiada exitosamente.</p>
-                <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #39a900; margin: 20px 0;">
+                <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #f389ff; margin: 20px 0;">
                     <p style="margin: 0; font-size: 14px; color: #555;">Si no realizaste este cambio, te recomendamos que cambies tu contraseña inmediatamente y contactes a nuestro soporte.</p>
                 </div>
                 <p style="color: #555; font-size: 14px; margin-top: 30px;">Gracias,</p>
