@@ -5,7 +5,7 @@ export const agregarAlCarrito = async (carritoData) => {
         .from('carrito')
         .insert([
             {
-                usuario_cc: carritoData.usuario_id,
+                usuario_cc: carritoData.usuario_id || carritoData.usuario_cc,
                 producto_id: carritoData.producto_id,
                 cantidad: carritoData.cantidad,
                 precio: carritoData.precio
@@ -13,47 +13,38 @@ export const agregarAlCarrito = async (carritoData) => {
         ])
         .select();
 
-    // Si Supabase devuelve error pero el registro sí se guardó, lo ignoramos
-    if (error) {
-        console.log("Advertencia de Supabase (se ignoró):", error.message);
-        return { 
-            data: [{ 
-                usuario_cc: carritoData.usuario_id,
-                producto_id: carritoData.producto_id,
-                cantidad: carritoData.cantidad,
-                precio: carritoData.precio,
-                mensaje: "Producto agregado correctamente"
-            }], 
-            error: null 
-        };
-    }
-
-    return { data, error };
+    if (error) throw new Error(error.message);
+    return data[0];
 };
 
-export const obtenerCarritoPorUsuario = async (usuario_id) => {
+export const obtenerCarritoPorUsuario = async (usuario_cc) => {
     const { data, error } = await supabase
         .from('carrito')
         .select('*')
-        .eq('usuario_cc', usuario_id);
+        .eq('usuario_cc', usuario_cc);
 
-    return { data, error };
+    if (error) throw new Error(error.message);
+    return data;
 };
 
 export const eliminarItemCarrito = async (id) => {
     const { data, error } = await supabase
         .from('carrito')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .select();
 
-    return { data, error };
+    if (error) throw new Error(error.message);
+    return data;
 };
 
-export const vaciarCarritoUsuario = async (usuario_id) => {
+export const vaciarCarritoUsuario = async (usuario_cc) => {
     const { data, error } = await supabase
         .from('carrito')
         .delete()
-        .eq('usuario_cc', usuario_id);
+        .eq('usuario_cc', usuario_cc)
+        .select();
 
-    return { data, error };
+    if (error) throw new Error(error.message);
+    return data;
 };

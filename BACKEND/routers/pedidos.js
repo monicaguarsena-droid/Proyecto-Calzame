@@ -1,12 +1,31 @@
 import express from 'express';
-import { postPedido, getPedidosUsuario } from '../controllers/pedidos.js';
+import { 
+    postPedido, 
+    getTodosLosPedidos, 
+    getPedidosUsuario, 
+    getPedidoPorId, 
+    actualizarEstado, 
+    eliminarPedido 
+} from '../controllers/pedidos.js';
 
 const router = express.Router();
 
-// guardar un pedido nuevbo
+//  Obtener todos los pedidos
+router.get('/', getTodosLosPedidos);
+
+//  Obtener pedido por ID con detalles
+router.get('/:id', getPedidoPorId);
+
+// Obtener pedidos por usuario
+router.get('/usuario/:usuario_id', getPedidosUsuario);
+
+//  Crear pedido
 router.post('/crear', postPedido);
 
-// ver compras de un cliente que uno quiera buscar 
-router.get('/usuario/:usuario_id', getPedidosUsuario);
+//  Actualizar estado del pedido
+router.put('/actualizar/:id', actualizarEstado);
+
+//  Eliminar pedido
+router.delete('/eliminar/:id', eliminarPedido);
 
 export default router;

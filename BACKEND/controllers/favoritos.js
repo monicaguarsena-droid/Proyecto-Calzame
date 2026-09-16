@@ -1,37 +1,51 @@
-import * as FavoritoModel from '../modelos/favoritos.js';
+import { 
+    obtenerFavoritosPorUsuario, 
+    agregarFavorito, 
+    eliminarFavorito 
+} from '../modelos/favoritos.js';
+import { supabase } from '../config/supabase.js';
 
-export const getFavoritosPorUsuario = async (req, res) => {
+export const obtenerTodosFavoritos = async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('favoritos').select('*');
+        if (error) return res.status(400).json({ error: error.message });
+        return res.status(200).json({ favoritos: data });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+export const obtenerFavoritosUsuario = async (req, res) => {
     try {
         const { usuario_id } = req.params;
-        const { data, error } = await FavoritoModel.obtenerFavoritosPorUsuario(usuario_id);
-        
+        const { data, error } = await obtenerFavoritosPorUsuario(usuario_id);
         if (error) return res.status(400).json({ error: error.message });
-        res.status(200).json(data);
-    } catch (err) {
-        res.status(500).json({ error: 'Error del servidor al obtener favoritos' });
+        return res.status(200).json({ favoritos: data });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
     }
 };
 
-export const postAgregarFavorito = async (req, res) => {
+
+export const crearFavorito = async (req, res) => {
     try {
         const { usuario_id, producto_id } = req.body;
-        const { data, error } = await FavoritoModel.agregarFavorito(usuario_id, producto_id);
-        
+        const { data, error } = await agregarFavorito(usuario_id, producto_id);
         if (error) return res.status(400).json({ error: error.message });
-        res.status(201).json({ mensaje: 'Producto agregado a favoritos', data });
-    } catch (err) {
-        res.status(500).json({ error: 'Error del servidor al agregar favorito' });
+        return res.status(201).json({ mensaje: 'Favorito agregado', data });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
     }
 };
 
-export const deleteFavorito = async (req, res) => {
+
+export const eliminarFavoritoController = async (req, res) => {
     try {
         const { usuario_id, producto_id } = req.body;
-        const { data, error } = await FavoritoModel.eliminarFavorito(usuario_id, producto_id);
-        
+        const { data, error } = await eliminarFavorito(usuario_id, producto_id);
         if (error) return res.status(400).json({ error: error.message });
-        res.status(200).json({ mensaje: 'Producto eliminado de favoritos', data });
-    } catch (err) {
-        res.status(500).json({ error: 'Error del servidor al eliminar favorito' });
+        return res.status(200).json({ mensaje: 'Favorito eliminado', data });
+    } catch (error) {
+        return res.status(500).json({ error: error.message });
     }
 };

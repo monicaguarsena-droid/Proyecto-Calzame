@@ -1,15 +1,19 @@
-import express from 'express';
-import { postItemCarrito, getCarritoUsuario, deleteItemCarrito } from '../controllers/carrito.js';
+import { Router } from 'express';
+import { 
+    agregarProductoCarrito, 
+    getCarritoUsuario, 
+    deleteItemCarrito 
+} from '../controllers/carrito.js';
 
-const router = express.Router();
+const router = Router();
 
-// Agregar producto al carrito
-router.post('/agregar', postItemCarrito);
 
-// Obtener carrito por ID de usuario
-router.get('/usuario/:usuario_id', getCarritoUsuario);
+router.post('/agregar', agregarProductoCarrito);
 
-// Eliminar un producto del carrito por su ID 
+
+router.get('/usuario/:usuario_cc', getCarritoUsuario);
+
+
 router.delete('/:id', deleteItemCarrito);
 
 export default router;

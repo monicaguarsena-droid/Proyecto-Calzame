@@ -29,7 +29,7 @@ export const obtenerPedidosPorUsuario = async (usuario_id) => {
 export const obtenerPedidoConDetalles = async (pedido_id) => {
     const { data, error } = await supabase
         .from('Pedidos')
-        .select(`*, detalle_pedido(*)`)
+        .select(`*, detalle_pedido(*)`) 
         .eq('id', pedido_id)
         .single();
 
@@ -48,8 +48,7 @@ export const actualizarEstadoPedido = async (pedido_id, estado) => {
 
 export const crearDetallePedido = async (detalleData) => {
     const { data, error } = await supabase
-        .from('detalle_pedido')
-        .insert(detalleData)
+        .from('detalle_pedido') 
         .select();
     return { data, error };
 };
