@@ -51,32 +51,22 @@ El proyecto utiliza una arquitectura moderna basada en un servidor backend API R
 
 ## 📂Estructura del proyecto
 ``
-* Proyecto-Calzame/
+Proyecto-Calzame/
 ├── backend/
-
-│   ├── config/ # Configuración de Supabase y Cloudinary
-
-│   ├── controllers/        # Lógica para usuarios, productos, pedidos, etc.
-
-│   ├── middlewares/        # Validación de JWT y control de roles
-
-│   ├── models/             # Consultas y esquemas de base de datos en Supabase
-
-│   ├── routes/             # Definición de rutas API REST
-
-│   └── utils/              # Servicios auxiliares (envío de emails, tokens, respuestas)
-
-├── node_modules/           # Dependencias instaladas
-
-├── .env                    # Variables de entorno
-
-├── .gitignore              # Archivos y carpetas ignorados por Git
-
-├── index.js                # Servidor principal Express
-
-├── package-lock.json       # Registro de versiones exactas de dependencias
-
-└── package.json            # Configuración del proyecto y dependencias
+│   ├── config/
+│   │   ├── cloudinary.js
+│   │   └── supabase.js
+│   ├── controladores/
+│   ├── middlewares/
+│   ├── modelos/
+│   ├── rutas/
+│   └── utils/
+├── node_modules/
+├── .env
+├── .gitignore
+├── index.js
+├── package-lock.json
+└── package.json
 
 ``
 
