@@ -27,10 +27,10 @@ export const obtenerCodigoValido = async (usuarioId, codigo) => {
         .eq('Codigo', codigo)
         .eq('usado', false)
         .gt('Expires', new Date().toISOString())
-        .single();
+        .maybeSingle();
 
     if (error) throw error;
-    return data;
+    return {data,error};
 };
 
 // Marcar código como usado

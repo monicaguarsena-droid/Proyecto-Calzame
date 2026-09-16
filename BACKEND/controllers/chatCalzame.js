@@ -15,9 +15,9 @@ export const chatearConCalzame = async (req, res) => {
         const idSesionValido = sesionId || `calzame_sesion_${Date.now()}`;
 
         //1. Obtener la carta desde tu tabla 'productos' en supabase
-        const {data: productos, error:errorProductos}=await supabase
-            .from('productos')
-            .select('nombre, categoria, descripcion, precio, talla');
+        const {data: Productos, error:errorProductos}=await supabase
+            .from('Productos')
+            .select('Nombre, Categoria, Descripcion, Precio, Talla');
 
         if (errorProductos) {
             console.error('Error al consultar Supabase:', errorProductos.message);
@@ -25,7 +25,7 @@ export const chatearConCalzame = async (req, res) => {
                 respuesta:'!Hola! En este momento no tenemos el cazado registrado en el local.'
             });
     }
-    const catalogoTexto=productos.map(p=>`-**${p.nombre}**: $${ Number(p.precio).toLocaleString('es-CO')} COP | Descripcion: ${p.descripcion}`).join('\n');
+    const catalogoTexto=Productos.map(p=>`-**${p.Nombre}**: $${ Number(p.Precio).toLocaleString('es-CO')} COP | Descripcion: ${p.Descripcion}`).join('\n');
 
     const systemPrompt =`
     Eres el asesor virtual y anfitrion de la tienda de calzados "Calzame".
@@ -37,7 +37,7 @@ export const chatearConCalzame = async (req, res) => {
 
     REGLAS DE ATENCION:
 
-    1. Si el cliente solo saluuda (ej: 'Hola','¿como estas?'), responde con cortesia y cercania sin dar el catalogo de los productos ni los precios:
+    1. Si el cliente solo saluda (ej: 'Hola','¿como estas?'), responde con cortesia y cercania sin dar el catalogo de los productos ni los precios:
     'Hola! Bienvenido a Calzame, la tienda de calzados que te hace sentir cómodo y elegante. ¿En qué puedo ayudarte hoy?'
     2. Da el catalogo, los productos, el precio y la talla UNICAMENTE cuando el cliente pregunte por el catalogo, los productos o cuanto cuesta los productos.
     3. Especifica los valores siempre en pesos colombianos ($ COP).
@@ -45,14 +45,14 @@ export const chatearConCalzame = async (req, res) => {
 
     `;
     //3. inferencia con grop
-    const completion = await groq.completions.create({
+    const completion = await groq.chat.completions.create({
         model: 'openai/gpt-oss-20b',
         messages: [
-            {role: 'sistem', content: systemPrompt},
+            {role: 'system', content: systemPrompt},
             {role: 'user', content: mensaje}
         ],
         temperature: 0.3,
-        max_tokens: 500,
+        max_completion_tokens: 500,
     });
 
     const respuestaTexto = completion.choices[0].message.content || 'No pude generar una respuesta ';

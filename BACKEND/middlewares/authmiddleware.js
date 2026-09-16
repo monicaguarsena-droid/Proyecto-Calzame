@@ -1,4 +1,7 @@
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
+
+const upload = multer({dest: 'upload/'});
 
 //verificamos que exita un token valido (usuario autenticado)
 export const verificarToken = (req, res, next) => {
@@ -25,3 +28,5 @@ export const verificarAdmin = (req, res, next) => {
     }
     next();
 };
+
+export default upload;
