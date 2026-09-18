@@ -6,15 +6,15 @@ class InicioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF0F2), // Fondo 
+      backgroundColor: const Color(0xFFFDF0F2),
       body: SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Imagen del tacón.jpg
+              // Imagen del tacón
               Image.asset(
-                'assets/img/tacon.jpg', 
+                'assets/img/tacon.jpg',
                 height: 180,
               ),
               const SizedBox(height: 20),
@@ -25,13 +25,13 @@ class InicioScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFE57373), 
+                  color: Color(0xFFE57373),
                   letterSpacing: 2.0,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 20),
 
-              //  flecha boton
+              // Botón de flecha
               IconButton(
                 iconSize: 32,
                 icon: const Icon(Icons.arrow_forward),
