@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class InicioScreen extends StatelessWidget {
-  const InicioScreen({super.key});
+class Inicio extends StatelessWidget {
+  const Inicio({super.key});
 
   @override
   Widget build(BuildContext context) {
