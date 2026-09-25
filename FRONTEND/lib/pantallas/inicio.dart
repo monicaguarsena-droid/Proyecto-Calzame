@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/cors/colores.dart';
+import 'package:frontend/pantallas/inicio_sesion.dart'; // <--- 1. Importa tu pantalla de inicio de sesión
 
-class InicioScreen extends StatelessWidget {
-  const InicioScreen({super.key});
+class Inicio extends StatelessWidget {
+  const Inicio({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF0F2), // Fondo 
+      backgroundColor: ColoresApp.fondoApp,
       body: SafeArea(
         child: Center(
           child: Column(
@@ -14,30 +16,36 @@ class InicioScreen extends StatelessWidget {
             children: [
               // Imagen del tacón.jpg
               Image.asset(
-                'assets/img/tacon.jpg', 
+                'assets/img/tacon.jpg',
                 height: 180,
+                color: ColoresApp.fondoApp,
+                colorBlendMode: BlendMode.multiply,
               ),
-              const SizedBox(height: 20),
-
+              const SizedBox(height: 30),
               // Título CALZAME
               const Text(
                 'CALZAME',
                 style: TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFE57373), 
+                  color: ColoresApp.letra,
                   letterSpacing: 2.0,
                 ),
               ),
               const SizedBox(height: 10),
-
-              //  flecha boton
+              // flecha boton
               IconButton(
                 iconSize: 32,
                 icon: const Icon(Icons.arrow_forward),
                 color: const Color(0xFF4A148C),
                 onPressed: () {
-                  // Acción al presionar la flechita
+                  // <--- 2. Agrega la navegación aquí dentro
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const InicioSesion(),
+                    ),
+                  );
                 },
               ),
             ],
