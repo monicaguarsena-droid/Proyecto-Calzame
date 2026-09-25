@@ -70,10 +70,10 @@ class InicioSesion extends StatelessWidget {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: Color(0xFFF48FB1)),
+                    borderSide: BorderSide(color: ColoresApp.fondoApp)),
                   ),
                 ),
-              ),
+            
               const SizedBox(height: 15),
 
               // Contraseña
