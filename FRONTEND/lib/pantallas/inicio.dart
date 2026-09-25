@@ -15,12 +15,7 @@ class Inicio extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               // Imagen del tacón.jpg
-              Image.asset(
-                'assets/img/tacon.jpg',
-                height: 180,
-                color: ColoresApp.fondoApp,
-                colorBlendMode: BlendMode.multiply,
-              ),
+              Image.asset('assets/img/tacon.jpg', height: 180),
               const SizedBox(height: 30),
               // Título CALZAME
               const Text(
