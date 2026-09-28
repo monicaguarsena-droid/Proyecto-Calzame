@@ -165,24 +165,6 @@ class InicioSesion extends StatelessWidget {
               const Text('O continuar con', style: TextStyle(fontSize: 14, color: ColoresApp.letra)),
               const SizedBox(height: 10),
 
-              // Botón Google
-              SizedBox(
-                width: 180,
-                height: 40,
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFFF48FB1)),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                  ),
-                  onPressed: () {},
-                  icon: const Icon(Icons.g_mobiledata, color: Colors.red, size: 28),
-                  label: const Text('Google', style: TextStyle(color: Colors.black, fontSize: 12)),
-                ),
-              ),
-              const SizedBox(height: 15),
 
               // Protección de datos
               const Text(
