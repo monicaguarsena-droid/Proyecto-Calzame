@@ -1,30 +1,44 @@
 import 'package:flutter/material.dart';
 
 class ColoresApp {
- 
-  static const Color primario = Color(0xFF1A1A2E);      
-  static const Color secundario = Color.fromARGB(255, 246, 186, 196);     
-  static const Color acento = Color.fromARGB(255, 7, 7, 7);        
+  static const Color background = Color(0xFFFFF0F3);
 
+  /// Fondo de la barra superior (AppBar)
+  static const Color appBar = Color(0xFFFFD6E0);
 
-  static const Color fondoApp = Color.fromRGBO(250, 226, 239, 1);       
-  static const Color letra = Color.fromARGB(255, 0, 0, 0);   
-  static const Color appbar = Color.fromARGB(255, 245, 168, 198);      
-  static const Color letra2 = Color.fromARGB(255, 177, 73, 122);      
+  /// Fondo de tarjetas / botón de Google
+  static const Color surface = Colors.white;
 
+  // Rosados (marca)
+  /// Botones principales (INICIAR SESIÓN, CONTINUAR), iconos del ojo y checkbox
+  static const Color pink = Color(0xFFF48FB1);
 
-  static const Color letra3 = Color.fromARGB(255, 54, 60, 71); 
-  static const Color letra4 = Color.fromARGB(255, 19, 177, 240); 
-  static const Color textoClaro = Color(0xFFA0AEC0);     
+  /// Título "CALZAME", flecha de regreso y candado
+  static const Color pinkTitle = Color(0xFFF77FA6);
 
- 
-  static const Color exito = Color.fromARGB(255, 94, 209, 142);          
-  static const Color advertencia = Color(0xFFECC94B);   
-  static const Color error = Color(0xFFF56565);          
-  static const Color info = Color(0xFF4299E1);          
+  /// Borde de los campos de texto y divisores
+  static const Color border = Color(0xFFF48FB1);
 
+  // Textos 
+  /// Color vino para títulos, etiquetas y textos
+  static const Color wine = Color(0xFF6B1F4B);
 
-  static const Color blanco = Color(0xFFFFFFFF);
-  static const Color negro = Color(0xFF000000);
-  static const Color transparente = Colors.transparent;
+  /// Texto de ayuda dentro de los campos (EMAIL.COM, ········)
+  static const Color hint = Color(0xFFB0A0A5);
+
+  /// Texto sobre botones rosados
+  static const Color onPink = Colors.white;
+
+  /// Texto del botón de Google y borde del logo
+  static const Color black = Colors.black;
+
+  /// "¿Olvidé mi Contraseña?", "Registrarse", "Inicia sesión"
+  static const Color link = Color(0xFF1E88E5);
+
+  // Estados 
+  /// Mensajes de error en validaciones
+  static const Color error = Colors.red;
+
+  /// Borde del botón de Google
+  static const Color greyBorder = Color(0xFFE0E0E0);
 }
