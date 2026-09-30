@@ -3,7 +3,7 @@ import multer from 'multer';
 
 const upload = multer({dest: 'upload/'});
 
-//verificamos que exita un token valido (usuario autenticado)
+//verificamos que exita un token valido 
 export const verificarToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -21,7 +21,7 @@ export const verificarToken = (req, res, next) => {
     });
 };
 
-//solo deja pasar si el usuario tiene rol de admin(panel de administrador)
+//solo deja pasar si el usuario tiene rol de admi
 export const verificarAdmin = (req, res, next) => {
     if (req.usuario?.rol !== 'admin') {
         return res.status(403).json({ error: 'No tienes permisos de administrador.' });
