@@ -1,44 +1,31 @@
 import 'package:flutter/material.dart';
-
+ 
+/// Paleta de colores de CalzaMe (extraída del diseño en Figma).
+/// Los valores son aproximados; ajusta los hex si tienes los exactos.
 class ColoresApp {
-  static const Color background = Color(0xFFFFF0F3);
-
-  /// Fondo de la barra superior (AppBar)
-  static const Color appBar = Color(0xFFFFD6E0);
-
-  /// Fondo de tarjetas / botón de Google
-  static const Color surface = Colors.white;
-
-  // Rosados (marca)
-  /// Botones principales (INICIAR SESIÓN, CONTINUAR), iconos del ojo y checkbox
-  static const Color pink = Color(0xFFF48FB1);
-
-  /// Título "CALZAME", flecha de regreso y candado
-  static const Color pinkTitle = Color(0xFFF77FA6);
-
-  /// Borde de los campos de texto y divisores
-  static const Color border = Color(0xFFF48FB1);
-
-  // Textos 
-  /// Color vino para títulos, etiquetas y textos
-  static const Color wine = Color(0xFF6B1F4B);
-
-  /// Texto de ayuda dentro de los campos (EMAIL.COM, ········)
-  static const Color hint = Color(0xFFB0A0A5);
-
-  /// Texto sobre botones rosados
-  static const Color onPink = Colors.white;
-
-  /// Texto del botón de Google y borde del logo
-  static const Color black = Colors.black;
-
-  /// "¿Olvidé mi Contraseña?", "Registrarse", "Inicia sesión"
-  static const Color link = Color(0xFF1E88E5);
-
-  // Estados 
-  /// Mensajes de error en validaciones
-  static const Color error = Colors.red;
-
-  /// Borde del botón de Google
-  static const Color greyBorder = Color(0xFFE0E0E0);
+  ColoresApp._();
+ 
+  // Marca
+  static const Color primary = Color(0xFF6B1229); // Vino / burdeos (botones, títulos, links)
+  static const Color primaryDark = Color(0xFF55091F); // Estado pressed
+  static const Color primaryLight = Color(0xFF8A2A42); // Acentos / íconos activos
+ 
+  // Fondos
+  static const Color background = Color(0xFFF9F1EE); // Crema de pantallas
+  static const Color surface = Color(0xFFFFFFFF); // Inputs, tarjetas, botón Google
+  static const Color surfaceVariant = Color(0xFFF3E7E3); // Chips / fondos suaves
+ 
+  // Texto
+  static const Color textPrimary = Color(0xFF2B1B1F); // Texto principal
+  static const Color textSecondary = Color(0xFF6E6468); // Subtítulos, hints
+  static const Color textOnPrimary = Color(0xFFFFFFFF); // Texto sobre botón vino
+  static const Color hint = Color(0xFF9A9094); // Placeholders
+ 
+  // Bordes
+  static const Color border = Color(0xFFE6DAD6); // Bordes de inputs
+  static const Color outline = primary; // Botón secundario (outlined)
+ 
+  // Estados
+  static const Color error = Color(0xFFB3261E);
+  static const Color success = Color(0xFF2E7D32);
 }
