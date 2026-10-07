@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
-class Registro extends StatelessWidget {
+class Registro extends StatefulWidget {
   const Registro({super.key});
+
+  @override
+  State<Registro> createState() => _RegistroState();
+}
+class _RegistroState extends State<Registro> {
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -148,11 +155,22 @@ class Registro extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 TextField(
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   style: const TextStyle(color: primaryColor, fontSize: 14),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.lock_outline, color: Color.fromARGB(255, 135, 134, 134), size: 20),
-                    suffixIcon: const Icon(Icons.visibility_off_outlined, color: Color.fromARGB(255, 75, 75, 75), size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: const Color.fromARGB(255, 75, 75, 75),
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                     hintText: "••••••••",
                     hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
                     filled: true,
@@ -183,11 +201,22 @@ class Registro extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 TextField(
-                  obscureText: true,
+                  obscureText: _obscureConfirmPassword,
                   style: const TextStyle(color: primaryColor, fontSize: 14),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.lock_outline, color: Color.fromARGB(255, 135, 134, 134), size: 20),
-                    suffixIcon: const Icon(Icons.visibility_off_outlined, color: Color.fromARGB(255, 75, 75, 75), size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: const Color.fromARGB(255, 75, 75, 75),
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscureConfirmPassword = !_obscureConfirmPassword;
+                        });
+                      },
+                    ),
                     hintText: "••••••••",
                     hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
                     filled: true,
