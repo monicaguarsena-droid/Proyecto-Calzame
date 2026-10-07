@@ -1,7 +1,16 @@
 import 'package:flutter/material.dart';
 import 'registro.dart';
-class InicioSesion extends StatelessWidget {
+
+class InicioSesion extends StatefulWidget {
   const InicioSesion({super.key});
+
+  @override
+  State<InicioSesion> createState() => _InicioSesionState();
+}
+
+class _InicioSesionState extends State<InicioSesion> {
+  // Variable de estado para controlar la visibilidad de la contraseña
+  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -10,7 +19,7 @@ class InicioSesion extends StatelessWidget {
     const backgroundColor = Color.fromARGB(255, 251, 248, 246);
 
     return Scaffold(
-      backgroundColor: backgroundColor, 
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -83,11 +92,22 @@ class InicioSesion extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 TextField(
-                  obscureText: true,
+                  obscureText: _obscurePassword,
                   style: const TextStyle(color: primaryColor, fontSize: 14),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(Icons.lock_outline, color: Color.fromARGB(255, 135, 134, 134), size: 20),
-                    suffixIcon: const Icon(Icons.visibility_off_outlined, color: Color.fromARGB(255, 75, 75, 75), size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        color: const Color.fromARGB(255, 75, 75, 75),
+                        size: 20,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
+                    ),
                     hintText: "••••••••",
                     hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
                     filled: true,
@@ -168,7 +188,8 @@ class InicioSesion extends StatelessWidget {
                         MaterialPageRoute(builder: (context) => const Registro()),
                       );
                     },
-                    child: const Text( "Crear cuenta",
+                    child: const Text(
+                      "Crear cuenta",
                       style: TextStyle(
                         color: Color.fromARGB(255, 106, 25, 49),
                         fontSize: 16,
