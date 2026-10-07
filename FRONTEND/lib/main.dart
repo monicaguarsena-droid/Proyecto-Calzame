@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/splash.dart';
+import 'package:frontend/pantallas/verificacioncongoogle.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,12 +10,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Inicio ()
     );
   }
 }
-
-
-
