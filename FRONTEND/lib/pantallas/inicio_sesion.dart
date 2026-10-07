@@ -1,347 +1,265 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/cors/colores.dart';
-import 'package:frontend/pantallas/registro.dart';
-import 'package:frontend/pantallas/verificacion.dart';
-import 'package:google_fonts/google_fonts.dart'; // Asegúrate de que el nombre del archivo coincida
-
-class Login extends StatefulWidget {
-  const Login({super.key});
-
-  @override
-  State<Login> createState() => _LoginState();
-}
-
-class _LoginState extends State<Login> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
-  bool _rememberMe = false;
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  TextStyle _font({
-    double size = 14,
-    Color color = ColoresApp.wine,
-    FontWeight weight = FontWeight.normal,
-  }) {
-    return GoogleFonts.fondamento(
-      fontSize: size,
-      color: color,
-      fontWeight: weight,
-    );
-  }
-
-  InputDecoration _inputDecoration({
-    required String hint,
-    required Widget suffix,
-  }) {
-    OutlineInputBorder border() => OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: ColoresApp.border, width: 1),
-    );
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: _font(size: 12, color: ColoresApp.hint),
-      filled: true,
-      fillColor: ColoresApp.background,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      enabledBorder: border(),
-      focusedBorder: border(),
-      border: border(),
-      suffixIcon: suffix,
-    );
-  }
+import 'registro.dart';
+class InicioSesion extends StatelessWidget {
+  const InicioSesion({super.key});
 
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color.fromARGB(255, 96, 24, 46);
+    // Color de fondo crema exacto de la interfaz
+    const backgroundColor = Color.fromARGB(255, 251, 248, 246);
+
     return Scaffold(
-      backgroundColor: ColoresApp.background,
-      appBar: AppBar(
-        backgroundColor: ColoresApp.appBar,
-        elevation: 0,
-        centerTitle: true,
-        toolbarHeight: 70,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            size: 18,
-            color: ColoresApp.pinkTitle,
-          ),
-          onPressed: () => Navigator.maybePop(context),
-        ),
-        title: Text(
-          'CALZAME',
-          style: _font(
-            size: 30,
-            color: ColoresApp.pinkTitle,
-            weight: FontWeight.bold,
-          ),
-        ),
-      ),
+      backgroundColor: backgroundColor, 
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Center(
+                  child: Text(
+                    "Bienvenida a CalzaMe",
+                    style: TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 111, 30, 54),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Center(
+                  child: Text(
+                    "Inicia sesión para continuar",
+                    style: TextStyle(
+                      color: Color(0xFF8C8C8C),
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 28),
+                const Text(
+                  "Correo electrónico",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 97, 27, 48),
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  style: const TextStyle(color: primaryColor, fontSize: 14),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey, size: 20),
+                    hintText: "ejemplo@correo.com",
+                    hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Contraseña",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 100, 27, 49),
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  obscureText: true,
+                  style: const TextStyle(color: primaryColor, fontSize: 14),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.lock_outline, color: Color.fromARGB(255, 135, 134, 134), size: 20),
+                    suffixIcon: const Icon(Icons.visibility_off_outlined, color: Color.fromARGB(255, 75, 75, 75), size: 20),
+                    hintText: "••••••••",
+                    hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () {},
+                    child: const Text(
+                      "¿Olvidaste tu contraseña?",
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 95, 25, 46),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 19),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 106, 29, 51),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {},
+                    child: const Text(
+                      "Iniciar sesión",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: primaryColor, width: 1),
+                      backgroundColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Registro()),
+                      );
+                    },
+                    child: const Text( "Crear cuenta",
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 106, 25, 49),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
                   children: [
-                    const SizedBox(height: 24),
-
-                    // Logo
-                    Center(
-                      child: Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                          border: Border.all(color: Colors.black, width: 3),
-                        ),
-                        // child: ClipOval(child: Image.asset('assets/logo.png', fit: BoxFit.cover)),
-                        child:
-                          Image.asset('name')
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    Center(
+                    Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
-                        'BIENVENIDA A CALZAME',
-                        style: _font(size: 16, weight: FontWeight.bold),
+                        "o continuar con",
+                        style: TextStyle(color: Color.fromARGB(255, 106, 106, 106), fontSize: 13),
                       ),
                     ),
-                    const SizedBox(height: 40),
-
-                    // Correo
-                    Text(
-                      'CORREO ELECTRONICO',
-                      style: _font(size: 14, weight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: _font(size: 13),
-                      decoration: _inputDecoration(
-                        hint: 'EMAIL.COM',
-                        suffix: const Icon(
-                          Icons.visibility_outlined,
-                          color: ColoresApp.pink,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Contraseña
-                    Text(
-                      'CONTRASEÑA',
-                      style: _font(size: 14, weight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      style: _font(size: 13),
-                      decoration: _inputDecoration(
-                        hint: '- - - - - - - -',
-                        suffix: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                            color: ColoresApp.pink,
-                          ),
-                          onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    // Recordarme / Olvidé contraseña
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: Checkbox(
-                            value: _rememberMe,
-                            side: const BorderSide(color: ColoresApp.pink),
-                            activeColor: ColoresApp.pink,
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            onChanged: (v) =>
-                                setState(() => _rememberMe = v ?? false),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text('Recordarme', style: _font(size: 12)),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: () {},
-                          child: Text(
-                            '¿Olvidé mi Contraseña?',
-                            style: _font(size: 12, color: ColoresApp.link),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 40),
-
-                    // Botón iniciar sesión
-                    Center(
-                      child: SizedBox(
-                        width: 190,
-                        height: 44,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>Verification(),
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ColoresApp.pink,
-                            foregroundColor: Colors.white,
-                            elevation: 2,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          child: Text(
-                            'INICIAR SESIÓN',
-                            style: _font(
-                              size: 14,
-                              color: Colors.white,
-                              weight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+                    Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
                   ],
                 ),
-              ),
-            ),
-
-            // Parte inferior
-            const Divider(height: 1, color: ColoresApp.border),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('¿No tienes una cuenta?', style: _font(size: 12)),
-                      const SizedBox(width: 18),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => Registro()),
-                          );
-                        },
-                        child: Text(
-                          'Registrarse',
-                          style: _font(size: 12, color: ColoresApp.link),
-                        ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.grey.shade300, width: 1),
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'O continuar con',
-                    style: _font(size: 14, weight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: 190,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.grey.shade300),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black,
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
+                    ),
+                    onPressed: () {},
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          "G",
+                          style: TextStyle(
+                            color: Color(0xFFEA4335),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          "Google",
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: () {},
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Reemplaza por Image.asset('assets/google.png', width: 20)
-                          Container(
-                            width: 20,
-                            height: 20,
-                            alignment: Alignment.center,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Color(0xFF4285F4),
-                            ),
-                            child: const Text(
-                              'G',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                  ),
+                ),
+                const SizedBox(height: 70),
+                Center(
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: const TextSpan(
+                      style: TextStyle(color: Color.fromARGB(255, 113, 113, 113), fontSize: 13, height: 1.8),
+                      children: [
+                        TextSpan(text: "Al continuar, aceptas nuestros "),
+                        TextSpan(
+                          text: "Términos y\ncondiciones",
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 90, 25, 45),
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Google',
-                            style: _font(
-                              size: 15,
-                              color: Colors.black,
-                              weight: FontWeight.bold,
-                            ),
+                        ),
+                        TextSpan(text: " y "),
+                        TextSpan(
+                          text: "Política de privacidad",
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
-                      ),
+                        ),
+                        TextSpan(text: "."),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(
-                        Icons.lock_outline,
-                        size: 14,
-                        color: ColoresApp.pinkTitle,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          'Tus datos están protegidos con encriptación de nivel empresarial',
-                          textAlign: TextAlign.center,
-                          style: _font(size: 10),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 10),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
