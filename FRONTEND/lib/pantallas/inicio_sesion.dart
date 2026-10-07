@@ -268,6 +268,7 @@ class _InicioSesionState extends State<InicioSesion> {
                         TextSpan(
                           text: "Política de privacidad",
                           style: TextStyle(
+                            
                             color: primaryColor,
                             fontWeight: FontWeight.bold,
                           ),
