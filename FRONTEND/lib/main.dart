@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/pantallas/confimarcodigo.dart';
+import 'package:frontend/pantallas/olvidocontrase%C3%B1a.dart';
 import 'package:frontend/pantallas/verificacioncongoogle.dart';
 
 void main() {
@@ -12,16 +14,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: VerificacionCorreo(
-        email:
-            "ejemplo@correo.com", // Reemplaza con el correo que necesites pasar
-        onVerificar: (codigo) async {
-          // Tu lógica de verificación aquí
-        },
-        onReenviar: () async {
-          // Tu lógica para reenviar código aquí
-        },
-      ),
+      home: //ConfirmarCodigo()
+      
+      RecuperarCuenta()
     );
   }
 }
