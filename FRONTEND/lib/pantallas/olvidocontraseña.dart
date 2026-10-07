@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/confimarcodigo.dart';
+import 'package:frontend/pantallas/inicio_sesion.dart';
 
 class RecuperarCuenta extends StatefulWidget {
   final Future<void> Function(String email)? onEnviarCodigo;
@@ -166,7 +167,14 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
 
                   Center(
                     child: GestureDetector(
-                      onTap: widget.onIniciarSesion,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InicioSesion(),
+                          ),
+                        );
+                      },
                       child: RichText(
                         text: const TextSpan(
                           text: '¿Recuerdas tu contraseña? ',

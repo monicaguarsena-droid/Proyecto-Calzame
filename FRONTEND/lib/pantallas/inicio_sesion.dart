@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/pantallas/olvidocontrase%C3%B1a.dart';
 import 'registro.dart';
 
 class InicioSesion extends StatefulWidget {
@@ -23,7 +24,10 @@ class _InicioSesionState extends State<InicioSesion> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -42,10 +46,7 @@ class _InicioSesionState extends State<InicioSesion> {
                 const Center(
                   child: Text(
                     "Inicia sesión para continuar",
-                    style: TextStyle(
-                      color: Color(0xFF8C8C8C),
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Color(0xFF8C8C8C), fontSize: 14),
                   ),
                 ),
                 const SizedBox(height: 28),
@@ -61,9 +62,16 @@ class _InicioSesionState extends State<InicioSesion> {
                 TextField(
                   style: const TextStyle(color: primaryColor, fontSize: 14),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey, size: 20),
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
                     hintText: "ejemplo@correo.com",
-                    hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                    hintStyle: const TextStyle(
+                      color: Colors.black26,
+                      fontSize: 14,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -77,7 +85,10 @@ class _InicioSesionState extends State<InicioSesion> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: primaryColor,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -95,10 +106,16 @@ class _InicioSesionState extends State<InicioSesion> {
                   obscureText: _obscurePassword,
                   style: const TextStyle(color: primaryColor, fontSize: 14),
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(Icons.lock_outline, color: Color.fromARGB(255, 135, 134, 134), size: 20),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: Color.fromARGB(255, 135, 134, 134),
+                      size: 20,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                         color: const Color.fromARGB(255, 75, 75, 75),
                         size: 20,
                       ),
@@ -109,7 +126,10 @@ class _InicioSesionState extends State<InicioSesion> {
                       },
                     ),
                     hintText: "••••••••",
-                    hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                    hintStyle: const TextStyle(
+                      color: Colors.black26,
+                      fontSize: 14,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     contentPadding: const EdgeInsets.symmetric(vertical: 14),
@@ -123,7 +143,10 @@ class _InicioSesionState extends State<InicioSesion> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: primaryColor,
+                        width: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -132,11 +155,21 @@ class _InicioSesionState extends State<InicioSesion> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 0,
+                        vertical: 8,
+                      ),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RecuperarCuenta(),
+                        ),
+                      );
+                    },
                     child: const Text(
                       "¿Olvidaste tu contraseña?",
                       style: TextStyle(
@@ -185,7 +218,9 @@ class _InicioSesionState extends State<InicioSesion> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const Registro()),
+                        MaterialPageRoute(
+                          builder: (context) => const Registro(),
+                        ),
                       );
                     },
                     child: const Text(
@@ -201,15 +236,22 @@ class _InicioSesionState extends State<InicioSesion> {
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                    Expanded(
+                      child: Divider(color: Colors.grey.shade300, thickness: 1),
+                    ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Text(
                         "o continuar con",
-                        style: TextStyle(color: Color.fromARGB(255, 106, 106, 106), fontSize: 13),
+                        style: TextStyle(
+                          color: Color.fromARGB(255, 106, 106, 106),
+                          fontSize: 13,
+                        ),
                       ),
                     ),
-                    Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                    Expanded(
+                      child: Divider(color: Colors.grey.shade300, thickness: 1),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 20),
@@ -254,7 +296,11 @@ class _InicioSesionState extends State<InicioSesion> {
                   child: RichText(
                     textAlign: TextAlign.center,
                     text: const TextSpan(
-                      style: TextStyle(color: Color.fromARGB(255, 113, 113, 113), fontSize: 13, height: 1.8),
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 113, 113, 113),
+                        fontSize: 13,
+                        height: 1.8,
+                      ),
                       children: [
                         TextSpan(text: "Al continuar, aceptas nuestros "),
                         TextSpan(
@@ -268,7 +314,6 @@ class _InicioSesionState extends State<InicioSesion> {
                         TextSpan(
                           text: "Política de privacidad",
                           style: TextStyle(
-                            
                             color: primaryColor,
                             fontWeight: FontWeight.bold,
                           ),
