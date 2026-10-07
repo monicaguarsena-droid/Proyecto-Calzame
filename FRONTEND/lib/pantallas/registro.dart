@@ -1,227 +1,342 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/cors/colores.dart';
 
 class Registro extends StatelessWidget {
   const Registro({super.key});
 
   @override
   Widget build(BuildContext context) {
+    const primaryColor = Color.fromARGB(255, 96, 24, 46);
+    const backgroundColor = Color.fromARGB(255, 251, 248, 246);
+
     return Scaffold(
-      backgroundColor: ColoresApp.background,
-      appBar: AppBar(
-        backgroundColor: ColoresApp.appBar,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 18),
-          color: ColoresApp.pinkTitle,
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'CALZAME',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: ColoresApp.pinkTitle,
-            letterSpacing: 1.5,
-          ),
-        ),
-        centerTitle: true,
-      ),
+      backgroundColor: backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 15),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'REGISTRARME',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: ColoresApp.wine,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'CEDULA',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColoresApp.wine,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const TextField(
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColoresApp.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Center(
+                  child: Text(
+                    "Bienvenida a CalzaMe",
+                    style: TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 111, 30, 54),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                'CORREO',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColoresApp.wine,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const TextField(
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColoresApp.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
+                const SizedBox(height: 6),
+                const Center(
+                  child: Text(
+                    "Regístrate para empezar a comprar",
+                    style: TextStyle(
+                      color: Color(0xFF8C8C8C),
+                      fontSize: 14,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                'NOMBRE',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColoresApp.wine,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const TextField(
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColoresApp.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
+                const SizedBox(height: 28),
+                const Text(
+                  "Cédula",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 97, 27, 48),
+                    fontSize: 16,
                   ),
                 ),
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                'CONTRASEÑA',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColoresApp.wine,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColoresApp.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                'CONFIRMAR CONTRASEÑA',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: ColoresApp.wine,
-                ),
-              ),
-              const SizedBox(height: 5),
-              const TextField(
-                obscureText: true,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: ColoresApp.surface,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(30)),
-                    borderSide: BorderSide(color: ColoresApp.border),
+                const SizedBox(height: 6),
+                TextField(
+                  style: const TextStyle(color: primaryColor, fontSize: 14),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.credit_card, color: Colors.grey, size: 20),
+                    hintText: "0000000000",
+                    hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 30),
-              Center(
-                child: SizedBox(
-                  width: 250,
-                  height: 45,
+                const SizedBox(height: 16),
+                const Text(
+                  "Nombre completo",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 97, 27, 48),
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  style: const TextStyle(color: primaryColor, fontSize: 14),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.person_outline, color: Colors.grey, size: 20),
+                    hintText: "Nombre y apellido",
+                    hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Correo electrónico",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 97, 27, 48),
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  style: const TextStyle(color: primaryColor, fontSize: 14),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.email_outlined, color: Colors.grey, size: 20),
+                    hintText: "ejemplo@correo.com",
+                    hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Contraseña",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 100, 27, 49),
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  obscureText: true,
+                  style: const TextStyle(color: primaryColor, fontSize: 14),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.lock_outline, color: Color.fromARGB(255, 135, 134, 134), size: 20),
+                    suffixIcon: const Icon(Icons.visibility_off_outlined, color: Color.fromARGB(255, 75, 75, 75), size: 20),
+                    hintText: "••••••••",
+                    hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  "Confirmar contraseña",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color.fromARGB(255, 100, 27, 49),
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  obscureText: true,
+                  style: const TextStyle(color: primaryColor, fontSize: 14),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.lock_outline, color: Color.fromARGB(255, 135, 134, 134), size: 20),
+                    suffixIcon: const Icon(Icons.visibility_off_outlined, color: Color.fromARGB(255, 75, 75, 75), size: 20),
+                    hintText: "••••••••",
+                    hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: ColoresApp.pink,
+                      backgroundColor: const Color.fromARGB(255, 106, 29, 51),
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     onPressed: () {},
                     child: const Text(
-                      'CONTINUAR',
+                      "Crear cuenta",
                       style: TextStyle(
-                        color: ColoresApp.onPink,
+                        color: Colors.white,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
                       ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    '¿YA TIENES CUENTA?',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: ColoresApp.wine,
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: primaryColor, width: 1),
+                      backgroundColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
                     child: const Text(
-                      'INICIA SECCIÓN',
+                      "Ya tengo cuenta",
                       style: TextStyle(
-                        fontSize: 12,
+                        color: Color.fromARGB(255, 106, 25, 49),
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: ColoresApp.link,
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                '🔒 Tus datos están protegidos con encriptación de nivel empresarial',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 8.5, color: Colors.black54),
-              ),
-            ],
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        "o continuar con",
+                        style: TextStyle(color: Color.fromARGB(255, 106, 106, 106), fontSize: 13),
+                      ),
+                    ),
+                    Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.grey.shade300, width: 1),
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {},
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Text(
+                          "G",
+                          style: TextStyle(
+                            color: Color(0xFFEA4335),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 22,
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          "Google",
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 40),
+                Center(
+                  child: RichText(
+                    textAlign: TextAlign.center,
+                    text: const TextSpan(
+                      style: TextStyle(color: Color.fromARGB(255, 113, 113, 113), fontSize: 13, height: 1.8),
+                      children: [
+                        TextSpan(text: "Al continuar, aceptas nuestros "),
+                        TextSpan(
+                          text: "Términos y\ncondiciones",
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 90, 25, 45),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(text: " y "),
+                        TextSpan(
+                          text: "Política de privacidad",
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(text: "."),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
         ),
       ),
