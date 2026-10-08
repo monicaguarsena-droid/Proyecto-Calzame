@@ -99,7 +99,7 @@ class _InicioState extends State<Inicio> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "Calzame",
+                    "CalzaMe",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 36,
@@ -132,7 +132,7 @@ class _InicioState extends State<Inicio> {
                         // AQUÍ CONECTAMOS EL BOTÓN CON LA PANTALLA DE INICIO DE SESIÓN
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const InicioSesion()),
+                          MaterialPageRoute(builder: (context) => InicioSesion()),
                         );
                       },
                       style: ElevatedButton.styleFrom(

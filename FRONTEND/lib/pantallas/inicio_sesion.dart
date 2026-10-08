@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/pantallas/olvidocontrase%C3%B1a.dart';
 import 'registro.dart';
 
 class InicioSesion extends StatefulWidget {
@@ -157,7 +158,14 @@ class _InicioSesionState extends State<InicioSesion> {
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RecuperarCuenta(),
+                        ),
+                      );
+                    },
                     child: const Text(
                       "¿Olvidaste tu contraseña?",
                       style: TextStyle(
