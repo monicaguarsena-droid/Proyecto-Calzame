@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/hola.dart';
 import 'registro.dart';
 
 class InicioSesion extends StatefulWidget {
   const InicioSesion({super.key});
+
   @override
   State<InicioSesion> createState() => _InicioSesionState();
 }
@@ -15,6 +15,7 @@ class _InicioSesionState extends State<InicioSesion> {
   Widget build(BuildContext context) {
     const primaryColor = Color.fromARGB(255, 96, 24, 46);
     const backgroundColor = Color.fromARGB(255, 251, 248, 246);
+    
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -159,12 +160,7 @@ class _InicioSesionState extends State<InicioSesion> {
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RecuperarCuenta(),
-                        ),
-                      );
+                      // Desactivado temporalmente hasta que crees la pantalla de recuperar cuenta
                     },
                     child: const Text(
                       "¿Olvidaste tu contraseña?",
@@ -189,10 +185,7 @@ class _InicioSesionState extends State<InicioSesion> {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Home()),
-                      );
+                      // Puedes cambiar la navegación a tu pantalla principal cuando la tengas lista
                     },
                     child: const Text(
                       "Iniciar sesión",

@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'inicio_sesion.dart'; 
+import 'inicio_sesion.dart';
 
-class Inicio extends StatefulWidget {
-  const Inicio({super.key});
+class PantallaInicio extends StatefulWidget {
+  const PantallaInicio({super.key});
 
   @override
-  State<Inicio> createState() => _InicioState();
+  State<PantallaInicio> createState() => _PantallaInicioState();
 }
 
-class _InicioState extends State<Inicio> {
+class _PantallaInicioState extends State<PantallaInicio> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   late Timer _timer;
@@ -118,9 +118,23 @@ class _InicioState extends State<Inicio> {
                   const SizedBox(height: 30),
                   Row(
                     children: [
-                      Container(width: _currentPage == 0 ? 24 : 6, height: 4, decoration: BoxDecoration(color: _currentPage == 0 ? const Color(0xFF8D6E63) : Colors.white38, borderRadius: BorderRadius.circular(2))),
+                      Container(
+                        width: _currentPage == 0 ? 24 : 6, 
+                        height: 4, 
+                        decoration: BoxDecoration(
+                          color: _currentPage == 0 ? const Color(0xFF8D6E63) : Colors.white38, 
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
                       const SizedBox(width: 6),
-                      Container(width: _currentPage == 1 ? 24 : 6, height: 4, decoration: BoxDecoration(color: _currentPage == 1 ? const Color(0xFF8D6E63) : Colors.white38, borderRadius: BorderRadius.circular(2))),
+                      Container(
+                        width: _currentPage == 1 ? 24 : 6, 
+                        height: 4, 
+                        decoration: BoxDecoration(
+                          color: _currentPage == 1 ? const Color(0xFF8D6E63) : Colors.white38, 
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 30),
@@ -129,10 +143,9 @@ class _InicioState extends State<Inicio> {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
-                        
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => Home()),
+                          MaterialPageRoute(builder: (context) => const InicioSesion()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
