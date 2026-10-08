@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/hola.dart';
-import 'package:frontend/pantallas/inicio_sesion.dart';
-import 'package:frontend/pantallas/splash.dart';
+import 'package:frontend/pantallas/splash.dart'; 
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +12,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: PantallaInicio()
+      home: PantallaInicio(), 
     );
   }
 }
