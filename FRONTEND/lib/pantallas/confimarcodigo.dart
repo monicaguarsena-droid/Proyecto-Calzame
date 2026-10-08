@@ -81,7 +81,7 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
                   ),
                   const SizedBox(height: 32),
 
-                  // 1. Campo: Correo electrónico
+                  // Correo electrónico
                   const Text(
                     'Correo electrónico',
                     style: TextStyle(
