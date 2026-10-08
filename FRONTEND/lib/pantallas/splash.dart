@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'inicio_sesion.dart'; // Importa tu pantalla de inicio de sesión
+import 'package:frontend/pantallas/hola.dart';
 
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
@@ -132,7 +132,7 @@ class _InicioState extends State<Inicio> {
                         // AQUÍ CONECTAMOS EL BOTÓN CON LA PANTALLA DE INICIO DE SESIÓN
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => InicioSesion()),
+                          MaterialPageRoute(builder: (context) => Home()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
