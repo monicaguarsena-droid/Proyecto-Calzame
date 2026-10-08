@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
 
-class RecuperarContrasena extends StatelessWidget {
+class RecuperarContrasena extends StatefulWidget {
   const RecuperarContrasena({super.key});
+
+  @override
+  State<RecuperarContrasena> createState() => _RecuperarContrasenaState();
+}
+
+class _RecuperarContrasenaState extends State<RecuperarContrasena> {
+  final TextEditingController _emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +63,7 @@ class RecuperarContrasena extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 TextField(
+                  controller: _emailController,
                   style: const TextStyle(color: primaryColor, fontSize: 14),
                   decoration: InputDecoration(
                     prefixIcon: const Icon(
@@ -100,7 +114,8 @@ class RecuperarContrasena extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      // Lógica para enviar el código
+                      setState(() {
+                      });
                     },
                     child: const Text(
                       "Enviar código",
