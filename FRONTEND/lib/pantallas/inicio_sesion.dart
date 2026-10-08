@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/hola.dart';
+import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/olvidocontrasena.dart';
 import 'registro.dart';
 
