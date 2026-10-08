@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/olvidocontrase%C3%B1a.dart';
+import 'package:frontend/pantallas/hola.dart';
+import 'package:frontend/pantallas/olvidocontrasena.dart';
 import 'registro.dart';
 
 class InicioSesion extends StatefulWidget {
@@ -188,7 +189,12 @@ class _InicioSesionState extends State<InicioSesion> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => Home()),
+                      );
+                    },
                     child: const Text(
                       "Iniciar sesión",
                       style: TextStyle(
