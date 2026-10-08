@@ -5,21 +5,17 @@ import 'registro.dart';
 
 class InicioSesion extends StatefulWidget {
   const InicioSesion({super.key});
-
   @override
   State<InicioSesion> createState() => _InicioSesionState();
 }
 
 class _InicioSesionState extends State<InicioSesion> {
-  // Variable de estado para controlar la visibilidad de la contraseña
   bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color.fromARGB(255, 96, 24, 46);
-    // Color de fondo crema exacto de la interfaz
     const backgroundColor = Color.fromARGB(255, 251, 248, 246);
-
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
