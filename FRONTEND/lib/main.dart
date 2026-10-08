@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart';
-import 'package:frontend/pantallas/verificacioncongoogle.dart';
-import 'package:frontend/pantallas/splash.dart';
 
 void main() {
   runApp(const MyApp());
