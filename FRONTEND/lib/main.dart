@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/pantallas/inicio_sesion.dart';
 import 'package:frontend/pantallas/verificacioncongoogle.dart';
+import 'package:frontend/pantallas/welcome.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +14,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Inicio ()
+      home: Inicio()
     );
   }
 }
