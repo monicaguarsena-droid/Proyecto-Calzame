@@ -129,7 +129,7 @@ class _InicioState extends State<Inicio> {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
-                        // AQUÍ CONECTAMOS EL BOTÓN CON LA PANTALLA DE INICIO DE SESIÓN
+                        
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => Home()),
