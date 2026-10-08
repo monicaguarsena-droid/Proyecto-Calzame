@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/hola.dart';
+import 'package:frontend/pantallas/home.dart';
+
 
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
