@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'inicio_sesion.dart'; // Importa tu pantalla de inicio de sesión
+import 'inicio_sesion.dart'; 
 
 class Inicio extends StatefulWidget {
   const Inicio({super.key});
