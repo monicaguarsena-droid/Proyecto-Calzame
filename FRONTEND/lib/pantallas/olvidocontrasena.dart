@@ -171,7 +171,7 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const InicioSesion(),
+                            builder: (context) => const Login(),
                           ),
                         );
                       },
