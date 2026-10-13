@@ -8,10 +8,8 @@ class InicioSesion extends StatefulWidget {
   @override
   State<InicioSesion> createState() => _InicioSesionState();
 }
-
 class _InicioSesionState extends State<InicioSesion> {
   bool _obscurePassword = true;
-
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color.fromARGB(255, 96, 24, 46);
