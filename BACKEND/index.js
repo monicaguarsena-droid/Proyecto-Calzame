@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
     });
 });
 
-app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes); // Cambiado de '/auth' a '/api/auth'
 app.use('/usuarios', userRouter);
 app.use('/productos', productosRouter);
 app.use('/pedidos', pedidosRouter);
