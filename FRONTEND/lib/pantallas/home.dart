@@ -21,7 +21,7 @@ class _HomeState extends State<Home> {
     if (index == _tab) return;
 
     if (index == 1) {
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const CarritoScreen()),
       );
@@ -305,7 +305,7 @@ class _HomeState extends State<Home> {
           child: GestureDetector(
             onTap: () {
               if (i == 0) {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const Categoriadama()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const CategoriaDama()));
               } else if (i == 1) {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaInfantil()));
               } else if (i == 2) {

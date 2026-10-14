@@ -1,265 +1,332 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/pantallas/home.dart';
+import 'package:frontend/pantallas/favoritos.dart';
+import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/producto.dart'; // Importa el detalle del producto
 
-class Categoriadama extends StatefulWidget {
-  final String imagen;
-  final String titulo;
-  final String subtitulo;
-  final String precio;
 
-  const Categoriadama({
-    super.key,
-    required this.imagen,
-    required this.titulo,
-    required this.subtitulo,
-    required this.precio,
-  });
+class CategoriaDama extends StatefulWidget {
+  const CategoriaDama({super.key});
 
   @override
-  State<Categoriadama> createState() => _CategoriadamaState();
+  State<CategoriaDama> createState() => _CategoriaDamaState();
 }
 
-class _CategoriadamaState extends State<Categoriadama> {
-  String tallaSeleccionada = '37';
-  int colorSeleccionado = 0;
+class _CategoriaDamaState extends State<CategoriaDama> {
+  int _tab = 0;
 
-  final List<Color> coloresDisponibles = [
-    const Color(0xFFD4B299), // Beige
-    const Color(0xFF2C2C2C), // Negro
-    const Color(0xFFB87979), // Rosado/Café claro
+  // Lista de productos de la categoría Dama
+  final List<Map<String, String>> _productosDama = const [
+    {
+      'imagen': 'assets/img/botas.jpg',
+      'titulo': 'Botas altas de cuero',
+      'subtitulo': 'Cuero suave · Invierno',
+      'precio': '\$129',
+    },
+    {
+      'imagen': 'assets/img/tacon.jpg',
+      'titulo': 'Stiletto clásico',
+      'subtitulo': 'Tacón fino · Elegante',
+      'precio': '\$89',
+    },
+    {
+      'imagen': 'assets/img/sandalia.jpg',
+      'titulo': 'Sandalia de tiras',
+      'subtitulo': 'Cuero suave · Tono beige',
+      'precio': '\$110',
+    },
+    {
+      'imagen': 'assets/img/zapatillas.jpg',
+      'titulo': 'Zapatillas casuales',
+      'subtitulo': 'Suela cómoda · Diario',
+      'precio': '\$95',
+    },
   ];
+
+  void _onItemTapped(int index) {
+    if (index == 0) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
+    } else if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const CarritoScreen()),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FavoritosScreen()),
+      );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const PerfilScreen()),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColoresApp.background,
-      appBar: AppBar(
-        backgroundColor: ColoresApp.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: ColoresApp.primary),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Detalle del producto",
-          style: TextStyle(
-            color: ColoresApp.primary,
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                height: 280,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: ColoresApp.border),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    widget.imagen,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: ColoresApp.surfaceVariant,
-                      child: const Icon(Icons.image_not_supported, size: 50, color: ColoresApp.textSecondary),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.titulo,
-                          style: const TextStyle(
-                            color: ColoresApp.primary,
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.subtitulo,
-                          style: const TextStyle(
-                            color: ColoresApp.textSecondary,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    widget.precio,
-                    style: const TextStyle(
-                      color: ColoresApp.primary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                "Tallas disponibles",
-                style: TextStyle(
-                  color: ColoresApp.primary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
               const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: ['36', '37', '38', '39'].map((talla) {
-                  bool esSeleccionada = tallaSeleccionada == talla;
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        tallaSeleccionada = talla;
-                      });
-                    },
-                    child: Container(
-                      width: 70,
-                      height: 45,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: esSeleccionada ? ColoresApp.primary : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: esSeleccionada ? ColoresApp.primary : ColoresApp.border,
-                        ),
-                      ),
-                      child: Text(
-                        talla,
-                        style: TextStyle(
-                          color: esSeleccionada ? Colors.white : ColoresApp.primary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 24),
+              // Encabezado con botón de volver
               Row(
                 children: [
-                  const Text(
-                    "Color: ",
-                    style: TextStyle(
-                      color: ColoresApp.primary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    colorSeleccionado == 0 ? "Beige" : (colorSeleccionado == 1 ? "Negro" : "Rosado"),
-                    style: const TextStyle(
-                      color: ColoresApp.textSecondary,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: List.generate(coloresDisponibles.length, (index) {
-                  return GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        colorSeleccionado = index;
-                      });
-                    },
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(20),
                     child: Container(
-                      margin: const EdgeInsets.only(right: 12),
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: coloresDisponibles[index],
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: colorSeleccionado == index ? ColoresApp.primary : Colors.transparent,
-                          width: 2,
-                        ),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: ColoresApp.primary,
+                        size: 20,
                       ),
                     ),
-                  );
-                }),
+                  ),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'CALZADO DE DAMA',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: ColoresApp.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               const Text(
-                "Descripción",
+                'Explora nuestra colección',
                 style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
                   color: ColoresApp.primary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                "Diseño exclusivo, materiales de alta calidad y máxima comodidad para acompañarte en tu día a día.",
-                style: TextStyle(
-                  color: ColoresApp.textSecondary,
-                  fontSize: 14,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: () {
-                    CarritoService.agregarProducto(
-                      imagen: widget.imagen,
-                      titulo: widget.titulo,
-                      subtitulo: widget.subtitulo,
-                      precioStr: widget.precio,
-                    );
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("¡Producto agregado al carrito con éxito!"),
-                        backgroundColor: ColoresApp.success,
-                      ),
+              const SizedBox(height: 16),
+              // Cuadrícula de productos
+              Expanded(
+                child: GridView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.62,
+                  ),
+                  itemCount: _productosDama.length,
+                  itemBuilder: (context, index) {
+                    final item = _productosDama[index];
+                    return _tarjetaProducto(
+                      context,
+                      item['imagen']!,
+                      item['titulo']!,
+                      item['subtitulo']!,
+                      item['precio']!,
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColoresApp.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    "Agregar al carrito",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: _nav(),
+    );
+  }
+
+  Widget _tarjetaProducto(
+    BuildContext context,
+    String asset,
+    String titulo,
+    String subtitulo,
+    String precio,
+  ) {
+    return GestureDetector(
+      onTap: () {
+        // Al hacer clic abre el detalle del producto enviando sus datos
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetalleProductoScreen(
+              imagen: asset,
+              titulo: titulo,
+              subtitulo: subtitulo,
+              precio: precio,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: ColoresApp.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: AspectRatio(
+                aspectRatio: 1.15,
+                child: Image.asset(
+                  asset,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: ColoresApp.surfaceVariant,
+                    child: const Icon(
+                      Icons.image_not_supported,
+                      color: ColoresApp.textSecondary,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
-            ],
-          ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              titulo,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: ColoresApp.primary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitulo,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                color: ColoresApp.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              precio,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: ColoresApp.primary,
+              ),
+            ),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: ElevatedButton(
+                onPressed: () {
+                  CarritoService.agregarProducto(
+                    imagen: asset,
+                    titulo: titulo,
+                    subtitulo: subtitulo,
+                    precioStr: precio,
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('¡Producto agregado al carrito!'),
+                      backgroundColor: ColoresApp.success,
+                      duration: Duration(seconds: 1),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColoresApp.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+                child: const Text(
+                  'Agregar al carrito',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _nav() {
+    const items = [
+      (Icons.home_outlined, Icons.home, 'Inicio'),
+      (Icons.shopping_cart_outlined, Icons.shopping_cart, 'Carrito'),
+      (Icons.favorite_border, Icons.favorite, 'Favoritos'),
+      (Icons.person_outline, Icons.person, 'Cuenta'),
+    ];
+
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: ColoresApp.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: ColoresApp.border),
+        ),
+        child: Row(
+          children: [
+            for (var i = 0; i < items.length; i++)
+              Expanded(
+                child: InkWell(
+                  onTap: () => _onItemTapped(i),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _tab == i ? items[i].$2 : items[i].$1,
+                        size: 22,
+                        color: _tab == i
+                            ? ColoresApp.primary
+                            : ColoresApp.textSecondary,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        items[i].$3,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: _tab == i
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: _tab == i
+                              ? ColoresApp.primary
+                              : ColoresApp.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
