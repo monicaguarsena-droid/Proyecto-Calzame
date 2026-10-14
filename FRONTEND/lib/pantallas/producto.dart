@@ -1,7 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/cors/colores.dart';
+import 'package:frontend/pantallas/carrito.dart';
 
 class DetalleProductoScreen extends StatefulWidget {
-  const DetalleProductoScreen({super.key});
+  final String imagen;
+  final String titulo;
+  final String subtitulo;
+  final String precio;
+
+  const DetalleProductoScreen({
+    super.key,
+    required this.imagen,
+    required this.titulo,
+    required this.subtitulo,
+    required this.precio,
+  });
 
   @override
   State<DetalleProductoScreen> createState() => _DetalleProductoScreenState();
@@ -9,7 +22,7 @@ class DetalleProductoScreen extends StatefulWidget {
 
 class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
   String tallaSeleccionada = '37';
-  int colorSeleccionado = 0; 
+  int colorSeleccionado = 0;
 
   final List<Color> coloresDisponibles = [
     const Color(0xFFD4B299), // Beige
@@ -20,18 +33,18 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF9F7), // Fondo crema claro característico
+      backgroundColor: ColoresApp.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF9F7),
+        backgroundColor: ColoresApp.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A1525)),
+          icon: const Icon(Icons.arrow_back, color: ColoresApp.primary),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          "producto",
+          "Detalle del producto",
           style: TextStyle(
-            color: Color(0xFF4A1525),
+            color: ColoresApp.primary,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -50,19 +63,17 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
+                  border: Border.all(color: ColoresApp.border),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(20),
                   child: Image.asset(
-                    'assets/img/botas.jpg', 
+                    widget.imagen,
                     fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: ColoresApp.surfaceVariant,
+                      child: const Icon(Icons.image_not_supported, size: 50, color: ColoresApp.textSecondary),
+                    ),
                   ),
                 ),
               ),
@@ -71,32 +82,34 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text(
-                        "Sandalia de tiras",
-                        style: TextStyle(
-                          color: Color(0xFF4A1525),
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.titulo,
+                          style: const TextStyle(
+                            color: ColoresApp.primary,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        "Cuero suave - Tono beige",
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.subtitulo,
+                          style: const TextStyle(
+                            color: ColoresApp.textSecondary,
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  const Text(
-                    "\$129",
-                    style: TextStyle(
-                      color: Color(0xFF4A1525),
-                      fontSize: 26,
+                  Text(
+                    widget.precio,
+                    style: const TextStyle(
+                      color: ColoresApp.primary,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -106,7 +119,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
               const Text(
                 "Tallas disponibles",
                 style: TextStyle(
-                  color: Color(0xFF4A1525),
+                  color: ColoresApp.primary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -127,16 +140,16 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                       height: 45,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: esSeleccionada ? const Color(0xFF4A1525) : Colors.white,
+                        color: esSeleccionada ? ColoresApp.primary : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: esSeleccionada ? const Color(0xFF4A1525) : Colors.grey.shade300,
+                          color: esSeleccionada ? ColoresApp.primary : ColoresApp.border,
                         ),
                       ),
                       child: Text(
                         talla,
                         style: TextStyle(
-                          color: esSeleccionada ? Colors.white : const Color(0xFF4A1525),
+                          color: esSeleccionada ? Colors.white : ColoresApp.primary,
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
@@ -151,7 +164,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                   const Text(
                     "Color: ",
                     style: TextStyle(
-                      color: Color(0xFF4A1525),
+                      color: ColoresApp.primary,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -159,7 +172,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                   Text(
                     colorSeleccionado == 0 ? "Beige" : (colorSeleccionado == 1 ? "Negro" : "Rosado"),
                     style: const TextStyle(
-                      color: Colors.grey,
+                      color: ColoresApp.textSecondary,
                       fontSize: 15,
                     ),
                   ),
@@ -182,7 +195,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                         color: coloresDisponibles[index],
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: colorSeleccionado == index ? const Color(0xFF4A1525) : Colors.transparent,
+                          color: colorSeleccionado == index ? ColoresApp.primary : Colors.transparent,
                           width: 2,
                         ),
                       ),
@@ -194,16 +207,16 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
               const Text(
                 "Descripción",
                 style: TextStyle(
-                  color: Color(0xFF4A1525),
+                  color: ColoresApp.primary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 8),
               const Text(
-                "Tiras delicadas y un tacón elegante para acompañarte en cada ocasión.\nCuero suave · Plantilla acolchada · Suela sintética",
+                "Diseño exclusivo, materiales de alta calidad y máxima comodidad para acompañarte en tu día a día.",
                 style: TextStyle(
-                  color: Colors.grey,
+                  color: ColoresApp.textSecondary,
                   fontSize: 14,
                   height: 1.4,
                 ),
@@ -214,20 +227,26 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () {
+                    CarritoService.agregarProducto(
+                      imagen: widget.imagen,
+                      titulo: widget.titulo,
+                      subtitulo: widget.subtitulo,
+                      precioStr: widget.precio,
+                    );
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text("¡Producto agregado al carrito con éxito!"),
-                        backgroundColor: Color(0xFF4A1525),
+                        backgroundColor: ColoresApp.primary,
                       ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A1525),
+                    backgroundColor: ColoresApp.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    elevation: 2,
+                    elevation: 0,
                   ),
                   child: const Text(
                     "Agregar al carrito",
@@ -243,48 +262,6 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavIcon(Icons.home_outlined, "Inicio", false),
-            _buildNavIcon(Icons.search, "Buscar", false),
-            _buildNavIcon(Icons.favorite_border, "Favoritos", false),
-            _buildNavIcon(Icons.person_outline, "Cuenta", false),
-          ],
-        ),
-      ),
-    );
-  }
-  Widget _buildNavIcon(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? const Color(0xFF4A1525) : Colors.grey,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? const Color(0xFF4A1525) : Colors.grey,
-            fontSize: 12,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-      ],
     );
   }
 }

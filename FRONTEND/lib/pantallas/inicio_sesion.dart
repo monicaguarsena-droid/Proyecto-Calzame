@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/home.dart';
-import 'package:frontend/pantallas/olvidocontrasena.dart';
-import 'registro.dart';
+import 'package:frontend/pantallas/registro.dart';
 
 class InicioSesion extends StatefulWidget {
   const InicioSesion({super.key});
+
   @override
   State<InicioSesion> createState() => _InicioSesionState();
 }
+
 class _InicioSesionState extends State<InicioSesion> {
   bool _obscurePassword = true;
+
   @override
   Widget build(BuildContext context) {
     const primaryColor = Color.fromARGB(255, 96, 24, 46);
     const backgroundColor = Color.fromARGB(255, 251, 248, 246);
+    
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -157,14 +160,7 @@ class _InicioSesionState extends State<InicioSesion> {
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => RecuperarCuenta(),
-                        ),
-                      );
-                    },
+                    onPressed: () {},
                     child: const Text(
                       "¿Olvidaste tu contraseña?",
                       style: TextStyle(
@@ -188,9 +184,11 @@ class _InicioSesionState extends State<InicioSesion> {
                       ),
                     ),
                     onPressed: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => Home()),
+                        MaterialPageRoute(
+                          builder: (context) => const Home(),
+                        ),
                       );
                     },
                     child: const Text(

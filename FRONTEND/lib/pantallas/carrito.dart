@@ -31,7 +31,7 @@ class CarritoService {
     required String subtitulo,
     required String precioStr,
   }) {
-    // Limpiamos el string del precio (ej: "$129" -> 129.0)
+    // Limpiamos el string del precio
     double precio = double.tryParse(precioStr.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
 
     // Verificamos si ya existe el producto en el carrito para aumentar cantidad
@@ -57,8 +57,7 @@ class CarritoScreen extends StatefulWidget {
 }
 
 class _CarritoScreenState extends State<CarritoScreen> {
-  final int _tab = 1; // 1 corresponde al Carrito en la barra inferior
-
+  final int _tab = 1; 
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
