@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/splash.dart';
+import 'package:frontend/pantallas/splash.dart'; // Importa el splash (PantallaInicio)
 
 void main() {
   runApp(const MyApp());
@@ -10,9 +10,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Inicio()
+      home: PantallaInicio(), // <-- Aquí llamas al splash como pantalla inicial
     );
   }
 }

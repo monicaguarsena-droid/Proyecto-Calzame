@@ -1,13 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
-
+import 'package:frontend/pantallas/favoritos.dart';
+import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/categoriacaballero.dart';
+import 'package:frontend/pantallas/categoriadama.dart';
+import 'package:frontend/pantallas/categoriainfantil.dart';
+import 'package:frontend/pantallas/todos_productos.dart';
+import 'package:frontend/pantallas/producto.dart'; 
 class Home extends StatefulWidget {
   const Home({super.key});
   @override
   State<Home> createState() => _HomeState();
 }
+
 class _HomeState extends State<Home> {
   int _tab = 0;
+
+  void _onItemTapped(int index) {
+    if (index == _tab) return;
+
+    if (index == 1) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const CarritoScreen()),
+      );
+    } else if (index == 2) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FavoritosScreen()),
+      );
+    } else if (index == 3) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const PerfilScreen()),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,40 +51,91 @@ class _HomeState extends State<Home> {
             _banner(),
             _seccion(
               'Explora por persona',
-              _fila(const [
+              _fila(context, const [
                 _Cat(Icons.person_outline, 'Dama', 'Zapatos y sandalias'),
                 _Cat(Icons.person_outline, 'Niña', 'Colecciones infantiles'),
-                _Cat(
-                  Icons.person_outline,
-                  'Caballero',
-                  'Estilo urbano y formal',
-                ),
+                _Cat(Icons.person_outline, 'Caballero', 'Estilo urbano y formal'),
               ]),
+              verTodoOnTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
+                );
+              },
             ),
             _seccion(
               'Tipos de calzado',
-              _fila(const [
+              _fila(context, const [
                 _Cat(Icons.directions_walk, 'Sandalias', 'Verano y playa'),
                 _Cat(Icons.directions_walk, 'Botas', 'Invierno y noche'),
                 _Cat(Icons.directions_walk, 'Zapatillas', 'Deporte y diario'),
               ]),
+              verTodoOnTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
+                );
+              },
             ),
             _seccion(
               'Colecciones destacadas',
-              _fila(const [
-                _Destacada(
-                  'assets/img/botas.jpg',
-                  'Botas de cuero',
-                  'Diseño elegante para invierno',
-                  r'Desde $129',
-                ),
-                _Destacada(
-                  'assets/img/tacon.jpg',
-                  'Zapatillas urbanas',
-                  'Estilo cómodo para diario',
-                  r'Desde $89',
-                ),
-              ]),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DetalleProductoScreen(
+                              imagen: 'assets/img/botas.jpg',
+                              titulo: 'Botas de cuero',
+                              subtitulo: 'Diseño elegante para invierno',
+                              precio: r'Desde $129',
+                            ),
+                          ),
+                        );
+                      },
+                      child: const _Destacada(
+                        'assets/img/botas.jpg',
+                        'Botas de cuero',
+                        'Diseño elegante para invierno',
+                        r'Desde $129',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DetalleProductoScreen(
+                              imagen: 'assets/img/tacon.jpg',
+                              titulo: 'Zapatillas urbanas',
+                              subtitulo: 'Estilo cómodo para diario',
+                              precio: r'Desde $89',
+                            ),
+                          ),
+                        );
+                      },
+                      child: const _Destacada(
+                        'assets/img/tacon.jpg',
+                        'Zapatillas urbanas',
+                        'Estilo cómodo para diario',
+                        r'Desde $89',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              verTodoOnTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
+                );
+              },
             ),
           ],
         ),
@@ -85,9 +166,25 @@ class _HomeState extends State<Home> {
           ],
         ),
       ),
-      const _Circ(Icons.search, size: 40),
+      GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const FavoritosScreen()),
+          );
+        },
+        child: const _Circ(Icons.favorite_border, size: 40),
+      ),
       const SizedBox(width: 8),
-      const _Circ(Icons.shopping_bag_outlined, size: 40),
+      GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CarritoScreen()),
+          );
+        },
+        child: const _Circ(Icons.shopping_bag_outlined, size: 40),
+      ),
     ],
   );
 
@@ -164,7 +261,7 @@ class _HomeState extends State<Home> {
     ),
   );
 
-  Widget _seccion(String titulo, Widget hijo) => Padding(
+  Widget _seccion(String titulo, Widget hijo, {required VoidCallback verTodoOnTap}) => Padding(
     padding: const EdgeInsets.only(top: 18),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,12 +278,15 @@ class _HomeState extends State<Home> {
                 ),
               ),
             ),
-            const Text(
-              'Ver todo',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: ColoresApp.primary,
+            GestureDetector(
+              onTap: verTodoOnTap,
+              child: const Text(
+                'Ver todo',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: ColoresApp.primary,
+                ),
               ),
             ),
           ],
@@ -197,11 +297,24 @@ class _HomeState extends State<Home> {
     ),
   );
 
-  Widget _fila(List<Widget> items) => Row(
+  Widget _fila(BuildContext context, List<Widget> items) => Row(
     children: [
       for (var i = 0; i < items.length; i++) ...[
         if (i > 0) const SizedBox(width: 10),
-        Expanded(child: items[i]),
+        Expanded(
+          child: GestureDetector(
+            onTap: () {
+              if (i == 0) {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const Categoriadama()));
+              } else if (i == 1) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaInfantil()));
+              } else if (i == 2) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaCaballero()));
+              }
+            },
+            child: items[i],
+          ),
+        ),
       ],
     ],
   );
@@ -209,7 +322,7 @@ class _HomeState extends State<Home> {
   Widget _nav() {
     const items = [
       (Icons.home_outlined, Icons.home, 'Inicio'),
-      (Icons.search, Icons.search, 'Buscar'),
+      (Icons.shopping_cart_outlined, Icons.shopping_cart, 'Carrito'),
       (Icons.favorite_border, Icons.favorite, 'Favoritos'),
       (Icons.person_outline, Icons.person, 'Cuenta'),
     ];
@@ -227,7 +340,7 @@ class _HomeState extends State<Home> {
             for (var i = 0; i < items.length; i++)
               Expanded(
                 child: InkWell(
-                  onTap: () => setState(() => _tab = i),
+                  onTap: () => _onItemTapped(i),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -243,9 +356,7 @@ class _HomeState extends State<Home> {
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: _tab == i
-                              ? FontWeight.w700
-                              : FontWeight.w400,
+                          fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
                           color: _tab == i
                               ? ColoresApp.primary
                               : ColoresApp.textSecondary,
@@ -261,6 +372,7 @@ class _HomeState extends State<Home> {
     );
   }
 }
+
 class _Circ extends StatelessWidget {
   final IconData icono;
   final double size;
@@ -281,7 +393,6 @@ class _Circ extends StatelessWidget {
   );
 }
 
-/// Imagen de fondo con degradado oscuro; si no existe el asset, muestra un degradado vino.
 class _Foto extends StatelessWidget {
   final String asset;
   final Widget child;
@@ -368,7 +479,6 @@ class _Cat extends StatelessWidget {
   );
 }
 
-/// Tarjeta de colección destacada.
 class _Destacada extends StatelessWidget {
   final String asset, titulo, subtitulo, precio;
   const _Destacada(this.asset, this.titulo, this.subtitulo, this.precio);

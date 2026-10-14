@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/carrito.dart';
 
-class DetalleProductoScreen extends StatefulWidget {
+class Categoriadama extends StatefulWidget {
   final String imagen;
   final String titulo;
   final String subtitulo;
   final String precio;
 
-  const DetalleProductoScreen({
+  const Categoriadama({
     super.key,
     required this.imagen,
     required this.titulo,
@@ -17,10 +17,10 @@ class DetalleProductoScreen extends StatefulWidget {
   });
 
   @override
-  State<DetalleProductoScreen> createState() => _DetalleProductoScreenState();
+  State<Categoriadama> createState() => _CategoriadamaState();
 }
 
-class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
+class _CategoriadamaState extends State<Categoriadama> {
   String tallaSeleccionada = '37';
   int colorSeleccionado = 0;
 
