@@ -33,12 +33,14 @@ class _GoogleLoginState extends State<GoogleLogin> {
 
     final result = await _authService.loginWithGoogle();
 
-    setState(() => _isLoading = false);
+    if (!mounted) return;
 
-    if (result != null) {
+    setState(() => _isLoading = false);
+  
+    if (result['success']==true) {
       // Navegar a la pantalla principal de CalzaMe
-      Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
-    } else {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const Home()));
+    }else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No se pudo iniciar sesión con Google')),
       );
