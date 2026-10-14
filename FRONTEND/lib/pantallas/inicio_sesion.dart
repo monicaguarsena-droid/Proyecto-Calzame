@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/olvidocontrasena.dart';
+import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/registro.dart';
 import 'package:frontend/servicios/auth_service.dart';
 
 class Login extends StatefulWidget {
-  const Login({Key? key}) : super(key: key);
+  const Login({super.key});
 
   @override
   State<Login> createState() => _LoginState();
@@ -20,7 +20,6 @@ class _LoginState extends State<Login> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  // Colores institucionales refinados de CalzaMe
   final Color _primaryColor = const Color(0xFF6B2D3C);
   final Color _backgroundColor = const Color(0xFFF7F4F0);
 
@@ -37,7 +36,10 @@ class _LoginState extends State<Login> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
     } else {
       _showSnackBar(result['message']);
     }
@@ -51,7 +53,10 @@ class _LoginState extends State<Login> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
     } else {
       _showSnackBar(result['message']);
     }
@@ -241,14 +246,7 @@ class _LoginState extends State<Login> {
                         minimumSize: const Size(50, 30),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RecuperarCuenta(),
-                          ),
-                        );
-                      },
+                      onPressed: () {},
                       child: Text(
                         '¿Olvidaste tu contraseña?',
                         style: TextStyle(
@@ -271,7 +269,6 @@ class _LoginState extends State<Login> {
                           borderRadius: BorderRadius.circular(14),
                         ),
                         elevation: 2,
-                        shadowColor: _primaryColor.withOpacity(0.4),
                       ),
                       onPressed: _isLoading ? null : _handleLogin,
                       child: _isLoading
@@ -308,7 +305,7 @@ class _LoginState extends State<Login> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => Registro()),
+                          MaterialPageRoute(builder: (context) => const Registro()),
                         );
                       },
                       child: Text(
