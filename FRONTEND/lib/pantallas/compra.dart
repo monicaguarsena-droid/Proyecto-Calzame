@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/favoritos.dart';
+import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/pantallas/pedido.dart';
 
 class CompraScreen extends StatefulWidget {
   final List<ItemCarrito> items;
@@ -19,31 +22,39 @@ class CompraScreen extends StatefulWidget {
 
 class _CompraScreenState extends State<CompraScreen> {
   bool _isProcessing = false;
+  final int _tab = 1; // Carrito / Proceso de compra activo
 
-  // Datos editables de envío
-  String _nombre = 'Evelyn Arrigui';
+  // Datos de contacto para la recogida
+  String _nombre = 'Sofia Pérez';
   String _cedula = '1234567890';
   String _telefono = '+57 300 123 4567';
-  String _direccion = 'Calle Principal #12-34, Garzón, Huila';
+  final String _puntoRecogida = 'Tienda CalzaMe - Calle Principal #12-34, Garzón, Huila';
 
   // Método de pago seleccionado
   String _metodoPago = 'Nequi';
   String _detallePago = 'Cuenta vinculada: 300 123 4567';
 
-  // Tipo y costo de envío
-  final String _tipoEnvio = 'Estándar';
-  final double _costoEnvio = 0.0;
-
   int get _cantidadTotalProductos {
     return widget.items.fold(0, (sum, item) => sum + item.cantidad);
   }
 
-  // Modal para editar datos de envío
-  void _editarEnvioModal() {
+  void _onItemTapped(int index) {
+    if (index == 0) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+    } else if (index == 1) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CarritoScreen()));
+    } else if (index == 2) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FavoritosScreen()));
+    } else if (index == 3) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PerfilScreen()));
+    }
+  }
+
+  // Modal para editar datos de contacto
+  void _editarContactoModal() {
     final nameCtrl = TextEditingController(text: _nombre);
     final cedulaCtrl = TextEditingController(text: _cedula);
     final telCtrl = TextEditingController(text: _telefono);
-    final dirCtrl = TextEditingController(text: _direccion);
 
     showModalBottomSheet(
       context: context,
@@ -62,7 +73,7 @@ class _CompraScreenState extends State<CompraScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Editar Datos de Envío',
+                'Editar Datos de Contacto',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: ColoresApp.primary),
               ),
               const SizedBox(height: 14),
@@ -71,8 +82,6 @@ class _CompraScreenState extends State<CompraScreen> {
               TextField(controller: cedulaCtrl, decoration: const InputDecoration(labelText: 'Cédula')),
               const SizedBox(height: 10),
               TextField(controller: telCtrl, decoration: const InputDecoration(labelText: 'Teléfono')),
-              const SizedBox(height: 10),
-              TextField(controller: dirCtrl, decoration: const InputDecoration(labelText: 'Dirección')),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
@@ -87,7 +96,6 @@ class _CompraScreenState extends State<CompraScreen> {
                       _nombre = nameCtrl.text;
                       _cedula = cedulaCtrl.text;
                       _telefono = telCtrl.text;
-                      _direccion = dirCtrl.text;
                     });
                     Navigator.pop(context);
                   },
@@ -170,6 +178,24 @@ class _CompraScreenState extends State<CompraScreen> {
 
   void _procesarCompra() {
     setState(() => _isProcessing = true);
+
+    double totalGeneral = widget.total;
+
+    // Guardar el pedido en el historial global
+    final nuevoPedido = Pedido(
+      idPedido: DateTime.now().millisecondsSinceEpoch.toString().substring(5),
+      fechaHora: DateTime.now(),
+      items: List.from(widget.items),
+      total: totalGeneral,
+      metodoPago: _metodoPago,
+      direccion: _puntoRecogida,
+      telefono: _telefono,
+      nombreCliente: _nombre,
+      estado: 'Listo para recoger',
+    );
+
+    HistorialPedidosService.agregarPedido(nuevoPedido);
+
     Future.delayed(const Duration(seconds: 2), () {
       if (!mounted) return;
       setState(() => _isProcessing = false);
@@ -181,10 +207,10 @@ class _CompraScreenState extends State<CompraScreen> {
           title: const Row(children: [
             Icon(Icons.check_circle, color: Colors.green, size: 28),
             SizedBox(width: 10),
-            Text('¡Compra exitosa!'),
+            Text('¡Pedido registrado!'),
           ]),
           content: const Text(
-            'Tu pedido ha sido procesado correctamente y llegará muy pronto.',
+            'Tu pedido ha sido registrado con éxito. Acércate a la tienda para retirarlo.',
             style: TextStyle(color: ColoresApp.textSecondary, fontSize: 14),
           ),
           actions: [
@@ -211,7 +237,7 @@ class _CompraScreenState extends State<CompraScreen> {
 
   @override
   Widget build(BuildContext context) {
-    double totalGeneral = widget.total + _costoEnvio;
+    double totalGeneral = widget.total;
 
     return Scaffold(
       backgroundColor: ColoresApp.background,
@@ -238,7 +264,7 @@ class _CompraScreenState extends State<CompraScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Lista desplegable con el detalle de TODOS los productos seleccionados
+            // 1. Resumen de productos
             _buildCard([
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -263,7 +289,6 @@ class _CompraScreenState extends State<CompraScreen> {
               const SizedBox(height: 14),
               const Divider(height: 1),
               const SizedBox(height: 14),
-              // Renderiza cada producto del carrito en la lista
               for (int i = 0; i < widget.items.length; i++) ...[
                 Row(
                   children: [
@@ -329,23 +354,23 @@ class _CompraScreenState extends State<CompraScreen> {
             ], padding: 18),
             const SizedBox(height: 20),
 
-            // 2. Datos de Envío ordenados por fila
+            // 2. Información de Recogida en Tienda
             _buildCard([
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Row(
                     children: [
-                      Icon(Icons.local_shipping_outlined, color: ColoresApp.primary, size: 20),
+                      Icon(Icons.storefront_outlined, color: ColoresApp.primary, size: 20),
                       SizedBox(width: 8),
                       Text(
-                        'Datos de envío',
+                        'Método de entrega',
                         style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: ColoresApp.primary),
                       ),
                     ],
                   ),
                   TextButton(
-                    onPressed: _editarEnvioModal,
+                    onPressed: _editarContactoModal,
                     style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
                     child: const Text(
                       'Editar',
@@ -355,31 +380,26 @@ class _CompraScreenState extends State<CompraScreen> {
                 ],
               ),
               const SizedBox(height: 12),
+              const Text(
+                '📍 Recogida en tienda física (No se hacen envíos)',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: ColoresApp.primary),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                _puntoRecogida,
+                style: const TextStyle(fontSize: 12, color: Color(0xFF4A4A4A)),
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10.0),
+                child: Divider(height: 1),
+              ),
               _datoEnvioFila('Nombre:', _nombre),
               const SizedBox(height: 6),
               _datoEnvioFila('Cédula:', _cedula),
               const SizedBox(height: 6),
               _datoEnvioFila('Teléfono:', _telefono),
-              const SizedBox(height: 6),
-              _datoEnvioFila('Dirección:', _direccion),
             ]),
-            const SizedBox(height: 10),
-
-            // Tipo de envío fuera del cuadro
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, size: 14, color: ColoresApp.primary),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Tipo de envío: $_tipoEnvio (Entrega estimada en 3-5 días)',
-                    style: const TextStyle(fontSize: 12, color: ColoresApp.primary, fontWeight: FontWeight.w600),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
 
             // 3. Método de Pago
             _buildCard([
@@ -423,7 +443,7 @@ class _CompraScreenState extends State<CompraScreen> {
             _buildCard([
               _filaResumen('Subtotal', '\$${widget.total.toStringAsFixed(0)}'),
               const SizedBox(height: 8),
-              _filaResumen('Envío ($_tipoEnvio)', _costoEnvio == 0 ? 'Gratis' : '\$${_costoEnvio.toStringAsFixed(0)}'),
+              _filaResumen('Recogida en tienda', 'Gratis'),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 10.0),
                 child: Divider(height: 1),
@@ -456,7 +476,7 @@ class _CompraScreenState extends State<CompraScreen> {
                           Icon(Icons.lock, size: 18, color: Colors.white),
                           SizedBox(width: 8),
                           Text(
-                            'Pagar de forma segura',
+                            'Confirmar y Pagar',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -468,10 +488,10 @@ class _CompraScreenState extends State<CompraScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.security, size: 15, color: Color(0xFF6B6B6B)),
+                  Icon(Icons.store, size: 15, color: Color(0xFF6B6B6B)),
                   SizedBox(width: 5),
                   Text(
-                    'Pagos 100% seguros y encriptados',
+                    'Paga en línea y retira directamente en el local',
                     style: TextStyle(fontSize: 12, color: Color(0xFF6B6B6B), fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -481,6 +501,7 @@ class _CompraScreenState extends State<CompraScreen> {
           ],
         ),
       ),
+      bottomNavigationBar: _nav(),
     );
   }
 
@@ -538,6 +559,56 @@ class _CompraScreenState extends State<CompraScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _nav() {
+    const items = [
+      (Icons.home_outlined, Icons.home, 'Inicio'),
+      (Icons.shopping_cart_outlined, Icons.shopping_cart, 'Carrito'),
+      (Icons.favorite_border, Icons.favorite, 'Favoritos'),
+      (Icons.person_outline, Icons.person, 'Cuenta'),
+    ];
+
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: ColoresApp.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: ColoresApp.border),
+        ),
+        child: Row(
+          children: [
+            for (var i = 0; i < items.length; i++)
+              Expanded(
+                child: InkWell(
+                  onTap: () => _onItemTapped(i),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _tab == i ? items[i].$2 : items[i].$1,
+                        size: 22,
+                        color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        items[i].$3,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
+                          color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

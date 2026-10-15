@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
-import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/pantallas/producto.dart';
 
 class FavoritosScreen extends StatefulWidget {
   const FavoritosScreen({super.key});
@@ -12,33 +13,33 @@ class FavoritosScreen extends StatefulWidget {
 }
 
 class _FavoritosScreenState extends State<FavoritosScreen> {
-  final int _tab = 2; // Pestaña de Favoritos seleccionada
+  final int _tab = 2; // Pestaña de Favoritos activa
 
-  // Lista de productos favoritos modificable
-  final List<Map<String, String>> _favoritos = [
+  // Lista de productos favoritos de ejemplo
+  final List<Map<String, String>> listaFavoritos = [
     {
-      'imagen': 'assets/img/sandalia.jpg',
+      'imagen': 'assets/img/playa.jpg',
       'titulo': 'Sandalia de tiras',
       'subtitulo': 'Cuero suave · Tono beige',
-      'precio': '\$129',
+      'precio': r'$129',
     },
     {
-      'imagen': 'assets/img/bota.jpg',
+      'imagen': 'assets/img/botas.jpg',
       'titulo': 'Bota tobillera',
       'subtitulo': 'Cuero negro · Tacón bajo',
-      'precio': '\$149',
+      'precio': r'$149',
     },
     {
-      'imagen': 'assets/img/zapatillas.jpg',
+      'imagen': 'assets/img/deporte.jpg',
       'titulo': 'Zapatillas blancas',
       'subtitulo': 'Suela cómoda · Diario',
-      'precio': '\$89',
+      'precio': r'$89',
     },
     {
-      'imagen': 'assets/img/mule.jpg',
+      'imagen': 'assets/img/invierno.jpg',
       'titulo': 'Mule de cuero',
       'subtitulo': 'Marrón claro · Minimalista',
-      'precio': '\$119',
+      'precio': r'$119',
     },
   ];
 
@@ -63,284 +64,245 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
     }
   }
 
+  void _abrirDetalleProducto(Map<String, String> producto) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetalleProductoScreen(
+          imagen: producto['imagen']!,
+          titulo: producto['titulo']!,
+          subtitulo: producto['subtitulo']!,
+          precio: producto['precio']!,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColoresApp.background,
+      appBar: AppBar(
+        backgroundColor: ColoresApp.background,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: ColoresApp.primary),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const Home()),
+            );
+          },
+        ),
+        title: const Text(
+          'FAVORITOS',
+          style: TextStyle(
+            color: ColoresApp.primary,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+            letterSpacing: 1,
+          ),
+        ),
+      ),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 12),
-              _header(context),
-              const SizedBox(height: 16),
-              _subHeader(),
-              const SizedBox(height: 16),
-              Expanded(
-                child: _favoritos.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.favorite_border, size: 64, color: ColoresApp.textSecondary),
-                            SizedBox(height: 12),
-                            Text(
-                              'No tienes favoritos aún',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: ColoresApp.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : GridView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.62,
-                        ),
-                        itemCount: _favoritos.length,
-                        itemBuilder: (context, index) {
-                          final item = _favoritos[index];
-                          return _tarjetaProducto(item, index);
-                        },
+              // Encabezado
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Tus elegidos',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: ColoresApp.primary,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: ColoresApp.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${listaFavoritos.length} productos',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: ColoresApp.primary,
                       ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 2),
+              const Text(
+                'Los que te encantan, en un solo lugar.',
+                style:
+                    TextStyle(fontSize: 13, color: ColoresApp.textSecondary),
+              ),
+              const SizedBox(height: 16),
+
+              // Grilla de productos
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 0.58,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 14,
+                ),
+                itemCount: listaFavoritos.length,
+                itemBuilder: (context, index) {
+                  final item = listaFavoritos[index];
+                  return GestureDetector(
+                    onTap: () => _abrirDetalleProducto(item),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: ColoresApp.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: ColoresApp.border),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Imagen con botón de corazón
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(20),
+                                ),
+                                child: SizedBox(
+                                  height: 150,
+                                  width: double.infinity,
+                                  child: Image.asset(
+                                    item['imagen']!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: ColoresApp.surfaceVariant,
+                                      child: const Icon(
+                                        Icons.image_not_supported,
+                                        size: 30,
+                                        color: ColoresApp.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.white,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.favorite,
+                                    size: 18,
+                                    color: ColoresApp.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item['titulo']!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: ColoresApp.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  item['subtitulo']!,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: ColoresApp.textSecondary,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  item['precio']!,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: ColoresApp.primary,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 36,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      CarritoService.agregarProducto(
+                                        imagen: item['imagen']!,
+                                        titulo: item['titulo']!,
+                                        subtitulo: item['subtitulo']!,
+                                        precioStr: item['precio']!,
+                                      );
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              '¡Agregado al carrito con éxito!'),
+                                          backgroundColor: ColoresApp.primary,
+                                        ),
+                                      );
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: ColoresApp.primary,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10),
+                                      ),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                    child: const Text(
+                                      'Agregar al carrito',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
         ),
       ),
       bottomNavigationBar: _nav(),
-    );
-  }
-
-  // Encabezado con botón de volver
-  Widget _header(BuildContext context) {
-    return Row(
-      children: [
-        InkWell(
-          onTap: () => Navigator.pop(context),
-          borderRadius: BorderRadius.circular(20),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.arrow_back,
-              color: ColoresApp.primary,
-              size: 20,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        const Text(
-          'FAVORITOS',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: ColoresApp.primary,
-            letterSpacing: 0.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Subencabezado "Tus elegidos" con badge dinámico
-  Widget _subHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text(
-              'Tus elegidos',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: ColoresApp.primary,
-              ),
-            ),
-            SizedBox(height: 2),
-            Text(
-              'Los que te encantan, en un solo lugar.',
-              style: TextStyle(
-                fontSize: 12,
-                color: ColoresApp.textSecondary,
-              ),
-            ),
-          ],
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: ColoresApp.primary.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            '${_favoritos.length} productos',
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: ColoresApp.primary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // Tarjeta de producto con botón de corazón interactivo para eliminar
-  Widget _tarjetaProducto(Map<String, String> item, int index) {
-    final asset = item['imagen']!;
-    final titulo = item['titulo']!;
-    final subtitulo = item['subtitulo']!;
-    final precio = item['precio']!;
-
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ColoresApp.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(14),
-                child: AspectRatio(
-                  aspectRatio: 1.15,
-                  child: Image.asset(
-                    asset,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: ColoresApp.surfaceVariant,
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        color: ColoresApp.textSecondary,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _favoritos.removeAt(index);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Eliminado de favoritos'),
-                        backgroundColor: Colors.redAccent,
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.favorite,
-                      size: 16,
-                      color: ColoresApp.primary,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            titulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: ColoresApp.primary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 11,
-              color: ColoresApp.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            precio,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: ColoresApp.primary,
-            ),
-          ),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            height: 36,
-            child: ElevatedButton(
-              onPressed: () {
-                CarritoService.agregarProducto(
-                  imagen: asset,
-                  titulo: titulo,
-                  subtitulo: subtitulo,
-                  precioStr: precio,
-                );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('¡Producto agregado al carrito!'),
-                    backgroundColor: ColoresApp.success,
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColoresApp.primary,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: EdgeInsets.zero,
-              ),
-              child: const Text(
-                'Agregar al carrito',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -382,9 +344,8 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: _tab == i
-                              ? FontWeight.w700
-                              : FontWeight.w400,
+                          fontWeight:
+                              _tab == i ? FontWeight.w700 : FontWeight.w400,
                           color: _tab == i
                               ? ColoresApp.primary
                               : ColoresApp.textSecondary,

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/favoritos.dart';
+import 'package:frontend/pantallas/perfil.dart';
+
 class DetalleProductoScreen extends StatefulWidget {
   final String imagen;
   final String titulo;
@@ -22,12 +26,25 @@ class DetalleProductoScreen extends StatefulWidget {
 class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
   String tallaSeleccionada = '37';
   int colorSeleccionado = 0;
+  int _tab = 0; // Pestaña activa por defecto
 
   final List<Color> coloresDisponibles = [
     const Color(0xFFD4B299), // Beige
     const Color(0xFF2C2C2C), // Negro
     const Color(0xFFB87979), // Rosado/Café claro
   ];
+
+  void _onItemTapped(int index) {
+    if (index == 0) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+    } else if (index == 1) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CarritoScreen()));
+    } else if (index == 2) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FavoritosScreen()));
+    } else if (index == 3) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PerfilScreen()));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -259,6 +276,57 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
               const SizedBox(height: 20),
             ],
           ),
+        ),
+      ),
+      bottomNavigationBar: _nav(),
+    );
+  }
+
+  Widget _nav() {
+    const items = [
+      (Icons.home_outlined, Icons.home, 'Inicio'),
+      (Icons.shopping_cart_outlined, Icons.shopping_cart, 'Carrito'),
+      (Icons.favorite_border, Icons.favorite, 'Favoritos'),
+      (Icons.person_outline, Icons.person, 'Cuenta'),
+    ];
+
+    return SafeArea(
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: ColoresApp.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: ColoresApp.border),
+        ),
+        child: Row(
+          children: [
+            for (var i = 0; i < items.length; i++)
+              Expanded(
+                child: InkWell(
+                  onTap: () => _onItemTapped(i),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _tab == i ? items[i].$2 : items[i].$1,
+                        size: 22,
+                        color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        items[i].$3,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
+                          color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

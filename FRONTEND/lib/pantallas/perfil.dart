@@ -3,6 +3,8 @@ import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/favoritos.dart';
+import 'package:frontend/pantallas/pedido.dart';
+import 'package:frontend/pantallas/detalle_pedido.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -16,7 +18,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   // Datos de la cuenta editables
   String _nombre = 'Sofia Pérez';
-  final String _email = 'sofia.perez@email.com';
+  String _email = 'sofia.perez@email.com';
   String _telefono = '+57 300 123 4567';
   String _direccion = 'Calle Principal #12-34, Garzón, Huila';
   bool _notificacionesActivas = true;
@@ -33,9 +35,98 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
   }
 
-  // Modal para editar Nombre, Teléfono y Dirección
+  // Modal para ver el historial de pedidos
+  void _mostrarHistorialPedidos() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Mis Pedidos Realizados',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: ColoresApp.primary),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Selecciona un pedido para ver el detalle completo.',
+                style: TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
+              ),
+              const SizedBox(height: 14),
+              const Divider(height: 1),
+              const SizedBox(height: 10),
+              Expanded(
+                child: HistorialPedidosService.listaPedidos.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Aún no tienes pedidos registrados.',
+                          style: TextStyle(color: ColoresApp.textSecondary, fontSize: 14),
+                        ),
+                      )
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: HistorialPedidosService.listaPedidos.length,
+                        itemBuilder: (context, index) {
+                          final pedido = HistorialPedidosService.listaPedidos[index];
+                          String fecha = '${pedido.fechaHora.day}/${pedido.fechaHora.month}/${pedido.fechaHora.year}';
+                          
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: ColoresApp.border),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              leading: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: ColoresApp.primary.withOpacity(0.1),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.shopping_bag, color: ColoresApp.primary, size: 20),
+                              ),
+                              title: Text(
+                                'Pedido #${pedido.idPedido}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: ColoresApp.primary),
+                              ),
+                              subtitle: Text(
+                                'Fecha: $fecha  •  Estado: ${pedido.estado}\nTotal: \$${pedido.total.toStringAsFixed(0)}',
+                                style: const TextStyle(fontSize: 11, color: ColoresApp.textSecondary, height: 1.3),
+                              ),
+                              isThreeLine: true,
+                              trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: ColoresApp.primary),
+                              onTap: () {
+                                Navigator.pop(context); // Cierra el modal
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => DetallePedidoScreen(pedido: pedido),
+                                  ),
+                                );
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Modal para editar Nombre, Correo (Gmail), Teléfono y Dirección
   void _mostrarModalEdicion() {
     final nombreCtrl = TextEditingController(text: _nombre);
+    final emailCtrl = TextEditingController(text: _email);
     final telefonoCtrl = TextEditingController(text: _telefono);
     final direccionCtrl = TextEditingController(text: _direccion);
 
@@ -57,6 +148,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
               const SizedBox(height: 14),
               TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre completo')),
               const SizedBox(height: 10),
+              TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Correo electrónico (Gmail)')),
+              const SizedBox(height: 10),
               TextField(controller: telefonoCtrl, decoration: const InputDecoration(labelText: 'Teléfono')),
               const SizedBox(height: 10),
               TextField(controller: direccionCtrl, decoration: const InputDecoration(labelText: 'Dirección de entrega')),
@@ -72,6 +165,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   onPressed: () {
                     setState(() {
                       _nombre = nombreCtrl.text;
+                      _email = emailCtrl.text;
                       _telefono = telefonoCtrl.text;
                       _direccion = direccionCtrl.text;
                     });
@@ -143,13 +237,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
                 icon: Icons.shopping_bag_outlined,
                 titulo: 'Mis pedidos',
                 subtitulo: 'Revisa el estado de tus compras',
-                onTap: () {},
+                onTap: _mostrarHistorialPedidos,
               ),
               const SizedBox(height: 12),
               _tarjetaOpcion(
                 icon: Icons.person_outline,
                 titulo: 'Editar información personal',
-                subtitulo: 'Nombre, teléfono y dirección',
+                subtitulo: 'Nombre, Gmail, teléfono y dirección',
                 onTap: _mostrarModalEdicion,
               ),
               const SizedBox(height: 12),
