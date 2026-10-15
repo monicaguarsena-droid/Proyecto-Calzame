@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/favoritos.dart';
@@ -7,7 +8,7 @@ import 'package:frontend/pantallas/categoriacaballero.dart';
 import 'package:frontend/pantallas/categoriadama.dart';
 import 'package:frontend/pantallas/categoriainfantil.dart';
 import 'package:frontend/pantallas/todos_productos.dart';
-import 'package:frontend/pantallas/producto.dart'; 
+import 'package:frontend/pantallas/producto.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -49,7 +50,7 @@ class _HomeState extends State<Home> {
           children: [
             _header(),
             const SizedBox(height: 14),
-            _banner(),
+            const _BannerAnimadoElegante(),
             _seccion(
               'Explora por persona',
               _fila(context, const [
@@ -76,7 +77,8 @@ class _HomeState extends State<Home> {
                           MaterialPageRoute(builder: (context) => const CategoriaDama()),
                         );
                       },
-                      child: const _CatConPlaya(
+                      child: const _TipoCalzadoDegradadoNegro(
+                        Icons.sunny,
                         'Sandalias',
                         'Verano y playa',
                       ),
@@ -91,7 +93,11 @@ class _HomeState extends State<Home> {
                           MaterialPageRoute(builder: (context) => const CategoriaCaballero()),
                         );
                       },
-                      child: const _Cat(Icons.ac_unit, 'Botas', 'Invierno y noche'),
+                      child: const _TipoCalzadoDegradadoNegro(
+                        Icons.ac_unit,
+                        'Botas',
+                        'Invierno y noche',
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -103,7 +109,11 @@ class _HomeState extends State<Home> {
                           MaterialPageRoute(builder: (context) => const CategoriaInfantil()),
                         );
                       },
-                      child: const _Cat(Icons.sports_basketball_outlined, 'Zapatillas', 'Deporte y diario'),
+                      child: const _TipoCalzadoDegradadoNegro(
+                        Icons.sports_basketball_outlined,
+                        'Zapatillas',
+                        'Deporte y diario',
+                      ),
                     ),
                   ),
                 ],
@@ -226,79 +236,6 @@ class _HomeState extends State<Home> {
     ],
   );
 
-  Widget _banner() => ClipRRect(
-    borderRadius: BorderRadius.circular(24),
-    child: SizedBox(
-      height: 130,
-      child: _Foto(
-        'assets/img/banner.jpg',
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'NUEVA COLECCIÓN',
-                style: TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 2,
-                  color: Colors.white70,
-                ),
-              ),
-              const SizedBox(height: 2),
-              const Text(
-                'Verano con estilo',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-              const Spacer(),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Hasta 30% de descuento',
-                          style: TextStyle(fontSize: 12, color: Colors.white70),
-                        ),
-                        Text(
-                          'En calzado de verano',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _Circ(
-                    Icons.chevron_left,
-                    size: 26,
-                    bg: Colors.white24,
-                    fg: Colors.white,
-                  ),
-                  const SizedBox(width: 6),
-                  _Circ(
-                    Icons.chevron_right,
-                    size: 26,
-                    bg: Colors.white24,
-                    fg: Colors.white,
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-
   Widget _seccion(String titulo, Widget hijo, {required VoidCallback verTodoOnTap}) => Padding(
     padding: const EdgeInsets.only(top: 18),
     child: Column(
@@ -411,6 +348,190 @@ class _HomeState extends State<Home> {
   }
 }
 
+class _BannerAnimadoElegante extends StatefulWidget {
+  const _BannerAnimadoElegante();
+
+  @override
+  State<_BannerAnimadoElegante> createState() => _BannerAnimadoEleganteState();
+}
+
+class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
+  late PageController _pageController;
+  int _paginaActual = 0;
+  Timer? _timer;
+
+  final List<Map<String, String>> _promociones = [
+    {
+      'tag': 'NUEVA COLECCIÓN',
+      'titulo': 'Verano con estilo',
+      'subtitulo': 'Hasta 30% de descuento',
+      'detalle': 'En calzado de verano',
+      'imagen': 'assets/img/verano.jpg',
+    },
+    {
+      'tag': 'TENDENCIA DE NOCHE',
+      'titulo': 'Elegancia & Confort',
+      'subtitulo': 'Nuevos estilos de cuero',
+      'detalle': 'Ideal para ocasiones especiales',
+      'imagen': 'assets/img/invierno.jpg',
+    },
+    {
+      'tag': 'URBANO & CASUAL',
+      'titulo': 'Zapatillas Urbanas',
+      'subtitulo': 'Diseño moderno para diario',
+      'detalle': 'Máxima comodidad a cada paso',
+      'imagen': 'assets/img/deporte.jpg',
+    },
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+    _iniciarTimerAutomatico();
+  }
+
+  void _iniciarTimerAutomatico() {
+    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_paginaActual < _promociones.length - 1) {
+        _paginaActual++;
+      } else {
+        _paginaActual = 0;
+      }
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          _paginaActual,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.easeInOutCubic,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: SizedBox(
+        height: 135,
+        child: Stack(
+          children: [
+            PageView.builder(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _paginaActual = index;
+                });
+              },
+              itemCount: _promociones.length,
+              itemBuilder: (context, index) {
+                final promo = _promociones[index];
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      promo['imagen']!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.black54, Colors.black26, Colors.black45],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            promo['tag']!,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              letterSpacing: 2,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            promo['titulo']!,
+                            style: const TextStyle(
+                              fontSize: 23,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const Spacer(),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                promo['subtitulo']!,
+                                style: const TextStyle(fontSize: 11, color: Colors.white70),
+                              ),
+                              Text(
+                                promo['detalle']!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: Row(
+                children: List.generate(
+                  _promociones.length,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.only(left: 5),
+                    height: 6,
+                    width: _paginaActual == index ? 18 : 6,
+                    decoration: BoxDecoration(
+                      color: _paginaActual == index ? Colors.white : Colors.white38,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _Circ extends StatelessWidget {
   final IconData icono;
   final double size;
@@ -428,42 +549,6 @@ class _Circ extends StatelessWidget {
     height: size,
     decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
     child: Icon(icono, size: size * 0.5, color: fg),
-  );
-}
-
-class _Foto extends StatelessWidget {
-  final String asset;
-  final Widget child;
-  const _Foto(this.asset, {required this.child});
-
-  @override
-  Widget build(BuildContext context) => Stack(
-    fit: StackFit.expand,
-    children: [
-      Image.asset(
-        asset,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-      ),
-      Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.black45, Colors.black26, Colors.black54],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
-      ),
-      child,
-    ],
   );
 }
 
@@ -517,69 +602,69 @@ class _Cat extends StatelessWidget {
   );
 }
 
-class _CatConPlaya extends StatelessWidget {
+class _TipoCalzadoDegradadoNegro extends StatelessWidget {
+  final IconData icono;
   final String titulo, subtitulo;
-  const _CatConPlaya(this.titulo, this.subtitulo);
+  const _TipoCalzadoDegradadoNegro(this.icono, this.titulo, this.subtitulo);
 
   @override
   Widget build(BuildContext context) => Container(
     height: 104,
+    padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(16),
-      image: const DecorationImage(
-        image: AssetImage('assets/img/playa.jpg'),
-        fit: BoxFit.cover,
-      ),
-    ),
-    child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            Colors.black.withOpacity(0.50),
-            Colors.transparent,
-          ],
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-        ),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.35),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.sunny, size: 16, color: Colors.white),
-          ),
-          const Spacer(),
-          Text(
-            titulo,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-          Text(
-            subtitulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 10,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+      gradient: LinearGradient(
+        colors: [
+          ColoresApp.primary,
+          Colors.black87,
         ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.25),
+          blurRadius: 6,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 30,
+          height: 30,
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icono, size: 16, color: Colors.white),
+        ),
+        const Spacer(),
+        Text(
+          titulo,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: Colors.white,
+          ),
+        ),
+        Text(
+          subtitulo,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Colors.white70,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     ),
   );
 }
+
 class _Destacada extends StatelessWidget {
   final String asset, titulo, subtitulo, precio;
   const _Destacada(this.asset, this.titulo, this.subtitulo, this.precio);
@@ -589,50 +674,74 @@ class _Destacada extends StatelessWidget {
     borderRadius: BorderRadius.circular(20),
     child: SizedBox(
       height: 170,
-      child: _Foto(
-        asset,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                titulo,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            asset,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitulo,
-                style: const TextStyle(fontSize: 11, color: Colors.white70),
+            ),
+          ),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black45, Colors.black26, Colors.black54],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              const Spacer(),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      precio,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitulo,
+                  style: const TextStyle(fontSize: 11, color: Colors.white70),
+                ),
+                const Spacer(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        precio,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                  const _Circ(
-                    Icons.arrow_forward,
-                    size: 28,
-                    bg: Colors.white24,
-                    fg: Colors.white,
-                  ),
-                ],
-              ),
-            ],
+                    const _Circ(
+                      Icons.arrow_forward,
+                      size: 28,
+                      bg: Colors.white24,
+                      fg: Colors.white,
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     ),
   );
