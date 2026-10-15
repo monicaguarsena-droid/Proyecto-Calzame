@@ -4,8 +4,7 @@ import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/carrito.dart';
-import 'package:frontend/pantallas/producto.dart'; // Importa el detalle del producto
-
+import 'package:frontend/pantallas/producto.dart';
 
 class CategoriaDama extends StatefulWidget {
   const CategoriaDama({super.key});
@@ -15,37 +14,43 @@ class CategoriaDama extends StatefulWidget {
 }
 
 class _CategoriaDamaState extends State<CategoriaDama> {
-  int _tab = 0;
+  final int _tab = 0;
 
-  // Lista de productos de la categoría Dama
-  final List<Map<String, String>> _productosDama = const [
+  // Llista de productes amb un booleà per controlar si és favorit
+  final List<Map<String, dynamic>> _productosDama = [
     {
       'imagen': 'assets/img/botas.jpg',
       'titulo': 'Botas altas de cuero',
       'subtitulo': 'Cuero suave · Invierno',
       'precio': '\$129',
+      'esFavorito': false,
     },
     {
       'imagen': 'assets/img/tacon.jpg',
       'titulo': 'Stiletto clásico',
       'subtitulo': 'Tacón fino · Elegante',
       'precio': '\$89',
+      'esFavorito': false,
     },
     {
       'imagen': 'assets/img/sandalia.jpg',
       'titulo': 'Sandalia de tiras',
       'subtitulo': 'Cuero suave · Tono beige',
       'precio': '\$110',
+      'esFavorito': false,
     },
     {
       'imagen': 'assets/img/zapatillas.jpg',
       'titulo': 'Zapatillas casuales',
       'subtitulo': 'Suela cómoda · Diario',
       'precio': '\$95',
+      'esFavorito': false,
     },
   ];
 
   void _onItemTapped(int index) {
+    if (index == _tab) return;
+
     if (index == 0) {
       Navigator.pushReplacement(
         context,
@@ -80,7 +85,7 @@ class _CategoriaDamaState extends State<CategoriaDama> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              // Encabezado con botón de volver
+              // Pàgina d'encapçalament
               Row(
                 children: [
                   InkWell(
@@ -122,7 +127,6 @@ class _CategoriaDamaState extends State<CategoriaDama> {
                 ),
               ),
               const SizedBox(height: 16),
-              // Cuadrícula de productos
               Expanded(
                 child: GridView.builder(
                   physics: const BouncingScrollPhysics(),
@@ -137,10 +141,8 @@ class _CategoriaDamaState extends State<CategoriaDama> {
                     final item = _productosDama[index];
                     return _tarjetaProducto(
                       context,
-                      item['imagen']!,
-                      item['titulo']!,
-                      item['subtitulo']!,
-                      item['precio']!,
+                      item,
+                      index,
                     );
                   },
                 ),
@@ -155,14 +157,17 @@ class _CategoriaDamaState extends State<CategoriaDama> {
 
   Widget _tarjetaProducto(
     BuildContext context,
-    String asset,
-    String titulo,
-    String subtitulo,
-    String precio,
+    Map<String, dynamic> item,
+    int index,
   ) {
+    final asset = item['imagen'] as String;
+    final titulo = item['titulo'] as String;
+    final subtitulo = item['subtitulo'] as String;
+    final precio = item['precio'] as String;
+    final bool esFavorito = item['esFavorito'] as bool;
+
     return GestureDetector(
       onTap: () {
-        // Al hacer clic abre el detalle del producto enviando sus datos
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -185,22 +190,63 @@ class _CategoriaDamaState extends State<CategoriaDama> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: AspectRatio(
-                aspectRatio: 1.15,
-                child: Image.asset(
-                  asset,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: ColoresApp.surfaceVariant,
-                    child: const Icon(
-                      Icons.image_not_supported,
-                      color: ColoresApp.textSecondary,
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: AspectRatio(
+                    aspectRatio: 1.15,
+                    child: Image.asset(
+                      asset,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: ColoresApp.surfaceVariant,
+                        child: const Icon(
+                          Icons.image_not_supported,
+                          color: ColoresApp.textSecondary,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+                // Icono de favoritos interactiu
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _productosDama[index]['esFavorito'] = !esFavorito;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            !esFavorito
+                                ? 'Añadido a favoritos'
+                                : 'Eliminado de favoritos',
+                          ),
+                          backgroundColor: ColoresApp.primary,
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        esFavorito ? Icons.favorite : Icons.favorite_border,
+                        size: 16,
+                        color: ColoresApp.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(

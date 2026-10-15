@@ -12,9 +12,9 @@ class FavoritosScreen extends StatefulWidget {
 }
 
 class _FavoritosScreenState extends State<FavoritosScreen> {
-  int _tab = 2; // Pestaña de Favoritos seleccionada
+  final int _tab = 2; // Pestaña de Favoritos seleccionada
 
-  // Lista de productos favoritos
+  // Lista de productos favoritos modificable
   final List<Map<String, String>> _favoritos = [
     {
       'imagen': 'assets/img/sandalia.jpg',
@@ -79,25 +79,38 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
               _subHeader(),
               const SizedBox(height: 16),
               Expanded(
-                child: GridView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.62, // Controla la altura de las tarjetas para que no se deformen
-                  ),
-                  itemCount: _favoritos.length,
-                  itemBuilder: (context, index) {
-                    final item = _favoritos[index];
-                    return _tarjetaProducto(
-                      item['imagen']!,
-                      item['titulo']!,
-                      item['subtitulo']!,
-                      item['precio']!,
-                    );
-                  },
-                ),
+                child: _favoritos.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(Icons.favorite_border, size: 64, color: ColoresApp.textSecondary),
+                            SizedBox(height: 12),
+                            Text(
+                              'No tienes favoritos aún',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: ColoresApp.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : GridView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.62,
+                        ),
+                        itemCount: _favoritos.length,
+                        itemBuilder: (context, index) {
+                          final item = _favoritos[index];
+                          return _tarjetaProducto(item, index);
+                        },
+                      ),
               ),
             ],
           ),
@@ -142,7 +155,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
     );
   }
 
-  // Subencabezado "Tus elegidos" con badge
+  // Subencabezado "Tus elegidos" con badge dinámico
   Widget _subHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -175,9 +188,9 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
             color: ColoresApp.primary.withOpacity(0.08),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Text(
-            '4 productos',
-            style: TextStyle(
+          child: Text(
+            '${_favoritos.length} productos',
+            style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w700,
               color: ColoresApp.primary,
@@ -188,13 +201,13 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
     );
   }
 
-  // Tarjeta de producto con altura ajustada
-  Widget _tarjetaProducto(
-    String asset,
-    String titulo,
-    String subtitulo,
-    String precio,
-  ) {
+  // Tarjeta de producto con botón de corazón interactivo para eliminar
+  Widget _tarjetaProducto(Map<String, String> item, int index) {
+    final asset = item['imagen']!;
+    final titulo = item['titulo']!;
+    final subtitulo = item['subtitulo']!;
+    final precio = item['precio']!;
+
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -205,7 +218,6 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Imagen con botón de corazón
           Stack(
             children: [
               ClipRRect(
@@ -228,17 +240,32 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
               Positioned(
                 top: 8,
                 right: 8,
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    size: 16,
-                    color: ColoresApp.primary,
+                child: InkWell(
+                  onTap: () {
+                    setState(() {
+                      _favoritos.removeAt(index);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Eliminado de favoritos'),
+                        backgroundColor: Colors.redAccent,
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.favorite,
+                      size: 16,
+                      color: ColoresApp.primary,
+                    ),
                   ),
                 ),
               ),
@@ -275,7 +302,6 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
             ),
           ),
           const Spacer(),
-          // Botón "Agregar al carrito"
           SizedBox(
             width: double.infinity,
             height: 36,
@@ -318,7 +344,6 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
     );
   }
 
-  // Barra de navegación inferior actualizada con Carrito
   Widget _nav() {
     const items = [
       (Icons.home_outlined, Icons.home, 'Inicio'),

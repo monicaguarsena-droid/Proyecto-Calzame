@@ -3,6 +3,8 @@ import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/producto.dart';
 
 class CategoriaCaballero extends StatefulWidget {
   const CategoriaCaballero({super.key});
@@ -12,28 +14,50 @@ class CategoriaCaballero extends StatefulWidget {
 }
 
 class _CategoriaCaballeroState extends State<CategoriaCaballero> {
-  int _tab = 0;
+  final int _tab = 0;
+
+  final List<Map<String, dynamic>> _productosCaballero = [
+    {
+      'imagen': 'assets/img/zapatocaballero.jpg',
+      'titulo': 'Zapato formal de cuero',
+      'subtitulo': 'Elegante · Oficina',
+      'precio': '\$145',
+      'esFavorito': false,
+    },
+    {
+      'imagen': 'assets/img/botincaballero.jpg',
+      'titulo': 'Botín casual',
+      'subtitulo': 'Cuero resistente · Urbano',
+      'precio': '\$160',
+      'esFavorito': false,
+    },
+    {
+      'imagen': 'assets/img/teniscaballero.jpg',
+      'titulo': 'Tenis deportivos',
+      'subtitulo': 'Máxima amortiguación',
+      'precio': '\$115',
+      'esFavorito': false,
+    },
+    {
+      'imagen': 'assets/img/sandaliacaballero.jpg',
+      'titulo': 'Sandalia de cuero',
+      'subtitulo': 'Frescas · Verano',
+      'precio': '\$85',
+      'esFavorito': false,
+    },
+  ];
 
   void _onItemTapped(int index) {
-    setState(() {
-      _tab = index;
-    });
+    if (index == _tab) return;
 
     if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Home()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+    } else if (index == 1) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CarritoScreen()));
     } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const FavoritosScreen()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FavoritosScreen()));
     } else if (index == 3) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const PerfilScreen()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PerfilScreen()));
     }
   }
 
@@ -42,186 +66,164 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
     return Scaffold(
       backgroundColor: ColoresApp.background,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          children: [
-            _header(context),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  'Catálogo caballero',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: ColoresApp.primary,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: const Icon(Icons.arrow_back, color: ColoresApp.primary, size: 20),
+                    ),
                   ),
-                ),
-                Text(
-                  'Ver todo',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: ColoresApp.primary,
+                  const SizedBox(width: 12),
+                  const Text(
+                    'CALZADO DE CABALLERO',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: ColoresApp.primary, letterSpacing: 0.5),
                   ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Explora nuestra colección',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: ColoresApp.primary),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: GridView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.62,
+                  ),
+                  itemCount: _productosCaballero.length,
+                  itemBuilder: (context, index) {
+                    final item = _productosCaballero[index];
+                    return _tarjetaProducto(context, item, index);
+                  },
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _tarjetaProducto(
-              imagen: 'assets/img/botascaballero.jpg',
-              titulo: 'Botas de vestir',
-              subtitulo: 'Cuero marrón · Tacón bajo',
-              precio: r'$189',
-            ),
-            _tarjetaProducto(
-              imagen: 'assets/img/mocasines.jpg',
-              titulo: 'Mocasines de cuero',
-              subtitulo: 'Cuero suave · Estilo clásico',
-              precio: r'$159',
-            ),
-            _tarjetaProducto(
-              imagen: 'assets/img/zapatillasnegras.jpg',
-              titulo: 'Zapatillas negras',
-              subtitulo: 'Suela cómoda · Diario',
-              precio: r'$129',
-            ),
-            _tarjetaProducto(
-              imagen: 'assets/img/monkstraps.jpg',
-              titulo: 'Monk straps',
-              subtitulo: 'Cuero cognac · Minimalista',
-              precio: r'$179',
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _nav(),
     );
   }
 
-  Widget _header(BuildContext context) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            icon: const Icon(Icons.arrow_back, color: ColoresApp.primary),
-            onPressed: () => Navigator.pop(context),
+  Widget _tarjetaProducto(BuildContext context, Map<String, dynamic> item, int index) {
+    final asset = item['imagen'] as String;
+    final titulo = item['titulo'] as String;
+    final subtitulo = item['subtitulo'] as String;
+    final precio = item['precio'] as String;
+    final bool esFavorito = item['esFavorito'] as bool;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetalleProductoScreen(imagen: asset, titulo: titulo, subtitulo: subtitulo, precio: precio),
           ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: ColoresApp.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
               children: [
-                Text(
-                  'CalzaMe',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: ColoresApp.primary,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: AspectRatio(
+                    aspectRatio: 1.15,
+                    child: Image.asset(
+                      asset,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: ColoresApp.surfaceVariant,
+                        child: const Icon(Icons.image_not_supported, color: ColoresApp.textSecondary),
+                      ),
+                    ),
                   ),
                 ),
-                Text(
-                  'Calzado para caballero',
-                  style: TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _productosCaballero[index]['esFavorito'] = !esFavorito;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(!esFavorito ? 'Añadido a favoritos' : 'Eliminado de favoritos'),
+                          backgroundColor: ColoresApp.primary,
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: Icon(
+                        esFavorito ? Icons.favorite : Icons.favorite_border,
+                        size: 16,
+                        color: ColoresApp.primary,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          const _Circ(Icons.search, size: 40),
-          const SizedBox(width: 8),
-          const _Circ(Icons.shopping_bag_outlined, size: 40),
-        ],
-      );
-
-  Widget _tarjetaProducto({
-    required String imagen,
-    required String titulo,
-    required String subtitulo,
-    required String precio,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: ColoresApp.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ColoresApp.border),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.asset(
-              imagen,
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 80,
-                height: 80,
-                color: ColoresApp.surfaceVariant,
-                child: const Icon(Icons.image, color: ColoresApp.primary),
+            const SizedBox(height: 8),
+            Text(titulo, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: ColoresApp.primary)),
+            const SizedBox(height: 2),
+            Text(subtitulo, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11, color: ColoresApp.textSecondary)),
+            const SizedBox(height: 6),
+            Text(precio, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ColoresApp.primary)),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: ElevatedButton(
+                onPressed: () {
+                  CarritoService.agregarProducto(imagen: asset, titulo: titulo, subtitulo: subtitulo, precioStr: precio);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('¡Producto agregado al carrito!'), backgroundColor: ColoresApp.success, duration: Duration(seconds: 1)),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColoresApp.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: EdgeInsets.zero,
+                ),
+                child: const Text('Agregar al carrito', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  titulo,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: ColoresApp.primary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitulo,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: ColoresApp.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  precio,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: ColoresApp.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: ColoresApp.surfaceVariant,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text(
-                  'Ver',
-                  style: TextStyle(
-                    color: ColoresApp.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
-                ),
-                SizedBox(width: 4),
-                Icon(Icons.arrow_forward, size: 14, color: ColoresApp.primary),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -229,10 +231,11 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
   Widget _nav() {
     const items = [
       (Icons.home_outlined, Icons.home, 'Inicio'),
-      (Icons.search, Icons.search, 'Buscar'),
+      (Icons.shopping_cart_outlined, Icons.shopping_cart, 'Carrito'),
       (Icons.favorite_border, Icons.favorite, 'Favoritos'),
       (Icons.person_outline, Icons.person, 'Cuenta'),
     ];
+
     return SafeArea(
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -251,26 +254,9 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        _tab == i ? items[i].$2 : items[i].$1,
-                        size: 22,
-                        color: _tab == i
-                            ? ColoresApp.primary
-                            : ColoresApp.textSecondary,
-                      ),
+                      Icon(_tab == i ? items[i].$2 : items[i].$1, size: 22, color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary),
                       const SizedBox(height: 2),
-                      Text(
-                        items[i].$3,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: _tab == i
-                              ? FontWeight.w700
-                              : FontWeight.w400,
-                          color: _tab == i
-                              ? ColoresApp.primary
-                              : ColoresApp.textSecondary,
-                        ),
-                      ),
+                      Text(items[i].$3, style: TextStyle(fontSize: 11, fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400, color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary)),
                     ],
                   ),
                 ),
@@ -280,21 +266,4 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
       ),
     );
   }
-}
-
-class _Circ extends StatelessWidget {
-  final IconData icono;
-  final double size;
-  const _Circ(this.icono, {required this.size});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: const BoxDecoration(
-          color: ColoresApp.surface,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icono, size: size * 0.5, color: ColoresApp.primary),
-      );
 }
