@@ -3,6 +3,8 @@ import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/producto.dart';
 
 class CategoriaInfantil extends StatefulWidget {
   const CategoriaInfantil({super.key});
@@ -12,28 +14,50 @@ class CategoriaInfantil extends StatefulWidget {
 }
 
 class _CategoriaInfantilState extends State<CategoriaInfantil> {
-  int _tab = 0;
+  final int _tab = 0;
+
+  final List<Map<String, dynamic>> _productosInfantil = [
+    {
+      'imagen': 'assets/img/tenisinfantil.jpg',
+      'titulo': 'Tenis con luces',
+      'subtitulo': 'Divertidos · Cómodos',
+      'precio': '\$79',
+      'esFavorito': false,
+    },
+    {
+      'imagen': 'assets/img/zapatoinfantil.jpg',
+      'titulo': 'Zapato escolar',
+      'subtitulo': 'Cuero duradero · Resistente',
+      'precio': '\$69',
+      'esFavorito': false,
+    },
+    {
+      'imagen': 'assets/img/sandaliainfantil.jpg',
+      'titulo': 'Sandalia playera',
+      'subtitulo': 'Suave · Antideslizante',
+      'precio': '\$49',
+      'esFavorito': false,
+    },
+    {
+      'imagen': 'assets/img/botaoinfantil.jpg',
+      'titulo': 'Botín impermeable',
+      'subtitulo': 'Ideal para lluvia',
+      'precio': '\$89',
+      'esFavorito': false,
+    },
+  ];
 
   void _onItemTapped(int index) {
-    setState(() {
-      _tab = index;
-    });
+    if (index == _tab) return;
 
     if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Home()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+    } else if (index == 1) {
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CarritoScreen()));
     } else if (index == 2) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const FavoritosScreen()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FavoritosScreen()));
     } else if (index == 3) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const PerfilScreen()),
-      );
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PerfilScreen()));
     }
   }
 
@@ -42,186 +66,164 @@ class _CategoriaInfantilState extends State<CategoriaInfantil> {
     return Scaffold(
       backgroundColor: ColoresApp.background,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          children: [
-            _header(context),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text(
-                  'Catálogo niños',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: ColoresApp.primary,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: const Icon(Icons.arrow_back, color: ColoresApp.primary, size: 20),
+                    ),
                   ),
-                ),
-                Text(
-                  'Ver todo',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: ColoresApp.primary,
+                  const SizedBox(width: 12),
+                  const Text(
+                    'CALZADO INFANTIL',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: ColoresApp.primary, letterSpacing: 0.5),
                   ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Explora nuestra colección',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: ColoresApp.primary),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: GridView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.62,
+                  ),
+                  itemCount: _productosInfantil.length,
+                  itemBuilder: (context, index) {
+                    final item = _productosInfantil[index];
+                    return _tarjetaProducto(context, item, index);
+                  },
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _tarjetaProducto(
-              imagen: 'assets/img/tenisniños.jpg',
-              titulo: 'Tenis deportivos',
-              subtitulo: 'Suela flexible · Colores',
-              precio: r'$69',
-            ),
-            _tarjetaProducto(
-              imagen: 'assets/img/sandaliasniños.jpg',
-              titulo: 'Sandalias de playa',
-              subtitulo: 'Goma suave · Cómodas',
-              precio: r'$49',
-            ),
-            _tarjetaProducto(
-              imagen: 'assets/img/botitasniños.jpg',
-              titulo: 'Botitas casuales',
-              subtitulo: 'Estilo urbano infantil',
-              precio: r'$85',
-            ),
-            _tarjetaProducto(
-              imagen: 'assets/img/zapatosecuela.jpg',
-              titulo: 'Zapatos escolares',
-              subtitulo: 'Cuero sintético · Resistente',
-              precio: r'$75',
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _nav(),
     );
   }
 
-  Widget _header(BuildContext context) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          IconButton(
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            icon: const Icon(Icons.arrow_back, color: ColoresApp.primary),
-            onPressed: () => Navigator.pop(context),
+  Widget _tarjetaProducto(BuildContext context, Map<String, dynamic> item, int index) {
+    final asset = item['imagen'] as String;
+    final titulo = item['titulo'] as String;
+    final subtitulo = item['subtitulo'] as String;
+    final precio = item['precio'] as String;
+    final bool esFavorito = item['esFavorito'] as bool;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DetalleProductoScreen(imagen: asset, titulo: titulo, subtitulo: subtitulo, precio: precio),
           ),
-          const SizedBox(width: 8),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: ColoresApp.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
               children: [
-                Text(
-                  'CalzaMe',
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: ColoresApp.primary,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: AspectRatio(
+                    aspectRatio: 1.15,
+                    child: Image.asset(
+                      asset,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: ColoresApp.surfaceVariant,
+                        child: const Icon(Icons.image_not_supported, color: ColoresApp.textSecondary),
+                      ),
+                    ),
                   ),
                 ),
-                Text(
-                  'Calzado para niños',
-                  style: TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _productosInfantil[index]['esFavorito'] = !esFavorito;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(!esFavorito ? 'Añadido a favoritos' : 'Eliminado de favoritos'),
+                          backgroundColor: ColoresApp.primary,
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                      child: Icon(
+                        esFavorito ? Icons.favorite : Icons.favorite_border,
+                        size: 16,
+                        color: ColoresApp.primary,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          const _Circ(Icons.search, size: 40),
-          const SizedBox(width: 8),
-          const _Circ(Icons.shopping_bag_outlined, size: 40),
-        ],
-      );
-
-  Widget _tarjetaProducto({
-    required String imagen,
-    required String titulo,
-    required String subtitulo,
-    required String precio,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: ColoresApp.surface,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ColoresApp.border),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Image.asset(
-              imagen,
-              width: 80,
-              height: 80,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 80,
-                height: 80,
-                color: ColoresApp.surfaceVariant,
-                child: const Icon(Icons.image, color: ColoresApp.primary),
+            const SizedBox(height: 8),
+            Text(titulo, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: ColoresApp.primary)),
+            const SizedBox(height: 2),
+            Text(subtitulo, maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11, color: ColoresApp.textSecondary)),
+            const SizedBox(height: 6),
+            Text(precio, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ColoresApp.primary)),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: ElevatedButton(
+                onPressed: () {
+                  CarritoService.agregarProducto(imagen: asset, titulo: titulo, subtitulo: subtitulo, precioStr: precio);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('¡Producto agregado al carrito!'), backgroundColor: ColoresApp.success, duration: Duration(seconds: 1)),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColoresApp.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: EdgeInsets.zero,
+                ),
+                child: const Text('Agregar al carrito', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
             ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  titulo,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: ColoresApp.primary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitulo,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: ColoresApp.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  precio,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: ColoresApp.primary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: ColoresApp.surfaceVariant,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Text(
-                  'Ver',
-                  style: TextStyle(
-                    color: ColoresApp.primary,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
-                ),
-                SizedBox(width: 4),
-                Icon(Icons.arrow_forward, size: 14, color: ColoresApp.primary),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -229,10 +231,11 @@ class _CategoriaInfantilState extends State<CategoriaInfantil> {
   Widget _nav() {
     const items = [
       (Icons.home_outlined, Icons.home, 'Inicio'),
-      (Icons.search, Icons.search, 'Buscar'),
+      (Icons.shopping_cart_outlined, Icons.shopping_cart, 'Carrito'),
       (Icons.favorite_border, Icons.favorite, 'Favoritos'),
       (Icons.person_outline, Icons.person, 'Cuenta'),
     ];
+
     return SafeArea(
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 10),
@@ -251,26 +254,9 @@ class _CategoriaInfantilState extends State<CategoriaInfantil> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        _tab == i ? items[i].$2 : items[i].$1,
-                        size: 22,
-                        color: _tab == i
-                            ? ColoresApp.primary
-                            : ColoresApp.textSecondary,
-                      ),
+                      Icon(_tab == i ? items[i].$2 : items[i].$1, size: 22, color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary),
                       const SizedBox(height: 2),
-                      Text(
-                        items[i].$3,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: _tab == i
-                              ? FontWeight.w700
-                              : FontWeight.w400,
-                          color: _tab == i
-                              ? ColoresApp.primary
-                              : ColoresApp.textSecondary,
-                        ),
-                      ),
+                      Text(items[i].$3, style: TextStyle(fontSize: 11, fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400, color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary)),
                     ],
                   ),
                 ),
@@ -280,21 +266,4 @@ class _CategoriaInfantilState extends State<CategoriaInfantil> {
       ),
     );
   }
-}
-
-class _Circ extends StatelessWidget {
-  final IconData icono;
-  final double size;
-  const _Circ(this.icono, {required this.size});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: const BoxDecoration(
-          color: ColoresApp.surface,
-          shape: BoxShape.circle,
-        ),
-        child: Icon(icono, size: size * 0.5, color: ColoresApp.primary),
-      );
 }

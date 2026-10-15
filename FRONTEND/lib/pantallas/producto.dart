@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/carrito.dart';
-
 class DetalleProductoScreen extends StatefulWidget {
   final String imagen;
   final String titulo;

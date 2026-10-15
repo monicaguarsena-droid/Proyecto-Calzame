@@ -3,6 +3,7 @@ import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/pantallas/compra.dart';
 
 // Modelo simple para los ítems del carrito
 class ItemCarrito {
@@ -260,7 +261,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  '\$${(item.precio * item.cantidad).toStringAsFixed(0)}', // <-- Corregido el operador de multiplicación
+                  '\$${(item.precio * item.cantidad).toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
@@ -349,12 +350,18 @@ class _CarritoScreenState extends State<CarritoScreen> {
             height: 48,
             child: ElevatedButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('¡Compra procesada con éxito!'), backgroundColor: ColoresApp.success),
+                if (CarritoService.itemsCarrito.isEmpty) return;
+
+                // Pasamos la lista completa de productos y el total general
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CompraScreen(
+                      items: CarritoService.itemsCarrito,
+                      total: _totalGeneral,
+                    ),
+                  ),
                 );
-                setState(() {
-                  CarritoService.itemsCarrito.clear();
-                });
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColoresApp.primary,

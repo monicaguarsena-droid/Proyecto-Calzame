@@ -8,6 +8,7 @@ import 'package:frontend/pantallas/categoriadama.dart';
 import 'package:frontend/pantallas/categoriainfantil.dart';
 import 'package:frontend/pantallas/todos_productos.dart';
 import 'package:frontend/pantallas/producto.dart'; 
+
 class Home extends StatefulWidget {
   const Home({super.key});
   @override
@@ -52,9 +53,9 @@ class _HomeState extends State<Home> {
             _seccion(
               'Explora por persona',
               _fila(context, const [
-                _Cat(Icons.person_outline, 'Dama', 'Zapatos y sandalias'),
-                _Cat(Icons.person_outline, 'Niña', 'Colecciones infantiles'),
-                _Cat(Icons.person_outline, 'Caballero', 'Estilo urbano y formal'),
+                _Cat(Icons.woman_outlined, 'Dama', 'Zapatos y sandalias'),
+                _Cat(Icons.child_care_outlined, 'Niña', 'Colecciones infantiles'),
+                _Cat(Icons.man_outlined, 'Caballero', 'Estilo urbano y formal'),
               ]),
               verTodoOnTap: () {
                 Navigator.push(
@@ -65,11 +66,48 @@ class _HomeState extends State<Home> {
             ),
             _seccion(
               'Tipos de calzado',
-              _fila(context, const [
-                _Cat(Icons.directions_walk, 'Sandalias', 'Verano y playa'),
-                _Cat(Icons.directions_walk, 'Botas', 'Invierno y noche'),
-                _Cat(Icons.directions_walk, 'Zapatillas', 'Deporte y diario'),
-              ]),
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CategoriaDama()),
+                        );
+                      },
+                      child: const _CatConPlaya(
+                        'Sandalias',
+                        'Verano y playa',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CategoriaCaballero()),
+                        );
+                      },
+                      child: const _Cat(Icons.ac_unit, 'Botas', 'Invierno y noche'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const CategoriaInfantil()),
+                        );
+                      },
+                      child: const _Cat(Icons.sports_basketball_outlined, 'Zapatillas', 'Deporte y diario'),
+                    ),
+                  ),
+                ],
+              ),
               verTodoOnTap: () {
                 Navigator.push(
                   context,
@@ -447,13 +485,13 @@ class _Cat extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 30,
-          height: 30,
-          decoration: const BoxDecoration(
-            color: ColoresApp.surfaceVariant,
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: ColoresApp.primary.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icono, size: 17, color: ColoresApp.primary),
+          child: Icon(icono, size: 18, color: ColoresApp.primary),
         ),
         const Spacer(),
         Text(
@@ -479,6 +517,69 @@ class _Cat extends StatelessWidget {
   );
 }
 
+class _CatConPlaya extends StatelessWidget {
+  final String titulo, subtitulo;
+  const _CatConPlaya(this.titulo, this.subtitulo);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 104,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      image: const DecorationImage(
+        image: AssetImage('assets/img/playa.jpg'),
+        fit: BoxFit.cover,
+      ),
+    ),
+    child: Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            Colors.black.withOpacity(0.50),
+            Colors.transparent,
+          ],
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+        ),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.35),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.sunny, size: 16, color: Colors.white),
+          ),
+          const Spacer(),
+          Text(
+            titulo,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            subtitulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 class _Destacada extends StatelessWidget {
   final String asset, titulo, subtitulo, precio;
   const _Destacada(this.asset, this.titulo, this.subtitulo, this.precio);
