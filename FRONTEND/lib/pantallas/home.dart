@@ -77,8 +77,7 @@ class _HomeState extends State<Home> {
                           MaterialPageRoute(builder: (context) => const CategoriaDama()),
                         );
                       },
-                      child: const _TipoCalzadoDegradadoNegro(
-                        Icons.sunny,
+                      child: const _CatConPlaya(
                         'Sandalias',
                         'Verano y playa',
                       ),
@@ -93,8 +92,7 @@ class _HomeState extends State<Home> {
                           MaterialPageRoute(builder: (context) => const CategoriaCaballero()),
                         );
                       },
-                      child: const _TipoCalzadoDegradadoNegro(
-                        Icons.ac_unit,
+                      child: const _CatConInvierno(
                         'Botas',
                         'Invierno y noche',
                       ),
@@ -109,8 +107,7 @@ class _HomeState extends State<Home> {
                           MaterialPageRoute(builder: (context) => const CategoriaInfantil()),
                         );
                       },
-                      child: const _TipoCalzadoDegradadoNegro(
-                        Icons.sports_basketball_outlined,
+                      child: const _CatConZapato(
                         'Zapatillas',
                         'Deporte y diario',
                       ),
@@ -602,65 +599,197 @@ class _Cat extends StatelessWidget {
   );
 }
 
-class _TipoCalzadoDegradadoNegro extends StatelessWidget {
-  final IconData icono;
+class _CatConPlaya extends StatelessWidget {
   final String titulo, subtitulo;
-  const _TipoCalzadoDegradadoNegro(this.icono, this.titulo, this.subtitulo);
+  const _CatConPlaya(this.titulo, this.subtitulo);
 
   @override
   Widget build(BuildContext context) => Container(
     height: 104,
-    padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(16),
-      gradient: LinearGradient(
-        colors: [
-          ColoresApp.primary,
-          Colors.black87,
-        ],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
+      image: const DecorationImage(
+        image: AssetImage('assets/img/playa.jpg'),
+        fit: BoxFit.cover,
       ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.25),
-          blurRadius: 6,
-          offset: const Offset(0, 3),
-        ),
-      ],
     ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 30,
-          height: 30,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icono, size: 16, color: Colors.white),
+    child: Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            Colors.black.withOpacity(0.90),
+            Colors.black.withOpacity(0.40),
+            Colors.transparent,
+          ],
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
         ),
-        const Spacer(),
-        Text(
-          titulo,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.35),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.sunny, size: 16, color: Colors.white),
           ),
-        ),
-        Text(
-          subtitulo,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 10,
-            color: Colors.white70,
-            fontWeight: FontWeight.w500,
+          const Spacer(),
+          Text(
+            titulo,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
           ),
+          Text(
+            subtitulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _CatConInvierno extends StatelessWidget {
+  final String titulo, subtitulo;
+  const _CatConInvierno(this.titulo, this.subtitulo);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 104,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      image: const DecorationImage(
+        image: AssetImage('assets/img/invierno.jpg'),
+        fit: BoxFit.cover,
+      ),
+    ),
+    child: Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            Colors.black.withOpacity(0.90),
+            Colors.black.withOpacity(0.40),
+            Colors.transparent,
+          ],
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
         ),
-      ],
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.35),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.ac_unit, size: 16, color: Colors.white),
+          ),
+          const Spacer(),
+          Text(
+            titulo,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            subtitulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _CatConZapato extends StatelessWidget {
+  final String titulo, subtitulo;
+  const _CatConZapato(this.titulo, this.subtitulo);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    height: 104,
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(16),
+      image: const DecorationImage(
+        image: AssetImage('assets/img/deporte.jpg'),
+        fit: BoxFit.cover,
+      ),
+    ),
+    child: Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            Colors.black.withOpacity(0.90),
+            Colors.black.withOpacity(0.40),
+            Colors.transparent,
+          ],
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+        ),
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.35),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.sports_basketball_outlined, size: 16, color: Colors.white),
+          ),
+          const Spacer(),
+          Text(
+            titulo,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          Text(
+            subtitulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              color: Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
