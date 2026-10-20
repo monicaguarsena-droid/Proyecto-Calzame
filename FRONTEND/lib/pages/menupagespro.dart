@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/detalle_pedido.dart';
 import 'package:frontend/pantallas/producto.dart';
 import 'package:frontend/servicios/admin_product_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
