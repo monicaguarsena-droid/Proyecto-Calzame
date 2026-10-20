@@ -3,7 +3,7 @@ import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
-import 'package:frontend/pantallas/compra.dart';
+import 'package:frontend/pantallas/inicio_sesion.dart'; 
 
 // Modelo simple para los ítems del carrito
 class ItemCarrito {
@@ -352,14 +352,11 @@ class _CarritoScreenState extends State<CarritoScreen> {
               onPressed: () {
                 if (CarritoService.itemsCarrito.isEmpty) return;
 
-                // Pasamos la lista completa de productos y el total general
+                // Redirige a la pantalla de Iniciar Sesión (Login) para continuar con el flujo
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CompraScreen(
-                      items: CarritoService.itemsCarrito,
-                      total: _totalGeneral,
-                    ),
+                    builder: (context) => const Login(),
                   ),
                 );
               },
