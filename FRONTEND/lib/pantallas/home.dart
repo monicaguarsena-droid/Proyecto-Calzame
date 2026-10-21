@@ -52,11 +52,12 @@ class _HomeState extends State<Home> {
             const SizedBox(height: 14),
             const _BannerAnimadoElegante(),
             _seccion(
-              'Explora por persona',
+              'Escoge tu Categoría',
               _fila(context, const [
-                _Cat(Icons.woman_outlined, 'Dama', 'Zapatos y sandalias'),
-                _Cat(Icons.child_care_outlined, 'Niña', 'Colecciones infantiles'),
-                _Cat(Icons.man_outlined, 'Caballero', 'Estilo urbano y formal'),
+                _Cat(Icons.woman_outlined, 'Damas', 'Zapatos y sandalias'),
+                _Cat(Icons.man_outlined, 'Caballeros', 'Estilo urbano y formal'),
+                _Cat(Icons.child_care_outlined, 'Niñas', 'Colecciones infantiles'),
+                
               ]),
               verTodoOnTap: () {
                 Navigator.push(

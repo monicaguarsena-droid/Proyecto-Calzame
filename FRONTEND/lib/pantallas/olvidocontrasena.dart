@@ -1,3 +1,6 @@
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:frontend/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/confimarcodigo.dart';
@@ -16,6 +19,7 @@ class RecuperarCuenta extends StatefulWidget {
     this.onTerminos,
     this.onPolitica,
   });
+
 
   @override
   State<RecuperarCuenta> createState() => _RecuperarCuentaState();
@@ -133,16 +137,59 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
 
                   // Botón "Enviar código"
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ConfirmarCodigo(),
-                        ),
-                      );
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
+                        final email = _emailController.text.trim();
+
+                        // 1. Opcional: Ejecutar callback externo si se pasa como parámetro
                         if (widget.onEnviarCodigo != null) {
-                          widget.onEnviarCodigo!(_emailController.text.trim());
+                          await widget.onEnviarCodigo!(email);
+                        }
+
+                        try {
+                          // 2. Realizar la petición HTTP al backend
+                          // Ajusta la ruta '/auth/recuperar' según la que tengas configurada en tu backend de Express
+                          final response = await http.post(
+                            Uri.parse(
+                              '${ApiConfig.baseUrl}/auth/forgot-password',
+                            ),
+                            headers: ApiConfig.headers,
+                            body: jsonEncode({'email': email}),
+                          );
+
+                          if (response.statusCode == 200) {
+                            // Si el backend responde correctamente, navegamos a confirmar código
+                            if (!context.mounted) return;
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ConfirmarCodigo(), // Puedes pasar el email si lo necesitas allá
+                              ),
+                            );
+                          } else {
+                            // Si hay un error (ej. correo no registrado), mostramos mensaje
+                            final data = jsonDecode(response.body);
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  data['message'] ??
+                                      'Error al enviar el código',
+                                ),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          // Error de conexión con el servidor
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'No se pudo conectar con el servidor',
+                              ),
+                            ),
+                          );
                         }
                       }
                     },

@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:frontend/api_config.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/pantallas/inicio_sesion.dart';
 
 class ConfirmarCodigo extends StatefulWidget {
   final String? emailInicial;
-  final Future<void> Function(String email, String codigo, String nuevaContrasena)? onConfirmarCambio;
+  final Future<void> Function(
+    String email,
+    String codigo,
+    String nuevaContrasena,
+  )?
+  onConfirmarCambio;
   final VoidCallback? onReenviarCodigo;
   final VoidCallback? onTerminos;
   final VoidCallback? onPolitica;
@@ -26,7 +35,7 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
   final _codigoController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  
+
   bool _obscurePassword = true;
 
   @override
@@ -68,7 +77,7 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  
+
                   // Subtítulo descriptivo
                   const Text(
                     'Ingresa el código que llegó a tu correo\ny crea una nueva contraseña.',
@@ -104,7 +113,10 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
                       ),
                       filled: true,
                       fillColor: ColoresApp.surface,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 16,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: ColoresApp.border),
@@ -115,7 +127,10 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: ColoresApp.primary, width: 1.5),
+                        borderSide: const BorderSide(
+                          color: ColoresApp.primary,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -141,18 +156,28 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
                     controller: _codigoController,
                     keyboardType: TextInputType.number,
                     maxLength: 6,
-                    style: const TextStyle(color: ColoresApp.textPrimary, letterSpacing: 2),
+                    style: const TextStyle(
+                      color: ColoresApp.textPrimary,
+                      letterSpacing: 2,
+                    ),
                     decoration: InputDecoration(
-                      counterText: '', // Oculta el contador de caracteres de maxLength
+                      counterText:
+                          '', // Oculta el contador de caracteres de maxLength
                       hintText: '123456',
-                      hintStyle: const TextStyle(color: ColoresApp.hint, letterSpacing: 1),
+                      hintStyle: const TextStyle(
+                        color: ColoresApp.hint,
+                        letterSpacing: 1,
+                      ),
                       prefixIcon: const Icon(
                         Icons.mark_email_unread_outlined,
                         color: ColoresApp.textSecondary,
                       ),
                       filled: true,
                       fillColor: ColoresApp.surface,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 16,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: ColoresApp.border),
@@ -163,7 +188,10 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: ColoresApp.primary, width: 1.5),
+                        borderSide: const BorderSide(
+                          color: ColoresApp.primary,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -198,7 +226,9 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: ColoresApp.textSecondary,
                         ),
                         onPressed: () {
@@ -209,7 +239,10 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
                       ),
                       filled: true,
                       fillColor: ColoresApp.surface,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 16,
+                      ),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: ColoresApp.border),
@@ -220,7 +253,10 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: ColoresApp.primary, width: 1.5),
+                        borderSide: const BorderSide(
+                          color: ColoresApp.primary,
+                          width: 1.5,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -234,13 +270,76 @@ class _ConfirmarCodigoState extends State<ConfirmarCodigo> {
 
                   // Botón principal "Confirmar cambio de contraseña"
                   ElevatedButton(
-                    onPressed: () {
+                    // Dentro de tu ElevatedButton -> onPressed:
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
+                        final email = _emailController.text.trim();
+                        final codigo = _codigoController.text.trim();
+                        final nuevaContrasena = _passwordController.text.trim();
+
+                        // 1. Opcional: Ejecutar callback externo si se pasa como parámetro
                         if (widget.onConfirmarCambio != null) {
-                          widget.onConfirmarCambio!(
-                            _emailController.text.trim(),
-                            _codigoController.text.trim(),
-                            _passwordController.text.trim(),
+                          await widget.onConfirmarCambio!(
+                            email,
+                            codigo,
+                            nuevaContrasena,
+                          );
+                        }
+
+                        try {
+                          // 2. Realizar la petición HTTP al backend
+                          final response = await http.post(
+                            Uri.parse('${ApiConfig.baseUrl}/auth/verify-code'),
+                            headers: ApiConfig.headers,
+                            body: jsonEncode({
+                              'email': email,
+                              'codigo': codigo,
+                              'newPassword': nuevaContrasena,
+                            }),
+                          );
+
+                          final data = jsonDecode(response.body);
+
+                          if (!context.mounted) return;
+
+                          if (response.statusCode == 200) {
+                            // Mostrar mensaje de éxito y redirigir al inicio de sesión
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  data['message'] ??
+                                      'Contraseña actualizada con éxito',
+                                ),
+                              ),
+                            );
+
+                            // Navegar de regreso al Login y limpiar el historial de rutas
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const Login(),
+                              ), // Asegúrate de importar tu pantalla Login
+                              (route) => false,
+                            );
+                          } else {
+                            // Si el código es incorrecto o expiró
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  data['message'] ??
+                                      'Código inválido o expirado',
+                                ),
+                              ),
+                            );
+                          }
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Error de conexión con el servidor',
+                              ),
+                            ),
                           );
                         }
                       }
