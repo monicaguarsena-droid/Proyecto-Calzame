@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/servicios/auth_service.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class GoogleLogin extends StatefulWidget {
   const GoogleLogin({Key? key}) : super(key: key);
@@ -13,36 +16,52 @@ class _GoogleLoginState extends State<GoogleLogin> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
-  // // Lista simulada o dinámica de cuentas previas en el dispositivo
-  final List<Map<String, String>> _savedAccounts = [
-  //   {
-  //     'name': 'Ana Morales',
-  //     'email': 'ana.morales@example.com',
-  //     'initials': 'AM',
-  //   },
-  //   {
-  //     'name': 'Lucía Castro',
-  //     'email': 'lucia.castro@example.com',
-  //     'initials': 'LC',
-  //   },
-  //   {'name': 'Mateo Ruiz', 'email': 'mateo.ruiz@example.com', 'initials': 'MR'},
-   ];
+  // Instancia oficial de GoogleSignIn para evitar el error rojo
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  // Lista simulada o dinámica de cuentas previas en el dispositivo
+  final List<Map<String, String>> _savedAccounts = [];
 
   Future<void> _handleGoogleLogin() async {
     setState(() => _isLoading = true);
 
-    final result = await _authService.loginWithGoogle();
+    try {
+      // 1. Cierra sesión previa y abre el selector de cuentas de Google
+      await _googleSignIn.signOut(); 
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
 
-    if (!mounted) return;
+      if (googleUser == null) {
+        // El usuario canceló el inicio de sesión
+        setState(() => _isLoading = false);
+        return;
+      }
 
-    setState(() => _isLoading = false);
-  
-    if (result['success']==true) {
-      // Navegar a la pantalla principal de CalzaMe
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const Home()));
-    }else {
+      // 2. Obtiene los detalles de autenticación (tokens) si los necesitas enviar al backend
+      // final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      // 3. Llama a tu servicio de autenticación
+      final result = await _authService.loginWithGoogle();
+
+      if (!mounted) return;
+
+      setState(() => _isLoading = false);
+    
+      if (result['success'] == true) {
+        // Navegar a la pantalla principal de CalzaMe
+        Navigator.pushReplacement(
+          context, 
+          MaterialPageRoute(builder: (context) => const Home())
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo iniciar sesión con Google')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo iniciar sesión con Google')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
   }
@@ -92,7 +111,7 @@ class _GoogleLoginState extends State<GoogleLogin> {
                         name: account['name']!,
                         email: account['email']!,
                         initials: account['initials']!,
-                        isSelected: account['name'] == ' ',
+                        isSelected: false,
                         onTap: _handleGoogleLogin,
                         primaryColor: primaryColor,
                       ),
