@@ -35,15 +35,29 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
     const Color(0xFFB87979), // Rosado/Café claro
   ];
 
+  final List<String> nombresColores = ['Beige', 'Negro', 'Rosado'];
+
   void _onItemTapped(int index) {
     if (index == 0) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
     } else if (index == 1) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CarritoScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const CarritoScreen()),
+      );
     } else if (index == 2) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FavoritosScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FavoritosScreen()),
+      );
     } else if (index == 3) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PerfilScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const PerfilScreen()),
+      );
     }
   }
 
@@ -109,7 +123,11 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: ColoresApp.surfaceVariant,
-                          child: const Icon(Icons.image_not_supported, size: 50, color: ColoresApp.textSecondary),
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            size: 50,
+                            color: ColoresApp.textSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -206,16 +224,22 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                       height: 45,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: esSeleccionada ? ColoresApp.primary : Colors.white,
+                        color: esSeleccionada
+                            ? ColoresApp.primary
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: esSeleccionada ? ColoresApp.primary : ColoresApp.border,
+                          color: esSeleccionada
+                              ? ColoresApp.primary
+                              : ColoresApp.border,
                         ),
                       ),
                       child: Text(
                         talla,
                         style: TextStyle(
-                          color: esSeleccionada ? Colors.white : ColoresApp.primary,
+                          color: esSeleccionada
+                              ? Colors.white
+                              : ColoresApp.primary,
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
                         ),
@@ -236,7 +260,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                     ),
                   ),
                   Text(
-                    colorSeleccionado == 0 ? "Beige" : (colorSeleccionado == 1 ? "Negro" : "Rosado"),
+                    nombresColores[colorSeleccionado],
                     style: const TextStyle(
                       color: ColoresApp.textSecondary,
                       fontSize: 15,
@@ -261,7 +285,9 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                         color: coloresDisponibles[index],
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: colorSeleccionado == index ? ColoresApp.primary : Colors.transparent,
+                          color: colorSeleccionado == index
+                              ? ColoresApp.primary
+                              : Colors.transparent,
                           width: 2,
                         ),
                       ),
@@ -293,15 +319,20 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () {
+                    // AQUÍ ENVIAMOS LA TALLA Y EL COLOR SELECCIONADOS POR EL USUARIO
                     CarritoService.agregarProducto(
                       imagen: widget.imagen,
                       titulo: widget.titulo,
                       subtitulo: widget.subtitulo,
                       precioStr: widget.precio,
+                      talla: tallaSeleccionada,
+                      color: nombresColores[colorSeleccionado],
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text("¡Producto agregado al carrito con éxito!"),
+                      SnackBar(
+                        content: Text(
+                          "¡Producto agregado al carrito! (Talla $tallaSeleccionada - Color ${nombresColores[colorSeleccionado]})",
+                        ),
                         backgroundColor: Colors.green,
                       ),
                     );
@@ -316,10 +347,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                   ),
                   child: const Text(
                     "Agregar al carrito",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -356,20 +384,26 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 child: InkWell(
                   onTap: () => _onItemTapped(i),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.min, // Correcto: MainAxisSize
                     children: [
                       Icon(
                         _tab == i ? items[i].$2 : items[i].$1,
                         size: 22,
-                        color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                        color: _tab == i
+                            ? ColoresApp.primary
+                            : ColoresApp.textSecondary,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
-                          color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                          fontWeight: _tab == i
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: _tab == i
+                              ? ColoresApp.primary
+                              : ColoresApp.textSecondary,
                         ),
                       ),
                     ],

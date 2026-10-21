@@ -4,13 +4,16 @@ import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart'; 
+import 'package:frontend/pantallas/producto.dart';
 
-// Modelo simple para los ítems del carrito
+// Modelo actualizado para incluir talla y color en los ítems del carrito
 class ItemCarrito {
   final String imagen;
   final String titulo;
   final String subtitulo;
   final double precio;
+  final String talla;
+  final String color;
   int cantidad;
 
   ItemCarrito({
@@ -18,6 +21,8 @@ class ItemCarrito {
     required this.titulo,
     required this.subtitulo,
     required this.precio,
+    required this.talla,
+    required this.color,
     this.cantidad = 1,
   });
 }
@@ -31,12 +36,17 @@ class CarritoService {
     required String titulo,
     required String subtitulo,
     required String precioStr,
+    String talla = 'Única',
+    String color = 'Único',
   }) {
     // Limpiamos el string del precio
     double precio = double.tryParse(precioStr.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
 
-    // Verificamos si ya existe el producto en el carrito para aumentar cantidad
-    final index = itemsCarrito.indexWhere((item) => item.titulo == titulo);
+    // Verificamos si ya existe el producto con la misma talla y color para aumentar cantidad
+    final index = itemsCarrito.indexWhere((item) => 
+      item.titulo == titulo && item.talla == talla && item.color == color
+    );
+    
     if (index >= 0) {
       itemsCarrito[index].cantidad += 1;
     } else {
@@ -45,6 +55,8 @@ class CarritoService {
         titulo: titulo,
         subtitulo: subtitulo,
         precio: precio,
+        talla: talla,
+        color: color,
       ));
     }
   }
@@ -213,113 +225,148 @@ class _CarritoScreenState extends State<CarritoScreen> {
 
   Widget _tarjetaCarritoItem(ItemCarrito item, int index) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ColoresApp.border),
       ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.asset(
-              item.imagen,
-              width: 70,
-              height: 70,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 70,
-                height: 70,
-                color: ColoresApp.surfaceVariant,
-                child: const Icon(Icons.image_not_supported, color: ColoresApp.textSecondary),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetalleProductoScreen(
+                  imagen: item.imagen,
+                  titulo: item.titulo,
+                  subtitulo: item.subtitulo,
+                  precio: '\$${item.precio.toStringAsFixed(0)}',
+                ),
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
               children: [
-                Text(
-                  item.titulo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: ColoresApp.primary,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.asset(
+                    item.imagen,
+                    width: 85,
+                    height: 85,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 85,
+                      height: 85,
+                      color: ColoresApp.surfaceVariant,
+                      child: const Icon(Icons.image_not_supported, color: ColoresApp.textSecondary),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  item.subtitulo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, color: ColoresApp.textSecondary),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  '\$${(item.precio * item.cantidad).toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w800,
-                    color: ColoresApp.primary,
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.titulo,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: ColoresApp.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        item.subtitulo,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Talla: ${item.talla}  |  Color: ${item.color}',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: ColoresApp.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '\$${(item.precio * item.cantidad).toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: ColoresApp.primary,
+                        ),
+                      ),
+                    ],
                   ),
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.delete_outline, size: 20, color: ColoresApp.error),
+                      onPressed: () {
+                        setState(() {
+                          CarritoService.itemsCarrito.removeAt(index);
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              if (item.cantidad > 1) {
+                                item.cantidad--;
+                              } else {
+                                CarritoService.itemsCarrito.removeAt(index);
+                              }
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(border: Border.all(color: ColoresApp.border), borderRadius: BorderRadius.circular(6)),
+                            child: const Icon(Icons.remove, size: 13),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Text('${item.cantidad}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                        ),
+                        InkWell(
+                          onTap: () {
+                            setState(() {
+                              item.cantidad++;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(border: Border.all(color: ColoresApp.border), borderRadius: BorderRadius.circular(6)),
+                            child: const Icon(Icons.add, size: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-          Column(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.delete_outline, size: 20, color: ColoresApp.error),
-                onPressed: () {
-                  setState(() {
-                    CarritoService.itemsCarrito.removeAt(index);
-                  });
-                },
-              ),
-              Row(
-                children: [
-                  InkWell(
-                    onTap: () {
-                      setState(() {
-                        if (item.cantidad > 1) {
-                          item.cantidad--;
-                        } else {
-                          CarritoService.itemsCarrito.removeAt(index);
-                        }
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(border: Border.all(color: ColoresApp.border), borderRadius: BorderRadius.circular(4)),
-                      child: const Icon(Icons.remove, size: 12),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text('${item.cantidad}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  ),
-                  InkWell(
-                    onTap: () {
-                      setState(() {
-                        item.cantidad++;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(border: Border.all(color: ColoresApp.border), borderRadius: BorderRadius.circular(4)),
-                      child: const Icon(Icons.add, size: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -352,7 +399,6 @@ class _CarritoScreenState extends State<CarritoScreen> {
               onPressed: () {
                 if (CarritoService.itemsCarrito.isEmpty) return;
 
-                // Redirige a la pantalla de Iniciar Sesión (Login) para continuar con el flujo
                 Navigator.push(
                   context,
                   MaterialPageRoute(
