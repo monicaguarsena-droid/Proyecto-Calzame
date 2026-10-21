@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/home.dart';
+import 'package:frontend/pantallas/olvidocontrasena.dart';
 import 'package:frontend/pantallas/registro.dart';
 import 'package:frontend/servicios/auth_service.dart';
 
@@ -81,7 +82,10 @@ class _LoginState extends State<Login> {
         child: Center(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 24.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -107,7 +111,7 @@ class _LoginState extends State<Login> {
 
                   // Títulos principales
                   Text(
-                    '¡Bienvenida de nuevo!',
+                    '¡Bienvenido!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 26,
@@ -120,10 +124,7 @@ class _LoginState extends State<Login> {
                   Text(
                     'Inicia sesión en CalzaMe para continuar',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 32),
 
@@ -167,7 +168,9 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty || !value.contains('@')) {
+                      if (value == null ||
+                          value.isEmpty ||
+                          !value.contains('@')) {
                         return 'Ingresa un correo válido';
                       }
                       return null;
@@ -208,9 +211,7 @@ class _LoginState extends State<Login> {
                           size: 20,
                         ),
                         onPressed: () {
-                          setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          );
+                          setState(() => _obscurePassword = !_obscurePassword);
                         },
                       ),
                       filled: true,
@@ -246,7 +247,14 @@ class _LoginState extends State<Login> {
                         minimumSize: const Size(50, 30),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => RecuperarCuenta(),
+                          ),
+                        );
+                      },
                       child: Text(
                         '¿Olvidaste tu contraseña?',
                         style: TextStyle(
@@ -305,7 +313,9 @@ class _LoginState extends State<Login> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const Registro()),
+                          MaterialPageRoute(
+                            builder: (context) => const Registro(),
+                          ),
                         );
                       },
                       child: Text(
@@ -323,7 +333,12 @@ class _LoginState extends State<Login> {
                   // Divisor "o continuar con"
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.grey.shade300,
+                          thickness: 1,
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12.0),
                         child: Text(
@@ -335,7 +350,12 @@ class _LoginState extends State<Login> {
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.grey.shade300,
+                          thickness: 1,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),

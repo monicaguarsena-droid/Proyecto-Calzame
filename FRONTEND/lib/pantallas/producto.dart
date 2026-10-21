@@ -111,48 +111,52 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: ColoresApp.border),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: Image.asset(
-                    widget.imagen,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: ColoresApp.surfaceVariant,
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        size: 50,
-                        color: ColoresApp.textSecondary,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 14,
-                    right: 14,
-                    child: GestureDetector(
-                      onTap: _toggleFavorito,
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 6,
-                              offset: Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          esFavorito ? Icons.favorite : Icons.favorite_border,
-                          size: 22,
-                          color: ColoresApp.primary,
+                child: Stack(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Image.asset(
+                        widget.imagen,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: ColoresApp.surfaceVariant,
+                          child: const Icon(
+                            Icons.image_not_supported,
+                            size: 50,
+                            color: ColoresApp.textSecondary,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    Positioned(
+                      top: 14,
+                      right: 14,
+                      child: GestureDetector(
+                        onTap: _toggleFavorito,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 6,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            esFavorito ? Icons.favorite : Icons.favorite_border,
+                            size: 22,
+                            color: ColoresApp.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
               Row(
