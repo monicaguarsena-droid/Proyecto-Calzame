@@ -20,6 +20,7 @@ class RecuperarCuenta extends StatefulWidget {
     this.onPolitica,
   });
 
+
   @override
   State<RecuperarCuenta> createState() => _RecuperarCuentaState();
 }
