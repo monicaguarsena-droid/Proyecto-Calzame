@@ -35,6 +35,8 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
     const Color(0xFFB87979), // Rosado/Café claro
   ];
 
+  final List<String> nombresColores = ['Beige', 'Negro', 'Rosado'];
+
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.pushReplacement(
@@ -103,28 +105,25 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                height: 280,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: ColoresApp.border),
-                ),
-                child: Stack(
-                  children: [
-                    ClipRRect(
+              // Imagen con el botón de favoritos integrado
+              Stack(
+                children: [
+                  Container(
+                    height: 280,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: ColoresApp.border),
+                    ),
+                    child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: Image.asset(
                         widget.imagen,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: ColoresApp.surfaceVariant,
-                          child: const Icon(
-                            Icons.image_not_supported,
-                            size: 50,
-                            color: ColoresApp.textSecondary,
-                          ),
+                          child: const Icon(Icons.image_not_supported, size: 50, color: ColoresApp.textSecondary),
                         ),
                       ),
                     ),
@@ -257,9 +256,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                     ),
                   ),
                   Text(
-                    colorSeleccionado == 0
-                        ? "Beige"
-                        : (colorSeleccionado == 1 ? "Negro" : "Rosado"),
+                    colorSeleccionado == 0 ? "Beige" : (colorSeleccionado == 1 ? "Negro" : "Rosado"),
                     style: const TextStyle(
                       color: ColoresApp.textSecondary,
                       fontSize: 15,
@@ -318,18 +315,19 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: () {
+                    // AQUÍ ENVIAMOS LA TALLA Y EL COLOR SELECCIONADOS POR EL USUARIO
                     CarritoService.agregarProducto(
                       imagen: widget.imagen,
                       titulo: widget.titulo,
                       subtitulo: widget.subtitulo,
                       precioStr: widget.precio,
+                      talla: tallaSeleccionada,
+                      color: nombresColores[colorSeleccionado],
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text(
-                          "¡Producto agregado al carrito con éxito!",
-                        ),
-                        backgroundColor: ColoresApp.primary,
+                        content: Text("¡Producto agregado al carrito con éxito!"),
+                        backgroundColor: Colors.green,
                       ),
                     );
                   },
@@ -380,7 +378,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 child: InkWell(
                   onTap: () => _onItemTapped(i),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisSize: MainAxisSize.min, // Correcto: MainAxisSize
                     children: [
                       Icon(
                         _tab == i ? items[i].$2 : items[i].$1,
