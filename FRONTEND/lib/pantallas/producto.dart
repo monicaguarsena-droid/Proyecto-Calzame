@@ -123,11 +123,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: ColoresApp.surfaceVariant,
-                          child: const Icon(
-                            Icons.image_not_supported,
-                            size: 50,
-                            color: ColoresApp.textSecondary,
-                          ),
+                          child: const Icon(Icons.image_not_supported, size: 50, color: ColoresApp.textSecondary),
                         ),
                       ),
                     ),
@@ -260,7 +256,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                     ),
                   ),
                   Text(
-                    nombresColores[colorSeleccionado],
+                    colorSeleccionado == 0 ? "Beige" : (colorSeleccionado == 1 ? "Negro" : "Rosado"),
                     style: const TextStyle(
                       color: ColoresApp.textSecondary,
                       fontSize: 15,
@@ -329,10 +325,8 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                       color: nombresColores[colorSeleccionado],
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          "¡Producto agregado al carrito! (Talla $tallaSeleccionada - Color ${nombresColores[colorSeleccionado]})",
-                        ),
+                      const SnackBar(
+                        content: Text("¡Producto agregado al carrito con éxito!"),
                         backgroundColor: Colors.green,
                       ),
                     );
