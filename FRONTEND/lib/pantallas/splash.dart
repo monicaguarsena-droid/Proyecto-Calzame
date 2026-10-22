@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/home.dart';
+//import 'package:frontend/pantallas/home.dart';
+import 'package:frontend/pantallas/inicio_sesion.dart';
 
 class PantallaInicio extends StatefulWidget {
   const PantallaInicio({super.key});
@@ -109,7 +110,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    "Descubre · Diseña · Viste con estilo",
+                    "Su mejor tienda de Calzado",
                     style: TextStyle(
                       color: Colors.white60,
                       fontSize: 14,
@@ -146,7 +147,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                         // Navega directamente a Home al hacer clic
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const Home()),
+                          MaterialPageRoute(builder: (context) => Login()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
