@@ -1,31 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/admininventario.dart';
+// Importa aquí tus pantallas creadas:
+// import 'package:frontend/pantallas/inventario_screen.dart';
+// import 'package:frontend/pantallas/pedidos_screen.dart';
+// import 'package:frontend/pantallas/categorias_screen.dart';
+// import 'package:frontend/pantallas/usuarios_screen.dart';
+// import 'package:frontend/pantallas/reportes_screen.dart';
+// import 'package:frontend/pantallas/configuracion_screen.dart';
 
-class AdminPanelPage extends StatefulWidget {
-  const AdminPanelPage({Key? key}) : super(key: key);
+class AdminPanel extends StatelessWidget {
+  const AdminPanel({super.key});
 
-  @override
-  State<AdminPanelPage> createState() => _AdminPanelPageState();
-}
-
-class _AdminPanelPageState extends State<AdminPanelPage> {
-  int _currentIndex = 0;
-
-  final Color primaryColor = const Color(0xFF6B1229);
-  final Color backgroundColor = const Color(0xFFF9F1EE);
-
-  late final List<Widget> _paginas;
-
-  @override
-  void initState() {
-    super.initState();
-    _paginas = [
-      _buildInicioAdmin(),
-      const InventarioAdminPage(), // SIN la palabra const extra en la lista
-      const Center(child: Text('Pantalla de Pedidos', style: TextStyle(fontSize: 18))),
-      const Center(child: Text('Pantalla de Configuración', style: TextStyle(fontSize: 18))),
-    ];
-  }
+  final Color _primaryColor = const Color(0xFF6B2D3C);
+  final Color _backgroundColor = const Color(0xFFF7F4F0);
 
   @override
   Widget build(BuildContext context) {
@@ -286,92 +272,108 @@ class _AdminPanelPageState extends State<AdminPanelPage> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: primaryColor,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: _primaryColor,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: const TextStyle(color: Colors.grey, fontSize: 11),
-                ),
-              ],
+              ),
+              Icon(icon, color: _primaryColor, size: 22),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          Icon(icon, color: primaryColor, size: 22),
         ],
       ),
     );
   }
 
-  Widget _buildOptionCard({
-    required IconData icon,
-    required String title,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Padding(
-          padding: const EdgeInsets.all(14.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(icon, color: primaryColor, size: 24),
-                  Icon(Icons.north_east, color: primaryColor, size: 16),
-                ],
+  Widget _buildMenuCard({required String title, required IconData icon, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: _primaryColor, size: 24),
+                Icon(Icons.arrow_outward, color: Colors.grey.shade400, size: 16),
+              ],
+            ),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: _primaryColor,
               ),
-              Text(
-                title,
-                style: TextStyle(
-                  color: primaryColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  height: 1.2,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _SalesChartPainter extends CustomPainter {
+class LineChartPainter extends CustomPainter {
+  final Color color;
+  LineChartPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withOpacity(0.85)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.0
-      ..strokeCap = StrokeCap.round;
+      ..color = color
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
 
     final path = Path();
-    path.moveTo(0, size.height * 0.7);
-    path.quadraticBezierTo(size.width * 0.2, size.height * 0.9, size.width * 0.35, size.height * 0.5);
-    path.quadraticBezierTo(size.width * 0.5, size.height * 0.1, size.width * 0.65, size.height * 0.6);
-    path.quadraticBezierTo(size.width * 0.85, size.height * 0.8, size.width, size.height * 0.1);
+    path.moveTo(0, size.height * 0.8);
+    path.lineTo(size.width * 0.15, size.height * 0.7);
+    path.lineTo(size.width * 0.3, size.height * 0.85);
+    path.lineTo(size.width * 0.45, size.height * 0.6);
+    path.lineTo(size.width * 0.6, size.height * 0.65);
+    path.lineTo(size.width * 0.75, size.height * 0.4);
+    path.lineTo(size.width, size.height * 0.2);
 
     canvas.drawPath(path, paint);
   }

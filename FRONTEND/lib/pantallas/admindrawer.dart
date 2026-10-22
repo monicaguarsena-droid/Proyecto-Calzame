@@ -17,6 +17,7 @@ class AdminDrawer extends StatelessWidget {
     required this.adminEmail,
   });
 
+
   Future<void> _cerrarSesion(BuildContext context) async {
     // 1. Limpiar datos de sesión guardados en el dispositivo (token, nombre, correo, rol)
     final prefs = await SharedPreferences.getInstance();

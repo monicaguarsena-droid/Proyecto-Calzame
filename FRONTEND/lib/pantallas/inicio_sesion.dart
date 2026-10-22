@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/pantallas/admin_panel.dart';
 import 'package:frontend/pantallas/home.dart';
+import 'package:frontend/pantallas/olvidocontrasena.dart';
 import 'package:frontend/pantallas/registro.dart';
 import 'package:frontend/pantallas/olvidocontrasena.dart'; // Importación agregada
 import 'package:frontend/pantallas/iniciacongoogle.dart'; // Importación agregada
@@ -13,6 +15,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _contrasenaController = TextEditingController();
@@ -25,33 +28,66 @@ class _LoginState extends State<Login> {
   final Color _primaryColor = const Color(0xFF6B2D3C);
   final Color _backgroundColor = const Color(0xFFF7F4F0);
 
+  final String _adminEmail = "monicaguarsena@gmail.com";
+
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
+    final emailIngresado = _emailController.text.trim();
+
     final result = await _authService.loginWithEmail(
-      _emailController.text.trim(),
+      emailIngresado,
       _contrasenaController.text.trim(),
     );
 
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const Home()),
-      );
+      // Validar si el correo ingresado es el del administrador
+    if (emailIngresado.toLowerCase() == _adminEmail.toLowerCase()) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AdminPanel()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Home()),
+        );
+      }
     } else {
       _showSnackBar(result['message']);
     }
   }
 
-  void _handleGoogleLogin() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const GoogleLogin()),
-    );
+  void _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
+
+    final result = await _authService.loginWithGoogle();
+
+    setState(() => _isLoading = false);
+
+   if (result['success']) {
+      // Extraemos el correo que viene de la respuesta de Google / Backend
+      final String userEmail = result['data']?['user']?['email'] ?? ''; 
+
+      // Validar si el correo de Google es el del administrador
+      if (userEmail.toLowerCase() == _adminEmail.toLowerCase()) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminPanel()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Home()),
+        );
+      }
+    } else {
+      _showSnackBar(result['message']);
+    }
   }
 
   void _showSnackBar(String message) {
@@ -73,7 +109,10 @@ class _LoginState extends State<Login> {
         child: Center(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 24.0,
+            ),
             child: Form(
               key: _formKey,
               child: Column(
@@ -99,7 +138,7 @@ class _LoginState extends State<Login> {
 
                   // Títulos principales
                   Text(
-                    '¡Bienvenida de nuevo!',
+                    '¡Bienvenido!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 26,
@@ -112,10 +151,7 @@ class _LoginState extends State<Login> {
                   Text(
                     'Inicia sesión en CalzaMe para continuar',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 32),
 
@@ -159,7 +195,9 @@ class _LoginState extends State<Login> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty || !value.contains('@')) {
+                      if (value == null ||
+                          value.isEmpty ||
+                          !value.contains('@')) {
                         return 'Ingresa un correo válido';
                       }
                       return null;
@@ -200,9 +238,7 @@ class _LoginState extends State<Login> {
                           size: 20,
                         ),
                         onPressed: () {
-                          setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          );
+                          setState(() => _obscurePassword = !_obscurePassword);
                         },
                       ),
                       filled: true,
@@ -242,7 +278,7 @@ class _LoginState extends State<Login> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const RecuperarCuenta(),
+                            builder: (context) => RecuperarCuenta(),
                           ),
                         );
                       },
@@ -304,7 +340,9 @@ class _LoginState extends State<Login> {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const Registro()),
+                          MaterialPageRoute(
+                            builder: (context) => const Registro(),
+                          ),
                         );
                       },
                       child: Text(
@@ -322,7 +360,12 @@ class _LoginState extends State<Login> {
                   // Divisor "o continuar con"
                   Row(
                     children: [
-                      Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.grey.shade300,
+                          thickness: 1,
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12.0),
                         child: Text(
@@ -334,7 +377,12 @@ class _LoginState extends State<Login> {
                           ),
                         ),
                       ),
-                      Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+                      Expanded(
+                        child: Divider(
+                          color: Colors.grey.shade300,
+                          thickness: 1,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 24),
