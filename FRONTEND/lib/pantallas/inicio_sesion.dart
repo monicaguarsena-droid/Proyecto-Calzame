@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/pantallas/admin_panel.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/olvidocontrasena.dart';
 import 'package:frontend/pantallas/registro.dart';
@@ -12,6 +13,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _contrasenaController = TextEditingController();
@@ -24,23 +26,35 @@ class _LoginState extends State<Login> {
   final Color _primaryColor = const Color(0xFF6B2D3C);
   final Color _backgroundColor = const Color(0xFFF7F4F0);
 
+  final String _adminEmail = "monicaguarsena@gmail.com";
+
   void _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
+    final emailIngresado = _emailController.text.trim();
+
     final result = await _authService.loginWithEmail(
-      _emailController.text.trim(),
+      emailIngresado,
       _contrasenaController.text.trim(),
     );
 
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const Home()),
-      );
+      // Validar si el correo ingresado es el del administrador
+    if (emailIngresado.toLowerCase() == _adminEmail.toLowerCase()) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => AdminPanel()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => Home()),
+        );
+      }
     } else {
       _showSnackBar(result['message']);
     }
@@ -53,11 +67,22 @@ class _LoginState extends State<Login> {
 
     setState(() => _isLoading = false);
 
-    if (result['success']) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const Home()),
-      );
+   if (result['success']) {
+      // Extraemos el correo que viene de la respuesta de Google / Backend
+      final String userEmail = result['data']?['user']?['email'] ?? ''; 
+
+      // Validar si el correo de Google es el del administrador
+      if (userEmail.toLowerCase() == _adminEmail.toLowerCase()) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AdminPanel()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const Home()),
+        );
+      }
     } else {
       _showSnackBar(result['message']);
     }
