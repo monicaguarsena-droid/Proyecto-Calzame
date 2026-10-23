@@ -98,3 +98,68 @@ export const actualizarEstadoPedidoAdmin = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+// Obtener todos los productos (con opción de filtrar por categoría)
+export const obtenerProductosAdmin = async (req, res) => {
+    try {
+        const { categoria } = req.query;
+        let query = supabase.from('Productos').select('*').order('id', { ascending: false });
+        
+        if (categoria && categoria !== 'Todos') {
+            query = query.eq('Categoria', categoria);
+        }
+
+        const { data, error } = await query;
+        if (error) return res.status(400).json({ error: error.message });
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Eliminar un producto por ID
+export const eliminarProductoAdmin = async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabase
+        .from('Productos')
+        .delete()
+        .eq('id', id);
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ mensaje: 'Producto eliminado exitosamente' });
+};
+
+// Obtener categorías del catálogo
+export const obtenerCategoriasAdmin = async (req, res) => {
+    try {
+        const { data, error } = await supabase.from('Categorias').select('*');
+        if (error) return res.status(400).json({ error: error.message });
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Crear categoría
+export const crearCategoriaAdmin = async (req, res) => {
+    const { nombre, imagen, cantidad } = req.body;
+    const { data, error } = await supabase
+        .from('Categorias')
+        .insert([{ nombre, imagen, cantidad }])
+        .select();
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.status(201).json({ mensaje: 'Categoría creada exitosamente', categoria: data });
+};
+
+// Eliminar categoría
+export const eliminarCategoriaAdmin = async (req, res) => {
+    const { id } = req.params;
+    const { error } = await supabase
+        .from('Categorias')
+        .delete()
+        .eq('id', id);
+
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ mensaje: 'Categoría eliminada exitosamente' });
+};
