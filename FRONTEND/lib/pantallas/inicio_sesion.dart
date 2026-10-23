@@ -75,12 +75,12 @@ class _LoginState extends State<Login> {
       if (userEmail.toLowerCase() == _adminEmail.toLowerCase()) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const AdminPanel()),
+          MaterialPageRoute(builder: (context) => AdminPanel()),
         );
       } else {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const Home()),
+          MaterialPageRoute(builder: (context) => Home()),
         );
       }
     } else {
@@ -147,7 +147,7 @@ class _LoginState extends State<Login> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Inicia sesión en CalzaMe para continuar',
+                    'Inicia sesión en Calzado Mar&Paz para continuar',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
