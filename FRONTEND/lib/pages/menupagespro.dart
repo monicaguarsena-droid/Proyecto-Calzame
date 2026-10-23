@@ -30,7 +30,7 @@ class _MenuPageState extends State<MenuPage> {
     _cargarRol();
   }
 
-  // Se usa solo para actualizar la vista tras un cambio
+  
   void _recargar() {
     setState(() {
       _productosFuture = _productoService.obtenerProductos();
