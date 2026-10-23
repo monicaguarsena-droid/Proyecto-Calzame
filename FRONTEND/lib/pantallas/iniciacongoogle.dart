@@ -97,7 +97,7 @@ class _GoogleLoginState extends State<GoogleLogin> {
               ),
               const SizedBox(height: 6),
               const Text(
-                'Continúa a CalzaMe',
+                'Continúa a Calzado Mar&Paz',
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
               const SizedBox(height: 30),
