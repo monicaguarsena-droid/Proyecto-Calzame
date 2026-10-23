@@ -16,230 +16,56 @@ class AdminPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _backgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Encabezado superior
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Calzado Mar&Paz',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: _primaryColor,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Panel Administrador',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: _primaryColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: Text(
-                      'ML',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _primaryColor,
-                      ),
-                    ),
-                  ),
-                ],
+      backgroundColor: backgroundColor,
+      body: _paginas[_currentIndex],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 15,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+          child: BottomNavigationBar(
+            currentIndex: _currentIndex,
+            onTap: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.white,
+            selectedItemColor: primaryColor,
+            unselectedItemColor: Colors.grey[400],
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            unselectedLabelStyle: const TextStyle(fontSize: 12),
+            items: const [
+              BottomNavigationBarItem(
+                icon: Icon(Icons.home_outlined),
+                activeIcon: Icon(Icons.home),
+                label: 'Inicio',
               ),
-              const SizedBox(height: 20),
-
-              // Tarjeta de Ventas Totales
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Ventas totales',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '\$12.480',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: _primaryColor,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 30,
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: CustomPaint(
-                              painter: LineChartPainter(color: _primaryColor),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'respecto al mes anterior',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.inventory_2_outlined),
+                activeIcon: Icon(Icons.inventory_2),
+                label: 'Inventario',
               ),
-              const SizedBox(height: 16),
-
-              // Tarjetas secundarias (Pedidos pendientes y Productos activos)
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Pedidos pendientes',
-                      value: '12',
-                      icon: Icons.access_time_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildMetricCard(
-                      title: 'Productos activos',
-                      value: '148',
-                      icon: Icons.inventory_2_outlined,
-                    ),
-                  ),
-                ],
+              BottomNavigationBarItem(
+                icon: Icon(Icons.shopping_bag_outlined),
+                activeIcon: Icon(Icons.shopping_bag),
+                label: 'Pedidos',
               ),
-              const SizedBox(height: 24),
-
-              // Título de sección
-              Text(
-                'Gestiona tu tienda',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _primaryColor,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Cuadrícula con las rutas configuradas en cada tarjeta
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.15,
-                children: [
-                  // 1. Inventario de Productos
-                  _buildMenuCard(
-                    title: 'Inventario de Productos',
-                    icon: Icons.inventory_outlined,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Placeholder()), // Reemplaza por tu pantalla real de Inventario
-                      );
-                    },
-                  ),
-                  // 2. Pedidos de Clientes
-                  _buildMenuCard(
-                    title: 'Pedidos de Clientes',
-                    icon: Icons.shopping_bag_outlined,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Placeholder()), // Reemplaza por tu pantalla real de Pedidos
-                      );
-                    },
-                  ),
-                  // 3. Categorías y Ofertas
-                  _buildMenuCard(
-                    title: 'Categorías y Ofertas',
-                    icon: Icons.local_offer_outlined,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Placeholder()), // Reemplaza por tu pantalla real de Categorías
-                      );
-                    },
-                  ),
-                  // 4. Usuarios y Clientes
-                  _buildMenuCard(
-                    title: 'Usuarios y Clientes',
-                    icon: Icons.people_outline,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Placeholder()), // Reemplaza por tu pantalla real de Usuarios
-                      );
-                    },
-                  ),
-                  // 5. Reportes de Ventas
-                  _buildMenuCard(
-                    title: 'Reportes de Ventas',
-                    icon: Icons.bar_chart_rounded,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Placeholder()), // Reemplaza por tu pantalla real de Reportes
-                      );
-                    },
-                  ),
-                  // 6. Configuración Tienda
-                  _buildMenuCard(
-                    title: 'Configuración Tienda',
-                    icon: Icons.tune_rounded,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Placeholder()), // Reemplaza por tu pantalla real de Configuración
-                      );
-                    },
-                  ),
-                ],
+              BottomNavigationBarItem(
+                icon: Icon(Icons.settings_outlined),
+                activeIcon: Icon(Icons.settings),
+                label: 'Ajustes',
               ),
             ],
           ),
@@ -248,7 +74,200 @@ class AdminPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricCard({required String title, required String value, required IconData icon}) {
+  Widget _buildInicioAdmin() {
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CalzaMe',
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      'Panel Administrador',
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    'ML',
+                    style: TextStyle(
+                      color: primaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [primaryColor, const Color(0xFF4A1525)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Ventas totales',
+                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.trending_up, color: Colors.greenAccent, size: 14),
+                            SizedBox(width: 4),
+                            Text(
+                              '+15.4%',
+                              style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '\$12.480',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 34,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 45,
+                    width: double.infinity,
+                    child: CustomPaint(
+                      painter: _SalesChartPainter(),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'respecto al mes anterior',
+                    style: TextStyle(color: Colors.white60, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatCard(
+                    title: '12',
+                    subtitle: 'Pedidos pendientes',
+                    icon: Icons.access_time_filled,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatCard(
+                    title: '148',
+                    subtitle: 'Productos activos',
+                    icon: Icons.inventory,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            Text(
+              'Gestiona tu tienda',
+              style: TextStyle(
+                color: primaryColor,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.3,
+              children: [
+                _buildOptionCard(
+                  icon: Icons.local_offer_outlined,
+                  title: 'Categorías y\nOfertas',
+                  onTap: () {},
+                ),
+                _buildOptionCard(
+                  icon: Icons.people_outline,
+                  title: 'Usuarios y\nClientes',
+                  onTap: () {},
+                ),
+                _buildOptionCard(
+                  icon: Icons.bar_chart_outlined,
+                  title: 'Reportes de\nVentas',
+                  onTap: () {},
+                ),
+                _buildOptionCard(
+                  icon: Icons.tune_outlined,
+                  title: 'Configuración\nTienda',
+                  onTap: () {},
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

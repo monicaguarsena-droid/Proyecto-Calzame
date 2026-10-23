@@ -81,10 +81,31 @@ class _GoogleLoginState extends State<GoogleLogin> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 30),
-              // Icono de Google superior
-              Image.network(
-                'https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png',
-                height: 40,
+              // Icono de Google seguro (evita errores CORS en web)
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 5,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    'G',
+                    style: TextStyle(
+                      color: Color(0xFF4285F4),
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
               const Text(
@@ -117,14 +138,14 @@ class _GoogleLoginState extends State<GoogleLogin> {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    // Botón para usar otra cuenta
+                    // Botón para usar otra cuenta / Iniciar con Google
                     OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        side: const BorderSide(color: Colors.transparent),
+                        side: BorderSide(color: primaryColor.withOpacity(0.2)),
                         backgroundColor: Colors.white,
                       ),
                       onPressed: _handleGoogleLogin,
@@ -158,12 +179,33 @@ class _GoogleLoginState extends State<GoogleLogin> {
               // Términos y condiciones
               Padding(
                 padding: const EdgeInsets.only(bottom: 16.0),
-                child: Text(
-                  'Al continuar, aceptas nuestros Términos y condiciones y Política de privacidad.',
+                child: RichText(
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: primaryColor.withOpacity(0.7),
+                  text: TextSpan(
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: primaryColor.withOpacity(0.7),
+                      height: 1.4,
+                    ),
+                    children: [
+                      const TextSpan(text: 'Al continuar, aceptas nuestros '),
+                      TextSpan(
+                        text: 'Términos y condiciones',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                      const TextSpan(text: ' y '),
+                      TextSpan(
+                        text: 'Política de privacidad',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: primaryColor,
+                        ),
+                      ),
+                      const TextSpan(text: '.'),
+                    ],
                   ),
                 ),
               ),
