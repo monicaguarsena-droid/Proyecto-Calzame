@@ -1,22 +1,34 @@
 import 'package:flutter/material.dart';
-// Importa aquí tus pantallas creadas:
 // import 'package:frontend/pantallas/inventario_screen.dart';
 // import 'package:frontend/pantallas/pedidos_screen.dart';
 // import 'package:frontend/pantallas/categorias_screen.dart';
 // import 'package:frontend/pantallas/usuarios_screen.dart';
 // import 'package:frontend/pantallas/reportes_screen.dart';
 // import 'package:frontend/pantallas/configuracion_screen.dart';
-
-class AdminPanel extends StatelessWidget {
+class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
+
+  @override
+  State<AdminPanel> createState() => _AdminPanelState();
+}
+
+class _AdminPanelState extends State<AdminPanel> {
+  int _currentIndex = 0;
 
   final Color _primaryColor = const Color(0xFF6B2D3C);
   final Color _backgroundColor = const Color(0xFFF7F4F0);
 
+  late final List<Widget> _paginas = [
+    _buildInicioAdmin(),
+    const Center(child: Text('Pantalla Inventario', style: TextStyle(fontSize: 18))), // Reemplaza por tu pantalla real
+    const Center(child: Text('Pantalla Pedidos', style: TextStyle(fontSize: 18))), // Reemplaza por tu pantalla real
+    const Center(child: Text('Pantalla Ajustes', style: TextStyle(fontSize: 18))), // Reemplaza por tu pantalla real
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: _backgroundColor,
       body: _paginas[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -42,7 +54,7 @@ class AdminPanel extends StatelessWidget {
             },
             type: BottomNavigationBarType.fixed,
             backgroundColor: Colors.white,
-            selectedItemColor: primaryColor,
+            selectedItemColor: _primaryColor,
             unselectedItemColor: Colors.grey[400],
             selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             unselectedLabelStyle: const TextStyle(fontSize: 12),
@@ -88,9 +100,9 @@ class AdminPanel extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'CalzaMe',
+                      'Calzado Mar&Paz',
                       style: TextStyle(
-                        color: primaryColor,
+                        color: _primaryColor,
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                         letterSpacing: 0.5,
@@ -99,7 +111,7 @@ class AdminPanel extends StatelessWidget {
                     Text(
                       'Panel Administrador',
                       style: TextStyle(
-                        color: primaryColor,
+                        color: _primaryColor,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -112,7 +124,7 @@ class AdminPanel extends StatelessWidget {
                   child: Text(
                     'ML',
                     style: TextStyle(
-                      color: primaryColor,
+                      color: _primaryColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -126,14 +138,14 @@ class AdminPanel extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [primaryColor, const Color(0xFF4A1525)],
+                  colors: [_primaryColor, const Color(0xFF4A1525)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.3),
+                    color: _primaryColor.withOpacity(0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 6),
                   ),
@@ -183,7 +195,7 @@ class AdminPanel extends StatelessWidget {
                     height: 45,
                     width: double.infinity,
                     child: CustomPaint(
-                      painter: _SalesChartPainter(),
+                      painter: LineChartPainter(color: Colors.white70),
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -200,16 +212,16 @@ class AdminPanel extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    title: '12',
-                    subtitle: 'Pedidos pendientes',
+                    value: '12',
+                    title: 'Pedidos pendientes',
                     icon: Icons.access_time_filled,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    title: '148',
-                    subtitle: 'Productos activos',
+                    value: '148',
+                    title: 'Productos activos',
                     icon: Icons.inventory,
                   ),
                 ),
@@ -220,7 +232,7 @@ class AdminPanel extends StatelessWidget {
             Text(
               'Gestiona tu tienda',
               style: TextStyle(
-                color: primaryColor,
+                color: _primaryColor,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),
@@ -235,22 +247,22 @@ class AdminPanel extends StatelessWidget {
               mainAxisSpacing: 12,
               childAspectRatio: 1.3,
               children: [
-                _buildOptionCard(
+                _buildMenuCard(
                   icon: Icons.local_offer_outlined,
                   title: 'Categorías y\nOfertas',
                   onTap: () {},
                 ),
-                _buildOptionCard(
+                _buildMenuCard(
                   icon: Icons.people_outline,
                   title: 'Usuarios y\nClientes',
                   onTap: () {},
                 ),
-                _buildOptionCard(
+                _buildMenuCard(
                   icon: Icons.bar_chart_outlined,
                   title: 'Reportes de\nVentas',
                   onTap: () {},
                 ),
-                _buildOptionCard(
+                _buildMenuCard(
                   icon: Icons.tune_outlined,
                   title: 'Configuración\nTienda',
                   onTap: () {},
@@ -264,8 +276,9 @@ class AdminPanel extends StatelessWidget {
   }
 
   Widget _buildStatCard({
+    required String value,
     required String title,
-    required String subtitle,
+    //required String subtitle,
     required IconData icon,
   }) {
     return Container(
