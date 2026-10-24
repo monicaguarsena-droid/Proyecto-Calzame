@@ -108,14 +108,12 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
   }
 
   // Iniciar sesión / Registro con Google (Guarda automáticamente en la BD del Backend/Supabase)
-  // Iniciar sesión / Registro con Google (Guarda automáticamente en la BD del Backend/Supabase)
   Future<Map<String, dynamic>> loginWithGoogle() async {
     try {
       // 1. Forzar el cierre de sesión previo para limpiar la caché y mostrar el selector de cuentas
       if (await _googleSignIn.isSignedIn()) {
         await _googleSignIn.signOut();
       }
-
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
         return {'success': false, 'message': 'Inicio de sesión cancelado'};

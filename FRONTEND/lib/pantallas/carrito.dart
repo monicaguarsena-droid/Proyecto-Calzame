@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/pantallas/compra.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
-import 'package:frontend/pantallas/inicio_sesion.dart'; 
 import 'package:frontend/pantallas/producto.dart';
 
 // Modelo actualizado para incluir talla y color en los ítems del carrito
@@ -402,7 +402,10 @@ class _CarritoScreenState extends State<CarritoScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const Login(),
+                    builder: (context) => CompraScreen(
+                      items: CarritoService.itemsCarrito,
+                      total: _totalGeneral,
+                    ),
                   ),
                 );
               },

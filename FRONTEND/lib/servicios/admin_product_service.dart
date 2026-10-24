@@ -5,7 +5,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/api_config.dart';
 
-// Operaciones del panel administrativo sobre /helados (requieren token de admin)
+// Operaciones del panel administrativo sobre el calzado (requieren token de admin)
 class AdminProductService {
   static Future<String?> _obtenerToken() async {
     final prefs = await SharedPreferences.getInstance();
