@@ -27,13 +27,13 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/auth', authRoutes); // Cambiado de '/auth' a '/api/auth'
-app.use('/usuarios', userRouter);
-app.use('/productos', productosRouter);
-app.use('/pedidos', pedidosRouter);
-app.use('/favoritos', favoritosRouter);
-app.use('/categorias', categoriasRouter);
-app.use('/direcciones', direccionesRouter);
-app.use('/carrito', carritoRouter);
+app.use('/api/usuarios', userRouter);
+app.use('/api/productos', productosRouter);
+app.use('/api/pedidos', pedidosRouter);
+app.use('/api/favoritos', favoritosRouter);
+app.use('/api/categorias', categoriasRouter);
+app.use('/api/direcciones', direccionesRouter);
+app.use('/api/carrito', carritoRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/chat', chatRoutes);
 
