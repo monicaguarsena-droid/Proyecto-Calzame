@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
@@ -5,6 +7,7 @@ import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/pedido.dart';
+//import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CompraScreen extends StatefulWidget {
   final List<ItemCarrito> items;
@@ -34,6 +37,8 @@ class _CompraScreenState extends State<CompraScreen> {
   String _metodoPago = 'Nequi';
   String _detallePago = 'Cuenta vinculada: 300 123 4567';
 
+  final String baseUrl = 'http://10.0.2.2:3000/api';
+
   int get _cantidadTotalProductos {
     return widget.items.fold(0, (sum, item) => sum + item.cantidad);
   }
@@ -47,6 +52,34 @@ class _CompraScreenState extends State<CompraScreen> {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FavoritosScreen()));
     } else if (index == 3) {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PerfilScreen()));
+    }
+  }
+
+  Future<void> _enviarPedidoAlServidor() async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/pedidos'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'usuario_id': 1, // ID del cliente
+          'total': widget.total,
+          'productos': widget.items.map((item) {
+            return {
+              'nombre': item.titulo,
+              'precio': item.precio,
+              'cantidad': item.cantidad,
+              'talla': item.talla,
+              'color': item.color,
+            };
+          }).toList(),
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        print('Pedido sincronizado con el backend exitosamente');
+      }
+    } catch (e) {
+      print('Error al conectar con el servidor backend: $e');
     }
   }
 
@@ -109,7 +142,7 @@ class _CompraScreenState extends State<CompraScreen> {
       },
     );
   }
-
+  
   // Modal para seleccionar método de pago
   void _seleccionarPagoModal() {
     showModalBottomSheet(
@@ -176,8 +209,10 @@ class _CompraScreenState extends State<CompraScreen> {
     );
   }
 
-  void _procesarCompra() {
+  void _procesarCompra() async {
     setState(() => _isProcessing = true);
+
+    await _enviarPedidoAlServidor();
 
     double totalGeneral = widget.total;
 

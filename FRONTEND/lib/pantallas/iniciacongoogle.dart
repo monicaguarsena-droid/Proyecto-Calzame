@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/servicios/auth_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+
 
 class GoogleLogin extends StatefulWidget {
   const GoogleLogin({Key? key}) : super(key: key);

@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/admin_panel.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/olvidocontrasena.dart';
-import 'package:frontend/pantallas/registro.dart';
-import 'package:frontend/pantallas/olvidocontrasena.dart'; // Importación agregada
-import 'package:frontend/pantallas/iniciacongoogle.dart'; // Importación agregada
+import 'package:frontend/pantallas/registro.dart'; // Importación agregada // Importación agregada
 import 'package:frontend/servicios/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   const Login({super.key});
@@ -45,6 +44,22 @@ class _LoginState extends State<Login> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
+      final prefs = await SharedPreferences.getInstance();
+  
+      // Guardamos el correo
+      await prefs.setString('email', emailIngresado);
+      
+      // Guardamos el nombre y datos que te devuelva el backend
+      if (result['nombre'] != null) {
+        await prefs.setString('nombre', result['nombre']);
+      } else if (result['usuario'] != null && result['usuario']['nombre'] != null) {
+        await prefs.setString('nombre', result['usuario']['nombre']);
+      }
+      
+      // Guardamos el token de autenticación (si tu servidor maneja JWT o Supabase)
+      if (result['token'] != null) {
+        await prefs.setString('token', result['token']);
+      }
       // Validar si el correo ingresado es el del administrador
     if (emailIngresado.toLowerCase() == _adminEmail.toLowerCase()) {
         Navigator.pushReplacement(

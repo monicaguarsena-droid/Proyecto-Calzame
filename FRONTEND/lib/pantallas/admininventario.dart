@@ -12,36 +12,20 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
   final Color backgroundColor = const Color(0xFFF9F1EE);
   
   String _categoriaSeleccionada = 'Todos';
+  String _filtroBusqueda = '';
 
-  final List<Map<String, dynamic>> _productos = [
-    {
-      'nombre': 'Sandalia de tiras',
-      'categoria': 'Dama',
-      'stock': 18,
-      'precio': 129,
-      'stockBajo': false,
-      'imagen': 'https://via.placeholder.com/150',
-    },
-    {
-      'nombre': 'Botas de vestir',
-      'categoria': 'Caballero',
-      'stock': 4,
-      'precio': 189,
-      'stockBajo': true,
-      'imagen': 'https://via.placeholder.com/150',
-    },
-    {
-      'nombre': 'Zapatillas de colores',
-      'categoria': 'Infantil',
-      'stock': 24,
-      'precio': 110,
-      'stockBajo': false,
-      'imagen': 'https://via.placeholder.com/150',
-    },
-  ];
+  // Lista vacía para que no tenga productos por defecto
+  final List<Map<String, dynamic>> _productos = [];
 
   @override
   Widget build(BuildContext context) {
+    // Filtrar productos según la categoría y búsqueda
+    final productosFiltrados = _productos.where((prod) {
+      final coincideCategoria = _categoriaSeleccionada == 'Todos' || prod['categoria'] == _categoriaSeleccionada;
+      final coincideTexto = prod['nombre'].toLowerCase().contains(_filtroBusqueda.toLowerCase());
+      return coincideCategoria && coincideTexto;
+    }).toList();
+
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -51,7 +35,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'CalzaMe',
+                'Calzado Mar&Paz',
                 style: TextStyle(
                   color: primaryColor,
                   fontWeight: FontWeight.w600,
@@ -77,7 +61,9 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () {
+                    // TODO: Navegar a la pantalla de "Agregar Producto" o abrir formulario
+                  },
                   icon: const Icon(Icons.add, color: Colors.white, size: 20),
                   label: const Text(
                     'Agregar producto',
@@ -100,8 +86,13 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(25),
                 ),
-                child: const TextField(
-                  decoration: InputDecoration(
+                child: TextField(
+                  onChanged: (valor) {
+                    setState(() {
+                      _filtroBusqueda = valor;
+                    });
+                  },
+                  decoration: const InputDecoration(
                     hintText: 'Buscar calzado por nombre...',
                     hintStyle: TextStyle(color: Colors.grey, fontSize: 13),
                     prefixIcon: Icon(Icons.search, color: Colors.grey),
@@ -150,7 +141,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    '148 productos activos',
+                    '${productosFiltrados.length} productos activos',
                     style: TextStyle(
                       color: primaryColor,
                       fontWeight: FontWeight.bold,
@@ -170,128 +161,156 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
               ),
               const SizedBox(height: 12),
 
-              ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _productos.length,
-                itemBuilder: (context, index) {
-                  final prod = _productos[index];
-                  return Container(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
+              // Si no hay productos, mostramos un mensaje indicándole al administrador que agregue uno
+              productosFiltrados.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40.0),
+                      child: Center(
+                        child: Column(
                           children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child: Container(
-                                width: 85,
-                                height: 85,
-                                color: Colors.grey[200],
-                                child: Image.network(
-                                  prod['imagen'],
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Icon(Icons.image, color: primaryColor),
-                                ),
-                              ),
+                            Icon(Icons.inventory_2_outlined, size: 60, color: Colors.grey.shade400),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No hay productos registrados',
+                              style: TextStyle(color: Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Presiona "Agregar producto" para empezar.',
+                              style: TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: productosFiltrados.length,
+                      itemBuilder: (context, index) {
+                        final prod = productosFiltrados[index];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 14),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Column(
+                            children: [
+                              Row(
                                 children: [
-                                  Text(
-                                    prod['categoria'],
-                                    style: const TextStyle(color: Colors.grey, fontSize: 11),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    prod['nombre'],
-                                    style: TextStyle(
-                                      color: primaryColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(14),
+                                    child: Container(
+                                      width: 85,
+                                      height: 85,
+                                      color: Colors.grey[200],
+                                      child: Image.network(
+                                        prod['imagen'] ?? '',
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) =>
+                                            Icon(Icons.image, color: primaryColor),
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      if (prod['stockBajo'])
-                                        const Icon(Icons.warning_amber_rounded,
-                                            color: Colors.orange, size: 14)
-                                      else
-                                        Container(
-                                          width: 6,
-                                          height: 6,
-                                          decoration: BoxDecoration(
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          prod['categoria'] ?? '',
+                                          style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          prod['nombre'] ?? '',
+                                          style: TextStyle(
                                             color: primaryColor,
-                                            shape: BoxShape.circle,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
                                           ),
                                         ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        '${prod['stock']} en stock${prod['stockBajo'] ? ' · Stock bajo' : ''}',
-                                        style: TextStyle(
-                                          color: prod['stockBajo'] ? Colors.orange[800] : Colors.grey[600],
-                                          fontSize: 11,
-                                          fontWeight: prod['stockBajo'] ? FontWeight.bold : FontWeight.normal,
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            if (prod['stockBajo'] == true)
+                                              const Icon(Icons.warning_amber_rounded,
+                                                  color: Colors.orange, size: 14)
+                                            else
+                                              Container(
+                                                width: 6,
+                                                height: 6,
+                                                decoration: BoxDecoration(
+                                                  color: primaryColor,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              '${prod['stock']} en stock${prod['stockBajo'] == true ? ' · Stock bajo' : ''}',
+                                              style: TextStyle(
+                                                color: prod['stockBajo'] == true ? Colors.orange[800] : Colors.grey[600],
+                                                fontSize: 11,
+                                                fontWeight: prod['stockBajo'] == true ? FontWeight.bold : FontWeight.normal,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '\$${prod['precio']}',
-                                    style: TextStyle(
-                                      color: primaryColor,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          '\$${prod['precio']}',
+                                          style: TextStyle(
+                                            color: primaryColor,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: TextButton.icon(
-                                onPressed: () {},
-                                icon: Icon(Icons.edit_outlined, color: primaryColor, size: 16),
-                                label: Text('Editar', style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
-                                style: TextButton.styleFrom(
-                                  backgroundColor: primaryColor.withOpacity(0.08),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: TextButton.icon(
+                                      onPressed: () {
+                                        // Acción Editar
+                                      },
+                                      icon: Icon(Icons.edit_outlined, color: primaryColor, size: 16),
+                                      label: Text('Editar', style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: primaryColor.withOpacity(0.08),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: () {
+                                        setState(() {
+                                          _productos.remove(prod);
+                                        });
+                                      },
+                                      icon: Icon(Icons.delete_outline, color: primaryColor, size: 16),
+                                      label: Text('Eliminar', style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(color: Colors.grey.shade300),
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {},
-                                icon: Icon(Icons.delete_outline, color: primaryColor, size: 16),
-                                label: Text('Eliminar', style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
-                                style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: Colors.grey.shade300),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ],
           ),
         ),

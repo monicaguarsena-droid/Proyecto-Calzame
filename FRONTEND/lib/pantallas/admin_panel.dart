@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-// import 'package:frontend/pantallas/inventario_screen.dart';
-// import 'package:frontend/pantallas/pedidos_screen.dart';
+import 'package:frontend/cors/colores.dart';
+import 'package:frontend/pantallas/admindrawer.dart';
+import 'package:frontend/pantallas/admininventario.dart';
+import 'package:frontend/pantallas/adminpedido.dart';
 // import 'package:frontend/pantallas/categorias_screen.dart';
 // import 'package:frontend/pantallas/usuarios_screen.dart';
 // import 'package:frontend/pantallas/reportes_screen.dart';
 // import 'package:frontend/pantallas/configuracion_screen.dart';
 class AdminPanel extends StatefulWidget {
-  const AdminPanel({super.key});
+  const AdminPanel({super.key,});
 
   @override
   State<AdminPanel> createState() => _AdminPanelState();
@@ -14,6 +16,8 @@ class AdminPanel extends StatefulWidget {
 
 class _AdminPanelState extends State<AdminPanel> {
   int _currentIndex = 0;
+
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   final Color _primaryColor = const Color(0xFF6B2D3C);
   final Color _backgroundColor = const Color(0xFFF7F4F0);
@@ -28,7 +32,14 @@ class _AdminPanelState extends State<AdminPanel> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: _backgroundColor,
+
+      drawer: AdminDrawer(
+        adminName: 'Mónica Molina',
+        adminEmail: 'monicaguarsena@gmail.com',
+      ),
+      
       body: _paginas[_currentIndex],
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -118,16 +129,13 @@ class _AdminPanelState extends State<AdminPanel> {
                     ),
                   ],
                 ),
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    'ML',
-                    style: TextStyle(
-                      color: _primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.menu_rounded, size: 28),
+                  color: _primaryColor,
+                  onPressed: () {
+                    // Abre el menú lateral izquierdo de forma directa y sin errores
+                    _scaffoldKey.currentState?.openDrawer();
+                  },
                 ),
               ],
             ),
@@ -247,6 +255,18 @@ class _AdminPanelState extends State<AdminPanel> {
               mainAxisSpacing: 12,
               childAspectRatio: 1.3,
               children: [
+                _buildMenuCard(
+                  icon: Icons.local_offer_outlined,
+                  title: 'Inventario de Productos',
+                  onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context)=> InventarioAdminPage()));},
+                ),
+                _buildMenuCard(
+                  icon: Icons.local_offer_outlined,
+                  title: 'Pedidos de Clientes',
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context)=> PedidosAdmin()));
+                  },
+                ),
                 _buildMenuCard(
                   icon: Icons.local_offer_outlined,
                   title: 'Categorías y\nOfertas',
