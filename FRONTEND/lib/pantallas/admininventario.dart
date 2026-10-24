@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/adminagregar.dart';
-import 'package:frontend/cors/colores.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
