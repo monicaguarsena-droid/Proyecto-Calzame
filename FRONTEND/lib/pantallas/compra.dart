@@ -8,6 +8,7 @@ import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/pedido.dart';
 //import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CompraScreen extends StatefulWidget {
   final List<ItemCarrito> items;
@@ -38,6 +39,23 @@ class _CompraScreenState extends State<CompraScreen> {
   String _detallePago = 'Cuenta vinculada: 300 123 4567';
 
   final String baseUrl = 'http://10.0.2.2:3000/api';
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatosUsuario();
+  }
+
+  Future<void> _cargarDatosUsuario() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      // Si el nombre, cédula o correo están guardados, los asignamos. 
+      // Si no hay cédula guardada aún, dejamos un texto por defecto o vacío.
+      _nombre = prefs.getString('nombre') ?? _nombre;
+      _cedula = prefs.getString('cedula') ?? _cedula;
+      _telefono = prefs.getString('telefono') ?? _telefono;
+    });
+  }
 
   int get _cantidadTotalProductos {
     return widget.items.fold(0, (sum, item) => sum + item.cantidad);

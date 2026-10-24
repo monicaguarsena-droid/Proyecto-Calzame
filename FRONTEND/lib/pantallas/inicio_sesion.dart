@@ -40,12 +40,16 @@ class _LoginState extends State<Login> {
       emailIngresado,
       _contrasenaController.text.trim(),
     );
-
+    print("RESPUESTA COMPLETA DEL LOGIN: $result");
     setState(() => _isLoading = false);
 
     if (result['success']) {
       final prefs = await SharedPreferences.getInstance();
-  
+      final tokenReal = result['data']?['token'];
+      if (tokenReal != null) {
+        await prefs.setString('token', tokenReal);
+        print("Token guardado con éxito: $tokenReal");
+      }
       // Guardamos el correo
       await prefs.setString('email', emailIngresado);
       

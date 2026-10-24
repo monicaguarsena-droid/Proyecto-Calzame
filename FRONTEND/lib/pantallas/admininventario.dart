@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/pantallas/adminagregar.dart';
+import 'package:frontend/cors/colores.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
 
 class InventarioAdminPage extends StatefulWidget {
   const InventarioAdminPage({Key? key}) : super(key: key);
@@ -10,19 +15,42 @@ class InventarioAdminPage extends StatefulWidget {
 class _InventarioAdminPageState extends State<InventarioAdminPage> {
   final Color primaryColor = const Color(0xFF6B1229);
   final Color backgroundColor = const Color(0xFFF9F1EE);
-  
+  final String baseUrl = "http://10.0.2.2:3000";
+
   String _categoriaSeleccionada = 'Todos';
   String _filtroBusqueda = '';
 
   // Lista vacía para que no tenga productos por defecto
-  final List<Map<String, dynamic>> _productos = [];
-
+  List<Map<String, dynamic>> _productos = [];
+  
+  Future<void> _cargarProductos() async {
+  try {
+    final response = await http.get(Uri.parse('$baseUrl/api/productos')); // O la ruta que uses
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      setState(() {
+        // Asegúrate de asignarlo a tu lista según cómo te devuelva los datos el backend
+        _productos = List<Map<String, dynamic>>.from(data['productos'] ?? data);
+      });
+    }
+  } catch (e) {
+    print("Error al cargar productos: $e");
+  }
+}
+  @override
+  void initState() {
+    super.initState();
+    _cargarProductos();
+  }
+  
   @override
   Widget build(BuildContext context) {
     // Filtrar productos según la categoría y búsqueda
     final productosFiltrados = _productos.where((prod) {
-      final coincideCategoria = _categoriaSeleccionada == 'Todos' || prod['categoria'] == _categoriaSeleccionada;
-      final coincideTexto = prod['nombre'].toLowerCase().contains(_filtroBusqueda.toLowerCase());
+      final coincideCategoria = _categoriaSeleccionada == 'Todos' || prod['Categoria'] == _categoriaSeleccionada;
+      // Si 'nombre' es null, le asignamos un texto vacío ('') para que no falle
+      final nombreProducto = prod['Nombre']?.toString() ?? '';
+      final coincideTexto = nombreProducto.toLowerCase().contains(_filtroBusqueda.toLowerCase());
       return coincideCategoria && coincideTexto;
     }).toList();
 
@@ -61,8 +89,16 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Navegar a la pantalla de "Agregar Producto" o abrir formulario
+                  onPressed: () async {
+                    final resultado = await Navigator.push(
+                      context, 
+                      MaterialPageRoute(
+                        builder: (context) => const AgregarProductoScreen(),
+                      ),
+                    );
+                    if (resultado == true) {
+                      _cargarProductos(); 
+                    }
                   },
                   icon: const Icon(Icons.add, color: Colors.white, size: 20),
                   label: const Text(
@@ -207,7 +243,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                       height: 85,
                                       color: Colors.grey[200],
                                       child: Image.network(
-                                        prod['imagen'] ?? '',
+                                        prod['Imagen'] ?? '',
                                         fit: BoxFit.cover,
                                         errorBuilder: (context, error, stackTrace) =>
                                             Icon(Icons.image, color: primaryColor),
@@ -220,12 +256,12 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          prod['categoria'] ?? '',
+                                          prod['Categoria'] ?? '',
                                           style: const TextStyle(color: Colors.grey, fontSize: 11),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          prod['nombre'] ?? '',
+                                          prod['Nombre'] ?? '',
                                           style: TextStyle(
                                             color: primaryColor,
                                             fontWeight: FontWeight.bold,
@@ -249,7 +285,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                               ),
                                             const SizedBox(width: 4),
                                             Text(
-                                              '${prod['stock']} en stock${prod['stockBajo'] == true ? ' · Stock bajo' : ''}',
+                                              '${prod['Stock']} en stock${prod['stockBajo'] == true ? ' · Stock bajo' : ''}',
                                               style: TextStyle(
                                                 color: prod['stockBajo'] == true ? Colors.orange[800] : Colors.grey[600],
                                                 fontSize: 11,
@@ -260,7 +296,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          '\$${prod['precio']}',
+                                          '\$${prod['Precio']}',
                                           style: TextStyle(
                                             color: primaryColor,
                                             fontSize: 18,

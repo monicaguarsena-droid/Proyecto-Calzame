@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/servicios/auth_service.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class GoogleLogin extends StatefulWidget {
@@ -34,8 +35,6 @@ class _GoogleLoginState extends State<GoogleLogin> {
         setState(() => _isLoading = false);
         return;
       }
-
-      // 2. Obtiene los detalles de autenticación (tokens) si los necesitas enviar al backend
       // final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       // 3. Llama a tu servicio de autenticación
@@ -46,7 +45,19 @@ class _GoogleLoginState extends State<GoogleLogin> {
       setState(() => _isLoading = false);
     
       if (result['success'] == true) {
-        // Navegar a la pantalla principal de CalzaMe
+        // Cuando Google Sign-In es exitoso y el backend te responde:
+        final prefs = await SharedPreferences.getInstance();
+
+        final Map<String, dynamic>? userData = result['user'] ?? result;
+        // Guardamos el nombre y el correo que vienen del inicio de sesión de Google
+        await prefs.setString('email', userData?['email'] ?? '');
+        await prefs.setString('nombre', userData?['nombre'] ?? 'Usuario Google');
+
+        // Si tu backend te devuelve la cédula o el teléfono, guárdalos también:
+        if (userData?['cedula'] != null) {
+          await prefs.setString('cedula', userData!['cedula']);
+        }
+        // Navegar a la pantalla principal de home
         Navigator.pushReplacement(
           context, 
           MaterialPageRoute(builder: (context) => const Home())

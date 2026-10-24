@@ -67,7 +67,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
         if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-
+        print('RESPUESTA DEL BACKEND: $data');
         // Mapeo flexible según cómo devuelva los datos tu controlador en Node.js
         final usuarioBD = (data is Map && data.containsKey('usuario'))
             ? data['usuario']
@@ -75,7 +75,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
         if (mounted && usuarioBD != null) {
           setState(() {
-            _nombre = usuarioBD['nombre'] ?? usuarioBD['name'] ?? _nombre;
+            _nombre = usuarioBD['nombre'] ?? usuarioBD['nombre_completo'] ?? usuarioBD['name'] ?? 'sin nombre';
             _email = usuarioBD['email'] ?? usuarioBD['correo'] ?? _email;
             _telefono = usuarioBD['telefono'] ?? usuarioBD['phone'] ?? _telefono;
             _direccion = usuarioBD['direccion'] ?? usuarioBD['address'] ?? _direccion;

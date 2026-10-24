@@ -4,6 +4,7 @@ import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/servicios/favoritos_service.dart';
 
 class DetalleProductoScreen extends StatefulWidget {
   final String imagen;
@@ -37,6 +38,13 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
 
   final List<String> nombresColores = ['Beige', 'Negro', 'Rosado'];
 
+  @override
+  void initState() {
+    super.initState();
+    // Verificamos si este producto ya está guardado en favoritos al abrir la pantalla
+    esFavorito = FavoritosService.esFavorito(widget.titulo);
+  }
+
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.pushReplacement(
@@ -62,21 +70,29 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
   }
 
   void _toggleFavorito() {
-    setState(() {
-      esFavorito = !esFavorito;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          esFavorito
-              ? '¡"${widget.titulo}" se agregó a favoritos!'
-              : '¡"${widget.titulo}" se quitó de favoritos!',
-        ),
-        backgroundColor: esFavorito ? Colors.green : Colors.redAccent,
-        duration: const Duration(seconds: 2),
+  FavoritosService.toggleFavorito(
+    imagen: widget.imagen,
+    titulo: widget.titulo,
+    subtitulo: widget.subtitulo,
+    precio: widget.precio,
+  );
+
+  setState(() {
+    esFavorito = FavoritosService.esFavorito(widget.titulo);
+  });
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(
+        esFavorito
+            ? '¡"${widget.titulo}" se agregó a favoritos!'
+            : '¡"${widget.titulo}" se quitó de favoritos!',
       ),
-    );
-  }
+      backgroundColor: esFavorito ? Colors.green : Colors.redAccent,
+      duration: const Duration(seconds: 2),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
