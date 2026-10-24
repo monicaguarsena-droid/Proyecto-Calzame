@@ -38,7 +38,28 @@ export const getUsuarioPorId = async (req,res)=>{
         });
     }
 };
+// Obtener perfil del usuario por correo electrónico
+export const getPerfilUsuario = async (req, res) => {
+    try {
+        const { email } = req.query; // Recibe el correo desde la URL (?email=...)
+        
+        if (!email) {
+            return res.status(400).json({ error: 'El correo es obligatorio' });
+        }
 
+        // Llamas a tu modelo de base de datos (asegúrate de importar la función correspondiente)
+        const { data, error } = await obtenerPorEmail(email); // O la función que uses en tu modelo
+
+        if (error || !data) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        return res.status(200).json(data);
+    } catch (error) {
+        console.error('Error al obtener el perfil:', error);
+        return res.status(500).json({ error: 'Error al obtener el perfil del usuario' });
+    }
+};
 //actualizar un usuario con contraseña encriptada
 export const updateUsuario = async (req,res)=>{
     try{

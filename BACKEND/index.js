@@ -34,7 +34,7 @@ app.use('/favoritos', favoritosRouter);
 app.use('/categorias', categoriasRouter);
 app.use('/direcciones', direccionesRouter);
 app.use('/carrito', carritoRouter);
-app.use('/admin', adminRouter);
+app.use('/api/admin', adminRouter);
 app.use('/api/chat', chatRoutes);
 
 
