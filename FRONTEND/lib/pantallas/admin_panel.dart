@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/admindrawer.dart';
 import 'package:frontend/pantallas/admininventario.dart';
 import 'package:frontend/pantallas/adminpedido.dart';
