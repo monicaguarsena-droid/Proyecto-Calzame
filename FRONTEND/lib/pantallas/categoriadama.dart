@@ -22,28 +22,24 @@ class _CategoriaDamaState extends State<CategoriaDama> {
       'titulo': 'Botas altas de cuero',
       'subtitulo': 'Cuero suave · Invierno',
       'precio': '\$129',
-      'esFavorito': false,
     },
     {
       'imagen': 'assets/img/tacon.jpg',
       'titulo': 'Stiletto clásico',
       'subtitulo': 'Tacón fino · Elegante',
       'precio': '\$89',
-      'esFavorito': false,
     },
     {
       'imagen': 'assets/img/sandalia.jpg',
       'titulo': 'Sandalia de tiras',
       'subtitulo': 'Cuero suave · Tono beige',
       'precio': '\$110',
-      'esFavorito': false,
     },
     {
       'imagen': 'assets/img/zapatillas.jpg',
       'titulo': 'Zapatillas casuales',
       'subtitulo': 'Suela cómoda · Diario',
       'precio': '\$95',
-      'esFavorito': false,
     },
   ];
 
@@ -126,7 +122,6 @@ class _CategoriaDamaState extends State<CategoriaDama> {
     final titulo = item['titulo'] as String;
     final subtitulo = item['subtitulo'] as String;
     final precio = item['precio'] as String;
-    final bool esFavorito = item['esFavorito'] as bool;
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -150,35 +145,6 @@ class _CategoriaDamaState extends State<CategoriaDama> {
                     errorBuilder: (_, __, ___) => Container(
                       color: ColoresApp.surfaceVariant,
                       child: const Icon(Icons.image_not_supported, color: ColoresApp.textSecondary),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _productosDama[index]['esFavorito'] = !esFavorito;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(!esFavorito ? 'Añadido a favoritos' : 'Eliminado de favoritos'),
-                        backgroundColor: ColoresApp.primary,
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                    child: Icon(
-                      esFavorito ? Icons.favorite : Icons.favorite_border,
-                      size: 16,
-                      color: ColoresApp.primary,
                     ),
                   ),
                 ),

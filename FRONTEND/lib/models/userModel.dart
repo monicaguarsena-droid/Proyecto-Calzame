@@ -2,14 +2,14 @@ class UserModel {
   final String? id; // Nulo al crear, asignado por la BD al responder
   final String nombre;
   final String email;
-  final String password;
+  final String contrasena;
   final String rol;
 
   UserModel({
     this.id,
     required this.nombre,
     required this.email,
-    required this.password,
+    required this.contrasena,
     this.rol = 'usuario', // Por defecto 'usuario'
   });
 
@@ -22,7 +22,7 @@ class UserModel {
       id: json['id']?.toString(), // Lee el ID retornado por Supabase/Backend
       nombre: json['nombre'] ?? '',
       email: json['email'] ?? '',
-      password: json['password'] ?? '',
+      contrasena: json['contrasena'] ?? '',
       rol: json['rol'] ?? 'usuario',
     );
   }
@@ -32,7 +32,7 @@ class UserModel {
     return {
       'nombre': nombre,
       'email': email,
-      'password': password,
+      'contrasena': contrasena,
       'rol': rol,
     };
   }

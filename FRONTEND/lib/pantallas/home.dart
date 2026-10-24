@@ -280,9 +280,9 @@ class _HomeState extends State<Home> {
               if (i == 0) {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => const CategoriaDama()));
               } else if (i == 1) {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaInfantil()));
-              } else if (i == 2) {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaCaballero()));
+              } else if (i == 2) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaInfantil()));
               }
             },
             child: items[i],

@@ -16,36 +16,7 @@ class CategoriaCaballero extends StatefulWidget {
 class _CategoriaCaballeroState extends State<CategoriaCaballero> {
   final int _tab = 0;
 
-  final List<Map<String, dynamic>> _productosCaballero = [
-    {
-      'imagen': 'assets/img/zapatocaballero.jpg',
-      'titulo': 'Zapato formal de cuero',
-      'subtitulo': 'Elegante · Oficina',
-      'precio': '\$145',
-      'esFavorito': false,
-    },
-    {
-      'imagen': 'assets/img/botincaballero.jpg',
-      'titulo': 'Botín casual',
-      'subtitulo': 'Cuero resistente · Urbano',
-      'precio': '\$160',
-      'esFavorito': false,
-    },
-    {
-      'imagen': 'assets/img/teniscaballero.jpg',
-      'titulo': 'Tenis deportivos',
-      'subtitulo': 'Máxima amortiguación',
-      'precio': '\$115',
-      'esFavorito': false,
-    },
-    {
-      'imagen': 'assets/img/sandaliacaballero.jpg',
-      'titulo': 'Sandalia de cuero',
-      'subtitulo': 'Frescas · Verano',
-      'precio': '\$85',
-      'esFavorito': false,
-    },
-  ];
+  final List<Map<String, dynamic>> _productosCaballero = [];
 
   void _onItemTapped(int index) {
     if (index == _tab) return;
@@ -126,7 +97,6 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
     final titulo = item['titulo'] as String;
     final subtitulo = item['subtitulo'] as String;
     final precio = item['precio'] as String;
-    final bool esFavorito = item['esFavorito'] as bool;
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -150,35 +120,6 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
                     errorBuilder: (_, __, ___) => Container(
                       color: ColoresApp.surfaceVariant,
                       child: const Icon(Icons.image_not_supported, color: ColoresApp.textSecondary),
-                    ),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 8,
-                right: 8,
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _productosCaballero[index]['esFavorito'] = !esFavorito;
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(!esFavorito ? 'Añadido a favoritos' : 'Eliminado de favoritos'),
-                        backgroundColor: ColoresApp.primary,
-                        duration: const Duration(seconds: 1),
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: 30,
-                    height: 30,
-                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                    child: Icon(
-                      esFavorito ? Icons.favorite : Icons.favorite_border,
-                      size: 16,
-                      color: ColoresApp.primary,
                     ),
                   ),
                 ),

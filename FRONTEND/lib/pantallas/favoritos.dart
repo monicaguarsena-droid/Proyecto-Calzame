@@ -4,6 +4,7 @@ import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/producto.dart';
+import 'package:frontend/servicios/favoritos_service.dart';
 
 class FavoritosScreen extends StatefulWidget {
   const FavoritosScreen({super.key});
@@ -16,32 +17,14 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
   final int _tab = 2; // Pestaña de Favoritos activa
 
   // Lista modificable para poder eliminar elementos
-  final List<Map<String, String>> listaFavoritos = [
-    {
-      'imagen': 'assets/img/playa.jpg',
-      'titulo': 'Sandalia de tiras',
-      'subtitulo': 'Cuero suave · Tono beige',
-      'precio': r'$129',
-    },
-    {
-      'imagen': 'assets/img/botas.jpg',
-      'titulo': 'Bota tobillera',
-      'subtitulo': 'Cuero negro · Tacón bajo',
-      'precio': r'$149',
-    },
-    {
-      'imagen': 'assets/img/deporte.jpg',
-      'titulo': 'Zapatillas blancas',
-      'subtitulo': 'Suela cómoda · Diario',
-      'precio': r'$89',
-    },
-    {
-      'imagen': 'assets/img/invierno.jpg',
-      'titulo': 'Mule de cuero',
-      'subtitulo': 'Marrón claro · Minimalista',
-      'precio': r'$119',
-    },
-  ];
+  List<ProductoFavorito> get listaFavoritos => FavoritosService.favoritos;
+
+  @override
+  void initState() {
+    super.initState();
+    // Forzamos a actualizar el estado por si se agregaron nuevos favoritos
+    setState(() {});
+  }
 
   void _onItemTapped(int index) {
     if (index == _tab) return;
@@ -64,15 +47,15 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
     }
   }
 
-  void _abrirDetalleProducto(Map<String, String> producto) {
+  void _abrirDetalleProducto(ProductoFavorito producto) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => DetalleProductoScreen(
-          imagen: producto['imagen']!,
-          titulo: producto['titulo']!,
-          subtitulo: producto['subtitulo']!,
-          precio: producto['precio']!,
+          imagen: producto.imagen,
+          titulo: producto.titulo,
+          subtitulo: producto.subtitulo,
+          precio: producto.precio,
         ),
       ),
     );
@@ -206,7 +189,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                       height: 145,
                                       width: double.infinity,
                                       child: Image.asset(
-                                        item['imagen']!,
+                                        item.imagen,
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) => Container(
                                           color: ColoresApp.surfaceVariant,
@@ -223,7 +206,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                     top: 8,
                                     right: 8,
                                     child: GestureDetector(
-                                      onTap: () => _quitarDeFavoritos(index, item['titulo']!),
+                                      onTap: () => _quitarDeFavoritos(index, item.titulo),
                                       child: Container(
                                         width: 30,
                                         height: 30,
@@ -247,7 +230,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      item['titulo']!,
+                                      item.titulo,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -258,7 +241,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                     ),
                                     const SizedBox(height: 1),
                                     Text(
-                                      item['subtitulo']!,
+                                      item.subtitulo,
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: const TextStyle(
@@ -268,7 +251,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      item['precio']!,
+                                      item.precio,
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w800,
@@ -309,10 +292,10 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                       child: ElevatedButton(
                                         onPressed: () {
                                           CarritoService.agregarProducto(
-                                            imagen: item['imagen']!,
-                                            titulo: item['titulo']!,
-                                            subtitulo: item['subtitulo']!,
-                                            precioStr: item['precio']!,
+                                            imagen: item.imagen,
+                                            titulo: item.titulo,
+                                            subtitulo: item.subtitulo,
+                                            precioStr: item.precio,
                                           );
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             const SnackBar(

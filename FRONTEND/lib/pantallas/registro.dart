@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/verificacioncongoogle.dart';
 import 'package:frontend/servicios/auth_service.dart'; // Asegúrate de importar tu AuthService
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Registro extends StatefulWidget {
   const Registro({super.key});
@@ -60,7 +61,10 @@ class _RegistroState extends State<Registro> {
     if (result['success']) {
       _showSnackBar('¡Registro exitoso! Revisa tu correo');
 
-      // AQUÍ ESTÁ EL CAMBIO: Navegamos a la pantalla de VerificaciónCorreo
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('email', _emailController.text.trim());
+      await prefs.setString('nombre', _nombreController.text.trim());
+      //Navegamos a la pantalla de VerificaciónCorreo
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
