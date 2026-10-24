@@ -1,5 +1,5 @@
 import express from 'express';
-import {getUsuarios, getUsuarioPorId, updateUsuario, deleteUsuario} from '../controllers/user.js';
+import {getUsuarios, getUsuarioPorId,getPerfilUsuario, updateUsuario, deleteUsuario} from '../controllers/user.js';
 
 const router = express.Router();
 
@@ -7,6 +7,8 @@ const router = express.Router();
 router.get('/', getUsuarios);
 //ruta para obtener un usuario por id
 router.get('/:id', getUsuarioPorId);
+//ruta para obtener el perfil del usuario por correo electrónico
+router.get('/perfil', getPerfilUsuario);
 //ruta para actualizar un usuario
 router.put('/actualizar/:id', updateUsuario);
 //ruta para eliminar un usuario
