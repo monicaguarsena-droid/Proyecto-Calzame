@@ -7,18 +7,19 @@ export const obtenerProductos = async () => {
     return { data, error };
 };
 
-export const crearProducto = async (nombre, descripcion, precio, talla, stock, imagen, categoria) => {
+export const crearProducto = async (Nombre, Categoria, Precio, Stock,  Descripcion, Tallas, Imagen) => {
     const { data, error } = await supabase
         .from('Productos')
         .insert([
             { 
-                Nombre: nombre,
-                Descripcion: descripcion,
-                Precio: precio,
-                Talla: talla,
-                Stock: stock,
-                Imagen: imagen,
-                Categoria: categoria
+                Nombre: Nombre,
+                Categoria: Categoria,
+                Precio: Precio,
+                Stock: Stock,
+                Descripcion: Descripcion,
+                Tallas: Tallas,
+                Imagen: Imagen,
+                
             }
         ])
         .select();
@@ -30,7 +31,7 @@ export const actualizarProducto = async (id, campos) => {
     if (campos.nombre !== undefined) camposMapeados.Nombre = campos.nombre;
     if (campos.descripcion !== undefined) camposMapeados.Descripcion = campos.descripcion;
     if (campos.precio !== undefined) camposMapeados.Precio = campos.precio;
-    if (campos.talla !== undefined) camposMapeados.Talla = campos.talla;
+    if (campos.tallas !== undefined) camposMapeados.Tallas = campos.tallas;
     if (campos.stock !== undefined) camposMapeados.Stock = campos.stock;
     if (campos.imagen !== undefined || campos.imagen_url !== undefined) {
         camposMapeados.Imagen_url = campos.imagen !== undefined ? campos.imagen : campos.imagen_url;

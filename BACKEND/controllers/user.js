@@ -41,7 +41,7 @@ export const getUsuarioPorId = async (req,res)=>{
 // Obtener perfil del usuario por correo electrónico
 export const getPerfilUsuario = async (req, res) => {
     try {
-        const { email } = req.query; // Recibe el correo desde la URL (?email=...)
+        const { email } = req.query;
         
         if (!email) {
             return res.status(400).json({ error: 'El correo es obligatorio' });
