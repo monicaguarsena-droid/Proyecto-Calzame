@@ -16,32 +16,7 @@ class CategoriaDama extends StatefulWidget {
 class _CategoriaDamaState extends State<CategoriaDama> {
   final int _tab = 0;
 
-  final List<Map<String, dynamic>> _productosDama = [
-    {
-      'imagen': 'assets/img/botas.jpg',
-      'titulo': 'Botas altas de cuero',
-      'subtitulo': 'Cuero suave · Invierno',
-      'precio': '\$129',
-    },
-    {
-      'imagen': 'assets/img/tacon.jpg',
-      'titulo': 'Stiletto clásico',
-      'subtitulo': 'Tacón fino · Elegante',
-      'precio': '\$89',
-    },
-    {
-      'imagen': 'assets/img/sandalia.jpg',
-      'titulo': 'Sandalia de tiras',
-      'subtitulo': 'Cuero suave · Tono beige',
-      'precio': '\$110',
-    },
-    {
-      'imagen': 'assets/img/zapatillas.jpg',
-      'titulo': 'Zapatillas casuales',
-      'subtitulo': 'Suela cómoda · Diario',
-      'precio': '\$95',
-    },
-  ];
+  final List<Map<String, dynamic>> _productosDama = [];
 
   void _onItemTapped(int index) {
     if (index == _tab) return;

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/pantallas/admininventario.dart';
+import 'package:frontend/pantallas/adminpedido.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart'; // Asegúrate de que apunte a tu archivo de login correcto
+import 'package:frontend/pantallas/paneldeusuarios.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 // AdminDrawer - menú lateral del panel administrativo adaptado a CalzaMe
@@ -84,21 +87,21 @@ class AdminDrawer extends StatelessWidget {
                 _drawerItem(
                   icon: Icons.inventory_2_outlined,
                   title: 'Inventario de Productos',
-                  onTap: () => Navigator.pop(context),
+                  onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => InventarioAdminPage())),
                 ),
                 
                 // Opción Usuarios
                 _drawerItem(
                   icon: Icons.people_alt_outlined,
                   title: 'Usuarios y Clientes',
-                  onTap: () => _proximamente(context, 'Usuarios'),
+                  onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ClientesAdminPage())),
                 ),
                 
                 // Opción Pedidos
                 _drawerItem(
                   icon: Icons.receipt_long_outlined,
                   title: 'Pedidos de Clientes',
-                  onTap: () => _proximamente(context, 'Pedidos'),
+                  onTap: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => PedidosAdmin())),
                 ),
                 
                 const Padding(

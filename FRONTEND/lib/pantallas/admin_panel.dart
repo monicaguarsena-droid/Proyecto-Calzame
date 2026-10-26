@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/admindrawer.dart';
 import 'package:frontend/pantallas/admininventario.dart';
 import 'package:frontend/pantallas/adminpedido.dart';
+import 'package:frontend/pantallas/paneldeusuarios.dart';
 // import 'package:frontend/pantallas/categorias_screen.dart';
-// import 'package:frontend/pantallas/usuarios_screen.dart';
 // import 'package:frontend/pantallas/reportes_screen.dart';
 // import 'package:frontend/pantallas/configuracion_screen.dart';
 class AdminPanel extends StatefulWidget {
@@ -274,7 +274,7 @@ class _AdminPanelState extends State<AdminPanel> {
                 _buildMenuCard(
                   icon: Icons.people_outline,
                   title: 'Usuarios y\nClientes',
-                  onTap: () {},
+                  onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context)=> ClientesAdminPage()));},
                 ),
                 _buildMenuCard(
                   icon: Icons.bar_chart_outlined,
