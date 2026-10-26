@@ -198,7 +198,7 @@ class _HomeState extends State<Home> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'CalzaMe',
+              'Mar y Paz',
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.w800,

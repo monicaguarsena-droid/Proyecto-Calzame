@@ -35,7 +35,7 @@ class AdminDrawer extends StatelessWidget {
     );
   }
 
-  void _proximamente(BuildContext context, String seccion) {
+  void_proximamente(BuildContext context, String seccion) {
     Navigator.pop(context);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
