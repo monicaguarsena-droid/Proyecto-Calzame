@@ -100,7 +100,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    "CalzaMe",
+                    "Mar&Paz",
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 36,
