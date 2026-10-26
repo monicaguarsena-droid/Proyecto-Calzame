@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/pantallas/admin_panel.dart';
 import 'package:frontend/pantallas/adminagregar.dart';
+import 'package:frontend/pantallas/editar_producto.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-
+import 'package:frontend/cors/colores.dart';
 
 class InventarioAdminPage extends StatefulWidget {
   const InventarioAdminPage({Key? key}) : super(key: key);
@@ -61,13 +63,23 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Calzado Mar&Paz',
-                style: TextStyle(
-                  color: primaryColor,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: ColoresApp.primary),
+                    onPressed: () => Navigator.pop(context, MaterialPageRoute(builder: (context) => const AdminPanel())),
+                  ),
+                  const SizedBox(width: 4), // Espacio sutil entre la flecha y el texto
+                  const Text(
+                    'Calzado Mar&Paz',
+                    style: TextStyle(
+                      color: ColoresApp.primary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
@@ -311,15 +323,27 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                               Row(
                                 children: [
                                   Expanded(
-                                    child: TextButton.icon(
-                                      onPressed: () {
-                                        // Acción Editar
+                                    child: ElevatedButton.icon(
+                                      onPressed: () async {
+                                        // 1. Navegamos pasando el mapa del producto actual
+                                        final resultado = await Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => EditarProductoScreen(producto: productosFiltrados[index]),
+                                          ),
+                                        );
+
+                                        // 2. Si se guardó correctamente, recargamos el inventario de forma automática
+                                        if (resultado == true) {
+                                          _cargarProductos();
+                                        }
                                       },
-                                      icon: Icon(Icons.edit_outlined, color: primaryColor, size: 16),
-                                      label: Text('Editar', style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
-                                      style: TextButton.styleFrom(
-                                        backgroundColor: primaryColor.withOpacity(0.08),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      icon: const Icon(Icons.edit, size: 18),
+                                      label: const Text('Editar'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.white,
+                                        foregroundColor: primaryColor,
+                                        elevation: 0,
                                       ),
                                     ),
                                   ),
