@@ -5,6 +5,7 @@ import 'package:frontend/pantallas/editar_producto.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:frontend/cors/colores.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class InventarioAdminPage extends StatefulWidget {
   const InventarioAdminPage({Key? key}) : super(key: key);
@@ -38,6 +39,42 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
     print("Error al cargar productos: $e");
   }
 }
+  Future<void> _eliminarProducto(String id) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    // Realiza la petición DELETE al backend
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/productos/eliminar/$id'),
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // Recarga tu lista de productos o remueve el elemento de la UI
+      setState(() {
+        // Vuelve a llamar a tu función que obtiene los productos de la API
+        _cargarProductos(); 
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Producto eliminado con éxito')),
+      );
+    } else {
+      final errorData = json.decode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorData['error'] ?? 'No se pudo eliminar')),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error de conexión: $e')),
+    );
+  }
+}
+
   @override
   void initState() {
     super.initState();
@@ -349,19 +386,33 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
-                                    child: OutlinedButton.icon(
+                                    child:TextButton.icon(
                                       onPressed: () {
-                                        setState(() {
-                                          _productos.remove(prod);
-                                        });
+                                        // Muestra una alerta de confirmación antes de borrar (opcional pero recomendado)
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text('Eliminar producto'),
+                                            content: const Text('¿Estás seguro de que deseas eliminar este calzado?'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () => Navigator.pop(context),
+                                                child: const Text('Cancelar'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.pop(context);
+                                                  final idProducto = productosFiltrados[index]['id'] ?? productosFiltrados[index]['_id'];                                                  _eliminarProducto(idProducto.toString()); // 👈 Asegúrate de pasar el ID real
+                                                },
+                                                child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                              ),
+                                            ],
+                                          ),
+                                        );
                                       },
-                                      icon: Icon(Icons.delete_outline, color: primaryColor, size: 16),
-                                      label: Text('Eliminar', style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
-                                      style: OutlinedButton.styleFrom(
-                                        side: BorderSide(color: Colors.grey.shade300),
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                      ),
-                                    ),
+                                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                      label: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                    )
                                   ),
                                 ],
                               ),
