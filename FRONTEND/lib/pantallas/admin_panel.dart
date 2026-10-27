@@ -3,11 +3,10 @@ import 'package:frontend/pantallas/admindrawer.dart';
 import 'package:frontend/pantallas/admininventario.dart';
 import 'package:frontend/pantallas/adminpedido.dart';
 import 'package:frontend/pantallas/paneldeusuarios.dart';
-// import 'package:frontend/pantallas/categorias_screen.dart';
-// import 'package:frontend/pantallas/reportes_screen.dart';
-// import 'package:frontend/pantallas/configuracion_screen.dart';
+import 'package:frontend/pantallas/admincategorias.dart';
+
 class AdminPanel extends StatefulWidget {
-  const AdminPanel({super.key,});
+  const AdminPanel({super.key});
 
   @override
   State<AdminPanel> createState() => _AdminPanelState();
@@ -23,9 +22,9 @@ class _AdminPanelState extends State<AdminPanel> {
 
   late final List<Widget> _paginas = [
     _buildInicioAdmin(),
-    const Center(child: Text('Pantalla Inventario', style: TextStyle(fontSize: 18))), // Reemplaza por tu pantalla real
-    const Center(child: Text('Pantalla Pedidos', style: TextStyle(fontSize: 18))), // Reemplaza por tu pantalla real
-    const Center(child: Text('Pantalla Ajustes', style: TextStyle(fontSize: 18))), // Reemplaza por tu pantalla real
+    const Center(child: Text('Pantalla Inventario', style: TextStyle(fontSize: 18))), 
+    const Center(child: Text('Pantalla Pedidos', style: TextStyle(fontSize: 18))), 
+    const Center(child: Text('Pantalla Ajustes', style: TextStyle(fontSize: 18))), 
   ];
 
   @override
@@ -40,59 +39,6 @@ class _AdminPanelState extends State<AdminPanel> {
       ),
       
       body: _paginas[_currentIndex],
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 15,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
-          ),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
-            selectedItemColor: _primaryColor,
-            unselectedItemColor: Colors.grey[400],
-            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-            unselectedLabelStyle: const TextStyle(fontSize: 12),
-            items: const [
-              BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Inicio',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.inventory_2_outlined),
-                activeIcon: Icon(Icons.inventory_2),
-                label: 'Inventario',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_bag_outlined),
-                activeIcon: Icon(Icons.shopping_bag),
-                label: 'Pedidos',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.settings_outlined),
-                activeIcon: Icon(Icons.settings),
-                label: 'Ajustes',
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 
@@ -132,7 +78,6 @@ class _AdminPanelState extends State<AdminPanel> {
                   icon: const Icon(Icons.menu_rounded, size: 28),
                   color: _primaryColor,
                   onPressed: () {
-                    // Abre el menú lateral izquierdo de forma directa y sin errores
                     _scaffoldKey.currentState?.openDrawer();
                   },
                 ),
@@ -257,24 +202,30 @@ class _AdminPanelState extends State<AdminPanel> {
                 _buildMenuCard(
                   icon: Icons.local_offer_outlined,
                   title: 'Inventario de Productos',
-                  onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context)=> InventarioAdminPage()));},
-                ),
-                _buildMenuCard(
-                  icon: Icons.local_offer_outlined,
-                  title: 'Pedidos de Clientes',
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context)=> PedidosAdmin()));
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const InventarioAdminPage()));
                   },
                 ),
                 _buildMenuCard(
-                  icon: Icons.local_offer_outlined,
+                  icon: Icons.shopping_bag_outlined,
+                  title: 'Pedidos de Clientes',
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const PedidosAdmin()));
+                  },
+                ),
+                _buildMenuCard(
+                  icon: Icons.category_outlined,
                   title: 'Categorías y\nOfertas',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const AdminCategorias()));
+                  },
                 ),
                 _buildMenuCard(
                   icon: Icons.people_outline,
                   title: 'Usuarios y\nClientes',
-                  onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context)=> ClientesAdminPage()));},
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => const ClientesAdminPage()));
+                  },
                 ),
                 _buildMenuCard(
                   icon: Icons.bar_chart_outlined,
@@ -297,7 +248,6 @@ class _AdminPanelState extends State<AdminPanel> {
   Widget _buildStatCard({
     required String value,
     required String title,
-    //required String subtitle,
     required IconData icon,
   }) {
     return Container(
