@@ -1,7 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/cors/colores.dart'; // Ajusta la ruta de tus colores si es necesario
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Para gestionar el token de autenticación
 
 class AgregarProductoScreen extends StatefulWidget {
@@ -17,78 +19,157 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   final _stockController = TextEditingController();
   final _descripcionController = TextEditingController();
 
+  File? _imagenSeleccionada;
+  final ImagePicker _picker = ImagePicker();
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(color: ColoresApp.hint),
+      filled: true,
+      fillColor: ColoresApp.surface,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ColoresApp.border),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: ColoresApp.border),
+      ),
+    );
+  }
+
+  // Función para abrir el selector (Galería o Cámara)
+  Future<void> _seleccionarImagen(ImageSource source) async {
+    try {
+      final XFile? Imagen = await _picker.pickImage(
+        source: source,
+        imageQuality: 80, // Comprime un poco la imagen para optimizar la subida
+      );
+
+      if (Imagen != null) {
+        setState(() {
+          _imagenSeleccionada = File(Imagen.path);
+        });
+      }
+    } catch (e) {
+      print("Error al seleccionar la imagen: $e");
+    }
+  }
+
+  void _mostrarOpcionesImagen(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: ColoresApp.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.photo_library, color: ColoresApp.primary),
+                title: const Text('Galería', style: TextStyle(color: ColoresApp.textPrimary)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _seleccionarImagen(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_camera, color: ColoresApp.primary),
+                title: const Text('Cámara', style: TextStyle(color: ColoresApp.textPrimary)),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _seleccionarImagen(ImageSource.camera);
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   String _categoriaSeleccionada = 'Dama';
   final List<String> _categorias = ['Dama', 'Caballero', 'Infantil'];
   
   // Tallas disponibles y seleccionadas
-  final List<String> _tallasDisponibles = ['30', '31', '36', '37', '38', '39','40', '41', '42', '43', '44', '45'];
+  final List<String> _tallasDisponibles = ['16','17','18','19','20','21','22','23','24','25','26','27','28','29','30', '31', '32','33','34','35', '36', '37', '38', '39','40', '41', '42', '43', '44', '45'];
   final List<String> _tallasSeleccionadas = [];
 
   bool _isLoading = false;
-  final String baseUrl = 'http://10.0.2.2:3000/api'; // URL de tu backend en Node.js
+  final String baseUrl = 'http://10.0.2.2:3000/api/productos'; // URL de tu backend en Node.js
 
-  Future<void> _guardarProducto() async {
-  if (_nombreController.text.isEmpty || _precioController.text.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Por favor llena al menos el nombre y el precio')),
-    );
-    return;
-  }
+  Future<void> _guardarProductoConImagen() async {
+    setState(() {
+      _isLoading = true;
+    });
 
-  setState(() => _isLoading = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
 
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
-
-    // Limpiamos el precio eliminando puntos o comas de miles
-    String precioLimpios = _precioController.text.replaceAll('.', '').replaceAll(',', '');
-    double precioFinal = double.tryParse(precioLimpios) ?? 0.0;
-    int stockFinal = int.tryParse(_stockController.text) ?? 0;
-
-    final bodyData = {
-      'Nombre': _nombreController.text.trim(),
-      'Categoria': _categoriaSeleccionada,
-      'Precio': precioFinal,
-      'Stock': stockFinal,
-      'Descripcion': _descripcionController.text.trim(),
-      'Tallas': _tallasSeleccionadas,
-      'Imagen': 'assets/images/default_shoe.png',
-    };
-    print("Datos que se enviarán: $bodyData");
-    print("TOKEN RECUPERADO DE MEMORIA: --> $token <--");
-
-    final response = await http.post(
-      Uri.parse('$baseUrl/productos/crear'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: json.encode(bodyData),
-    );
-
-    print("Código de respuesta del servidor: ${response.statusCode}");
-    print("Respuesta: ${response.body}");
-
-    if (!mounted) return;
-
-    if (response.statusCode == 201 || response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('¡Producto agregado con éxito!'), backgroundColor: Colors.green),
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/crear'),
       );
-      Navigator.pop(context, true); 
-    } else {
+
+      request.headers.addAll({
+        'Authorization': 'Bearer $token',
+      });
+
+      // Adjuntar los campos de texto
+      request.fields['Nombre'] = _nombreController.text.trim();
+      request.fields['Categoria'] = _categoriaSeleccionada;
+      request.fields['Precio'] = _precioController.text.trim();
+      request.fields['Stock'] = _stockController.text.trim();
+      request.fields['Descripcion'] = _descripcionController.text.trim();
+      request.fields['Tallas'] = json.encode(_tallasSeleccionadas);
+
+      // Adjuntar la imagen si el usuario seleccionó una
+      if (_imagenSeleccionada != null) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'Imagen', // El nombre del campo que espera tu backend (ej. Multer en Node.js)
+            _imagenSeleccionada!.path,
+          ),
+        );
+      }
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Navigator.pop(context, true); // Regresa al inventario y recarga
+      } else {
+        final errorData = json.decode(response.body);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorData['error'] ?? 'Error al guardar el producto'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error del servidor: ${response.body}'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('Error de conexión: $e'),
+          backgroundColor: Colors.red,
+        ),
       );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+      });
     }
-  } catch (e) {
-    print("Excepción de red: $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error de conexión con el backend: $e'), backgroundColor: Colors.red),
-    );
-  } finally {
-    if (mounted) setState(() => _isLoading = false);
   }
-}
-
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,21 +195,35 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Caja para subir imagen
-            Container(
-              width: double.infinity,
-              height: 130,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: ColoresApp.border),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.camera_alt_outlined, size: 40, color: ColoresApp.primary),
-                  SizedBox(height: 8),
-                  Text('Subir imagen del calzado', style: TextStyle(color: ColoresApp.primary, fontWeight: FontWeight.w600)),
-                ],
+            GestureDetector(
+              onTap: () => _mostrarOpcionesImagen(context),
+              child: Container(
+                width: double.infinity,
+                height: 130,
+                decoration: BoxDecoration(
+                  color: ColoresApp.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: ColoresApp.border),
+                ),
+                child: _imagenSeleccionada != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.file(
+                          _imagenSeleccionada!,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.camera_alt_outlined, size: 40, color: ColoresApp.primary),
+                          SizedBox(height: 8),
+                          Text(
+                            'Subir imagen del calzado',
+                            style: TextStyle(color: ColoresApp.primary, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
               ),
             ),
             const SizedBox(height: 16),
@@ -246,7 +341,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                   backgroundColor: ColoresApp.primary,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
-                onPressed: _isLoading ? null : _guardarProducto,
+                onPressed: _isLoading ? null : _guardarProductoConImagen,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Guardar Producto', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
@@ -255,17 +350,6 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ColoresApp.border)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: ColoresApp.border)),
     );
   }
 }
