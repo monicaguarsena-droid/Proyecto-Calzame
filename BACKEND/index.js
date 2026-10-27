@@ -26,6 +26,11 @@ app.get('/', (req, res) => {
     });
 });
 
+//montando las rutas de la API
+app.get('/health', (req, res) => {
+    res.status(200).send('ok');
+});
+
 app.use('/api/auth', authRoutes); // Cambiado de '/auth' a '/api/auth'
 app.use('/api/usuarios', userRouter);
 app.use('/api/productos', productosRouter);
