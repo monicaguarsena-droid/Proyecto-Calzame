@@ -29,10 +29,10 @@ export const crearProducto = async (Nombre, Categoria, Precio, Stock,  Descripci
 export const actualizarProducto = async (id, campos) => {
     const camposMapeados = {};
     if (campos.nombre !== undefined) camposMapeados.Nombre = campos.nombre;
-    if (campos.descripcion !== undefined) camposMapeados.Descripcion = campos.descripcion;
     if (campos.precio !== undefined) camposMapeados.Precio = campos.precio;
-    if (campos.tallas !== undefined) camposMapeados.Tallas = campos.tallas;
     if (campos.stock !== undefined) camposMapeados.Stock = campos.stock;
+    if (campos.descripcion !== undefined) camposMapeados.Descripcion = campos.descripcion;
+    if (campos.tallas !== undefined) camposMapeados.Tallas = campos.tallas;
     if (campos.imagen !== undefined || campos.imagen_url !== undefined) {
         camposMapeados.Imagen_url = campos.imagen !== undefined ? campos.imagen : campos.imagen_url;
     }

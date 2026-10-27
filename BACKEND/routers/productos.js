@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getProductos, postProducto, putProducto, deleteProducto } from '../controllers/productos.js';
-import upload, { verificarToken, verificarAdmin, } from '../middlewares/authmiddleware.js';
+import { verificarToken, verificarAdmin, } from '../middlewares/authmiddleware.js';
+import { upload} from '../config/cloudinary.js';
 
 const router = Router();
 
