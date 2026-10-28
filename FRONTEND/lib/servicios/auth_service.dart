@@ -1,10 +1,11 @@
 import 'dart:convert';
+import 'package:frontend/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
   // Cambia esta URL por la IP de tu servidor backend o dominio en producción
-  final String baseUrl = 'http://10.0.2.2:3000/api'; 
+  final String baseUrl = ApiConfig.baseUrl;
 
 final GoogleSignIn _googleSignIn = GoogleSignIn(
   scopes: ['email', 'profile'],
