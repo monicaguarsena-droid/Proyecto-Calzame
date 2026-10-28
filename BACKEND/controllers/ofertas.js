@@ -1,4 +1,4 @@
-import { OfertaModel } from '../models/ofertaModel.js';
+import { OfertaModel } from '../modelos/ofertas.js';
 
 export const OfertaController = {
     // Obtener ofertas
