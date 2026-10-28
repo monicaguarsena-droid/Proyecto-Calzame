@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/favoritos.dart';
@@ -16,17 +17,30 @@ class DetallePedidoScreen extends StatefulWidget {
 }
 
 class _DetallePedidoScreenState extends State<DetallePedidoScreen> {
-  final int _tab = 3; // Pestaña de cuenta activa por defecto al venir del perfil
+  final int _tab =
+      3; // Pestaña de cuenta activa por defecto al venir del perfil
 
   void _onItemTapped(int index) {
     if (index == 0) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
     } else if (index == 1) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CarritoScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const CarritoScreen()),
+      );
     } else if (index == 2) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FavoritosScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FavoritosScreen()),
+      );
     } else if (index == 3) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PerfilScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const PerfilScreen()),
+      );
     }
   }
 
@@ -153,19 +167,24 @@ class _DetallePedidoScreenState extends State<DetallePedidoScreen> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
-                      child: Image.asset(
-                        item.imagen,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          width: 60,
-                          height: 60,
-                          color: ColoresApp.surfaceVariant,
-                          child:
-                              const Icon(Icons.image_not_supported, size: 20),
-                        ),
-                      ),
+                      child: item.imagen.startsWith('http')
+                          ? Image.network(
+                              item.imagen,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) =>
+                                  imagenCatalogoPlaceholder(
+                                    width: 60,
+                                    height: 60,
+                                    iconSize: 20,
+                                  ),
+                            )
+                          : imagenCatalogoPlaceholder(
+                              width: 60,
+                              height: 60,
+                              iconSize: 20,
+                            ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -243,8 +262,10 @@ class _DetallePedidoScreenState extends State<DetallePedidoScreen> {
     );
   }
 
-  Widget _tarjetaSeccion(
-      {required String titulo, required List<Widget> hijos}) {
+  Widget _tarjetaSeccion({
+    required String titulo,
+    required List<Widget> hijos,
+  }) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -330,15 +351,21 @@ class _DetallePedidoScreenState extends State<DetallePedidoScreen> {
                       Icon(
                         _tab == i ? items[i].$2 : items[i].$1,
                         size: 22,
-                        color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                        color: _tab == i
+                            ? ColoresApp.primary
+                            : ColoresApp.textSecondary,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
-                          color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                          fontWeight: _tab == i
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: _tab == i
+                              ? ColoresApp.primary
+                              : ColoresApp.textSecondary,
                         ),
                       ),
                     ],

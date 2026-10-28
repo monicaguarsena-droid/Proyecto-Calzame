@@ -14,17 +14,12 @@ class _PantallaInicioState extends State<PantallaInicio> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
   late Timer _timer;
-  
-  final List<String> _images = [
-    'assets/img/botas.jpg',
-    'assets/img/zapato.jpg',
-  ];
 
   @override
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
-      if (_currentPage < _images.length - 1) {
+      if (_currentPage < 1) {
         _currentPage++;
       } else {
         _currentPage = 0;
@@ -53,18 +48,23 @@ class _PantallaInicioState extends State<PantallaInicio> {
         children: [
           PageView.builder(
             controller: _pageController,
-            itemCount: _images.length,
+            itemCount: 2,
             onPageChanged: (int index) {
               setState(() {
                 _currentPage = index;
               });
             },
             itemBuilder: (context, index) {
-              return Image.asset(
-                _images[index],
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
+              return Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: index == 0
+                        ? const [Color(0xFF8A5962), Color(0xFF3E2723)]
+                        : const [Color(0xFF6B2D3C), Color(0xFF25151A)],
+                  ),
+                ),
               );
             },
           ),
@@ -84,7 +84,10 @@ class _PantallaInicioState extends State<PantallaInicio> {
           ),
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 20.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -111,28 +114,29 @@ class _PantallaInicioState extends State<PantallaInicio> {
                   const SizedBox(height: 6),
                   const Text(
                     "Su mejor tienda de Calzado",
-                    style: TextStyle(
-                      color: Colors.white60,
-                      fontSize: 14,
-                    ),
+                    style: TextStyle(color: Colors.white60, fontSize: 14),
                   ),
                   const SizedBox(height: 30),
                   Row(
                     children: [
                       Container(
-                        width: _currentPage == 0 ? 24 : 6, 
-                        height: 4, 
+                        width: _currentPage == 0 ? 24 : 6,
+                        height: 4,
                         decoration: BoxDecoration(
-                          color: _currentPage == 0 ? const Color(0xFF8D6E63) : Colors.white38, 
+                          color: _currentPage == 0
+                              ? const Color(0xFF8D6E63)
+                              : Colors.white38,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
                       const SizedBox(width: 6),
                       Container(
-                        width: _currentPage == 1 ? 24 : 6, 
-                        height: 4, 
+                        width: _currentPage == 1 ? 24 : 6,
+                        height: 4,
                         decoration: BoxDecoration(
-                          color: _currentPage == 1 ? const Color(0xFF8D6E63) : Colors.white38, 
+                          color: _currentPage == 1
+                              ? const Color(0xFF8D6E63)
+                              : Colors.white38,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -163,7 +167,10 @@ class _PantallaInicioState extends State<PantallaInicio> {
                         children: const [
                           Text(
                             "Comenzar a explorar",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           SizedBox(width: 10),
                           Icon(Icons.arrow_forward, size: 18),
@@ -175,7 +182,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
                   const Center(
                     child: Text(
                       "Elegancia · Comodidad · Estilo",
-                      style: TextStyle(color: Colors.white54, fontSize: 11, letterSpacing: 1.1),
+                      style: TextStyle(
+                        color: Colors.white54,
+                        fontSize: 11,
+                        letterSpacing: 1.1,
+                      ),
                     ),
                   ),
                 ],

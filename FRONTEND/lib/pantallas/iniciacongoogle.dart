@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/servicios/auth_service.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:frontend/pantallas/admin_panel.dart';
 
 class GoogleLogin extends StatefulWidget {
   const GoogleLogin({Key? key}) : super(key: key);
@@ -16,9 +15,6 @@ class _GoogleLoginState extends State<GoogleLogin> {
   final AuthService _authService = AuthService();
   bool _isLoading = false;
 
-  // Instancia oficial de GoogleSignIn para evitar el error rojo
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
-
   // Lista simulada o dinámica de cuentas previas en el dispositivo
   final List<Map<String, String>> _savedAccounts = [];
 
@@ -26,53 +22,75 @@ class _GoogleLoginState extends State<GoogleLogin> {
     setState(() => _isLoading = true);
 
     try {
-      // 1. Cierra sesión previa y abre el selector de cuentas de Google
-      await _googleSignIn.signOut(); 
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-
-      if (googleUser == null) {
-        // El usuario canceló el inicio de sesión
-        setState(() => _isLoading = false);
-        return;
-      }
-      // final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-
-      // 3. Llama a tu servicio de autenticación
       final result = await _authService.loginWithGoogle();
 
       if (!mounted) return;
 
-      setState(() => _isLoading = false);
-    
-      if (result['success'] == true) {
-        // Cuando Google Sign-In es exitoso y el backend te responde:
-        final prefs = await SharedPreferences.getInstance();
-
-        final Map<String, dynamic>? userData = result['user'] ?? result;
-        // Guardamos el nombre y el correo que vienen del inicio de sesión de Google
-        await prefs.setString('email', userData?['email'] ?? '');
-        await prefs.setString('nombre', userData?['nombre'] ?? 'Usuario Google');
-
-        // Si tu backend te devuelve la cédula o el teléfono, guárdalos también:
-        if (userData?['cedula'] != null) {
-          await prefs.setString('cedula', userData!['cedula']);
+      if (result['success'] != true) {
+        setState(() => _isLoading = false);
+        if (result['message'] != 'Inicio de sesión cancelado') {
+          final message =
+              result['message'] ?? 'No se pudo iniciar sesión con Google';
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message.toString())));
         }
-        // Navegar a la pantalla principal de home
-        Navigator.pushReplacement(
-          context, 
-          MaterialPageRoute(builder: (context) => const Home())
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo iniciar sesión con Google')),
-        );
+        return;
       }
+
+      final responseData = result['data'];
+      final userData = responseData is Map<String, dynamic>
+          ? responseData['usuario']
+          : null;
+      if (userData is! Map<String, dynamic>) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'La respuesta del servidor no contiene el perfil del usuario',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final prefs = await SharedPreferences.getInstance();
+      final String email = (userData['email']?.toString() ?? '').trim();
+      final String nombre = userData['nombre']?.toString() ?? 'Usuario Google';
+      final String rol = userData['rol']?.toString().trim() ?? '';
+
+      await prefs.setString('email', email);
+      await prefs.setString('nombre', nombre);
+      await prefs.setString('user_email', email);
+      await prefs.setString('user_name', nombre);
+      await prefs.setString('user_role', rol);
+
+      final token = responseData['token'];
+      if (token is String) {
+        await prefs.setString('token', token);
+      }
+      if (userData['cedula'] != null) {
+        await prefs.setString('cedula', userData['cedula'].toString());
+      }
+
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      final bool isAdmin =
+          rol.toLowerCase() == 'admin' ||
+          email.toLowerCase() == 'monicaguarsena@gmail.com';
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => isAdmin ? const AdminPanel() : const Home(),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
     }
   }
 

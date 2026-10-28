@@ -5,7 +5,7 @@ class ApiConfig {
   static const bool useRemote =
       true; // Cambia a false para usar el servidor local
 
- static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/';
+static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/api';
   static const int _port = 3000; // Puerto del servidor local
   static const String? _lanIp = null;
   static String get baseUrl {

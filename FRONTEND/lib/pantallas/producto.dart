@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/favoritos.dart';
@@ -70,29 +71,29 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
   }
 
   void _toggleFavorito() {
-  FavoritosService.toggleFavorito(
-    imagen: widget.imagen,
-    titulo: widget.titulo,
-    subtitulo: widget.subtitulo,
-    precio: widget.precio,
-  );
+    FavoritosService.toggleFavorito(
+      imagen: widget.imagen,
+      titulo: widget.titulo,
+      subtitulo: widget.subtitulo,
+      precio: widget.precio,
+    );
 
-  setState(() {
-    esFavorito = FavoritosService.esFavorito(widget.titulo);
-  });
+    setState(() {
+      esFavorito = FavoritosService.esFavorito(widget.titulo);
+    });
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        esFavorito
-            ? '¡"${widget.titulo}" se agregó a favoritos!'
-            : '¡"${widget.titulo}" se quitó de favoritos!',
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          esFavorito
+              ? '¡"${widget.titulo}" se agregó a favoritos!'
+              : '¡"${widget.titulo}" se quitó de favoritos!',
+        ),
+        backgroundColor: esFavorito ? Colors.green : Colors.redAccent,
+        duration: const Duration(seconds: 2),
       ),
-      backgroundColor: esFavorito ? Colors.green : Colors.redAccent,
-      duration: const Duration(seconds: 2),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +122,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-             // Imagen con el botón de favoritos integrado
+              // Imagen con el botón de favoritos integrado
               Stack(
                 children: [
                   Container(
@@ -134,14 +135,16 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                     ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(20),
-                      child: Image.asset(
-                        widget.imagen,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          color: ColoresApp.surfaceVariant,
-                          child: const Icon(Icons.image_not_supported, size: 50, color: ColoresApp.textSecondary),
-                        ),
-                      ),
+                      child: widget.imagen.startsWith('http')
+                          ? Image.network(
+                              widget.imagen,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                color: ColoresApp.surfaceVariant,
+                                child: imagenCatalogoPlaceholder(iconSize: 50),
+                              ),
+                            )
+                          : imagenCatalogoPlaceholder(iconSize: 50),
                     ),
                   ),
                   Positioned(
@@ -272,7 +275,9 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                     ),
                   ),
                   Text(
-                    colorSeleccionado == 0 ? "Beige" : (colorSeleccionado == 1 ? "Negro" : "Rosado"),
+                    colorSeleccionado == 0
+                        ? "Beige"
+                        : (colorSeleccionado == 1 ? "Negro" : "Rosado"),
                     style: const TextStyle(
                       color: ColoresApp.textSecondary,
                       fontSize: 15,
@@ -342,7 +347,9 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("¡Producto agregado al carrito con éxito!"),
+                        content: Text(
+                          "¡Producto agregado al carrito con éxito!",
+                        ),
                         backgroundColor: Colors.green,
                       ),
                     );

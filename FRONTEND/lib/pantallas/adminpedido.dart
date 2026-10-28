@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:frontend/api_config.dart';
 
 class PedidosAdmin extends StatefulWidget {
   const PedidosAdmin({Key? key}) : super(key: key);
@@ -19,7 +20,7 @@ class _PedidosAdminState extends State<PedidosAdmin> {
   List<dynamic> _pedidos = [];
 
   // Reemplaza con la IP de tu servidor backend o localhost (ej. 10.0.2.2 para emulador Android)
-  final String baseUrl = 'http://10.0.2.2:3000/api/admin';
+  final String baseUrl = ApiConfig.baseUrl + '/admin';
 
   @override
   void initState() {

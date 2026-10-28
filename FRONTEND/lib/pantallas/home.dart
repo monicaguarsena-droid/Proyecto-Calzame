@@ -9,6 +9,9 @@ import 'package:frontend/pantallas/categoriadama.dart';
 import 'package:frontend/pantallas/categoriainfantil.dart';
 import 'package:frontend/pantallas/todos_productos.dart';
 import 'package:frontend/pantallas/producto.dart';
+import 'package:frontend/models/productoModel.dart';
+import 'package:frontend/servicios/catalogo_visual_service.dart';
+import 'package:frontend/servicios/producto_service.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -18,6 +21,18 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   int _tab = 0;
+  final ProductoService _productoService = ProductoService();
+  late Future<List<Map<String, dynamic>>> _ofertasFuture;
+  late Future<List<Map<String, dynamic>>> _tiposCalzadoFuture;
+  late Future<List<ProductoModel>> _productosFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _ofertasFuture = CatalogoVisualService.listar('ofertas');
+    _tiposCalzadoFuture = CatalogoVisualService.listar('tipos-calzado');
+    _productosFuture = _productoService.obtenerProductos();
+  }
 
   void _onItemTapped(int index) {
     if (index == _tab) return;
@@ -40,153 +55,237 @@ class _HomeState extends State<Home> {
     }
   }
 
+  Future<void> _actualizarCatalogo() async {
+    setState(() {
+      _ofertasFuture = CatalogoVisualService.listar('ofertas');
+      _tiposCalzadoFuture = CatalogoVisualService.listar('tipos-calzado');
+      _productosFuture = _productoService.obtenerProductos();
+    });
+    try {
+      await Future.wait([
+        _ofertasFuture,
+        _tiposCalzadoFuture,
+        _productosFuture,
+      ]);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo actualizar el catálogo: $error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColoresApp.background,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          children: [
-            _header(),
-            const SizedBox(height: 14),
-            const _BannerAnimadoElegante(),
-            _seccion(
-              'Escoge tu Categoría',
-              _fila(context, const [
-                _Cat(Icons.woman_outlined, 'Damas', 'Zapatos y sandalias'),
-                _Cat(Icons.man_outlined, 'Caballeros', 'Estilo urbano y formal'),
-                _Cat(Icons.child_care_outlined, 'Niñas', 'Colecciones infantiles'),
-                
-              ]),
-              verTodoOnTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
-                );
-              },
-            ),
-            _seccion(
-              'Tipos de calzado',
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CategoriaDama()),
-                        );
-                      },
-                      child: const _CatConPlaya(
-                        'Sandalias',
-                        'Verano y playa',
-                      ),
-                    ),
+        child: RefreshIndicator(
+          onRefresh: _actualizarCatalogo,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            children: [
+              _header(),
+              const SizedBox(height: 14),
+              _BannerAnimadoElegante(ofertasFuture: _ofertasFuture),
+              _seccion(
+                'Escoge tu Categoría',
+                _fila(context, const [
+                  _Cat(Icons.woman_outlined, 'Damas', 'Zapatos y sandalias'),
+                  _Cat(
+                    Icons.man_outlined,
+                    'Caballeros',
+                    'Estilo urbano y formal',
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CategoriaCaballero()),
-                        );
-                      },
-                      child: const _CatConInvierno(
-                        'Botas',
-                        'Invierno y noche',
-                      ),
-                    ),
+                  _Cat(
+                    Icons.child_care_outlined,
+                    'Niñas',
+                    'Colecciones infantiles',
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const CategoriaInfantil()),
-                        );
-                      },
-                      child: const _CatConZapato(
-                        'Zapatillas',
-                        'Deporte y diario',
-                      ),
+                ]),
+                verTodoOnTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TodosProductosScreen(),
                     ),
-                  ),
-                ],
+                  );
+                },
               ),
-              verTodoOnTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
-                );
-              },
-            ),
-            _seccion(
-              'Colecciones destacadas',
-              Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const DetalleProductoScreen(
-                              imagen: 'assets/img/botas.jpg',
-                              titulo: 'Botas de cuero',
-                              subtitulo: 'Diseño elegante para invierno',
-                              precio: r'Desde $129',
-                            ),
-                          ),
-                        );
-                      },
-                      child: const _Destacada(
-                        'assets/img/botas.jpg',
-                        'Botas de cuero',
-                        'Diseño elegante para invierno',
-                        r'Desde $129',
-                      ),
+              _seccion(
+                'Tipos de calzado',
+                _tiposCalzado(),
+                verTodoOnTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TodosProductosScreen(),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const DetalleProductoScreen(
-                              imagen: 'assets/img/tacon.jpg',
-                              titulo: 'Zapatillas urbanas',
-                              subtitulo: 'Estilo cómodo para diario',
-                              precio: r'Desde $89',
-                            ),
-                          ),
-                        );
-                      },
-                      child: const _Destacada(
-                        'assets/img/tacon.jpg',
-                        'Zapatillas urbanas',
-                        'Estilo cómodo para diario',
-                        r'Desde $89',
-                      ),
-                    ),
-                  ),
-                ],
+                  );
+                },
               ),
-              verTodoOnTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
-                );
-              },
-            ),
-          ],
+              _seccion(
+                'Colecciones destacadas',
+                _coleccionesDestacadas(),
+                verTodoOnTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TodosProductosScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: _nav(),
+    );
+  }
+
+  Widget _tiposCalzado() {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: _tiposCalzadoFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 104,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Container(
+            height: 104,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: ColoresApp.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: ColoresApp.border),
+            ),
+            child: const Text('No se pudieron cargar los tipos de calzado.'),
+          );
+        }
+        final tipos = snapshot.data ?? [];
+        final mostrados = tipos.isEmpty
+            ? [
+                {'nombre': 'Sandalias', 'descripcion': 'Verano y playa'},
+                {'nombre': 'Botas', 'descripcion': 'Invierno y noche'},
+                {'nombre': 'Zapatillas', 'descripcion': 'Deporte y diario'},
+              ]
+            : tipos;
+        if (mostrados.length <= 3) {
+          return Row(
+            children: [
+              for (var i = 0; i < mostrados.length; i++) ...[
+                if (i > 0) const SizedBox(width: 10),
+                Expanded(child: _tipoCalzadoCard(mostrados[i])),
+              ],
+            ],
+          );
+        }
+        return SizedBox(
+          height: 104,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: mostrados.length,
+            separatorBuilder: (_, _) => const SizedBox(width: 10),
+            itemBuilder: (context, index) => SizedBox(
+              width: MediaQuery.sizeOf(context).width * 0.39,
+              child: _tipoCalzadoCard(mostrados[index]),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _tipoCalzadoCard(Map<String, dynamic> tipo) {
+    final nombre = tipo['nombre']?.toString() ?? '';
+    final descripcion = tipo['descripcion']?.toString() ?? '';
+    final imagen = tipo['imagen_url']?.toString() ?? '';
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
+      ),
+      child: _TipoCalzadoCard(
+        titulo: nombre,
+        subtitulo: descripcion,
+        imagenUrl: imagen,
+      ),
+    );
+  }
+
+  Widget _coleccionesDestacadas() {
+    return FutureBuilder<List<ProductoModel>>(
+      future: _productosFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 170,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return Text('No se pudieron cargar los productos: ${snapshot.error}');
+        }
+        final productos = (snapshot.data ?? []).take(2).toList();
+        if (productos.isEmpty) {
+          return const Row(
+            children: [
+              Expanded(
+                child: _Destacada(
+                  '',
+                  'Aún no hay productos',
+                  'Las nuevas colecciones aparecerán aquí',
+                  '',
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: _Destacada(
+                  '',
+                  'Explora el catálogo',
+                  'Consulta los productos por categoría',
+                  '',
+                ),
+              ),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            for (var i = 0; i < productos.length; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    final producto = productos[i];
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DetalleProductoScreen(
+                          imagen: producto.imagenUrl ?? '',
+                          titulo: producto.nombre,
+                          subtitulo: producto.descripcion,
+                          precio: '\$${producto.precio.toStringAsFixed(0)}',
+                        ),
+                      ),
+                    );
+                  },
+                  child: _Destacada(
+                    productos[i].imagenUrl ?? '',
+                    productos[i].nombre,
+                    productos[i].descripcion,
+                    '\$${productos[i].precio.toStringAsFixed(0)}',
+                  ),
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -198,7 +297,7 @@ class _HomeState extends State<Home> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Mar y Paz',
+              'Mar&Paz',
               style: TextStyle(
                 fontSize: 30,
                 fontWeight: FontWeight.w800,
@@ -234,7 +333,11 @@ class _HomeState extends State<Home> {
     ],
   );
 
-  Widget _seccion(String titulo, Widget hijo, {required VoidCallback verTodoOnTap}) => Padding(
+  Widget _seccion(
+    String titulo,
+    Widget hijo, {
+    required VoidCallback verTodoOnTap,
+  }) => Padding(
     padding: const EdgeInsets.only(top: 18),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -278,11 +381,22 @@ class _HomeState extends State<Home> {
           child: GestureDetector(
             onTap: () {
               if (i == 0) {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const CategoriaDama()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CategoriaDama(),
+                  ),
+                );
               } else if (i == 1) {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaCaballero()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CategoriaCaballero()),
+                );
               } else if (i == 2) {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaInfantil()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CategoriaInfantil()),
+                );
               }
             },
             child: items[i],
@@ -329,7 +443,9 @@ class _HomeState extends State<Home> {
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
+                          fontWeight: _tab == i
+                              ? FontWeight.w700
+                              : FontWeight.w400,
                           color: _tab == i
                               ? ColoresApp.primary
                               : ColoresApp.textSecondary,
@@ -347,62 +463,31 @@ class _HomeState extends State<Home> {
 }
 
 class _BannerAnimadoElegante extends StatefulWidget {
-  const _BannerAnimadoElegante();
+  final Future<List<Map<String, dynamic>>> ofertasFuture;
+
+  const _BannerAnimadoElegante({required this.ofertasFuture});
 
   @override
   State<_BannerAnimadoElegante> createState() => _BannerAnimadoEleganteState();
 }
 
 class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
-  late PageController _pageController;
+  final PageController _pageController = PageController();
   int _paginaActual = 0;
   Timer? _timer;
-
-  final List<Map<String, String>> _promociones = [
-    {
-      'tag': 'NUEVA COLECCIÓN',
-      'titulo': 'Verano con estilo',
-      'subtitulo': 'Hasta 30% de descuento',
-      'detalle': 'En calzado de verano',
-      'imagen': 'assets/img/verano.jpg',
-    },
-    {
-      'tag': 'TENDENCIA DE NOCHE',
-      'titulo': 'Elegancia & Confort',
-      'subtitulo': 'Nuevos estilos de cuero',
-      'detalle': 'Ideal para ocasiones especiales',
-      'imagen': 'assets/img/invierno.jpg',
-    },
-    {
-      'tag': 'URBANO & CASUAL',
-      'titulo': 'Zapatillas Urbanas',
-      'subtitulo': 'Diseño moderno para diario',
-      'detalle': 'Máxima comodidad a cada paso',
-      'imagen': 'assets/img/deporte.jpg',
-    },
-  ];
+  List<Map<String, dynamic>> _promociones = [];
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController(initialPage: 0);
-    _iniciarTimerAutomatico();
-  }
-
-  void _iniciarTimerAutomatico() {
-    _timer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (_paginaActual < _promociones.length - 1) {
-        _paginaActual++;
-      } else {
-        _paginaActual = 0;
-      }
-      if (_pageController.hasClients) {
-        _pageController.animateToPage(
-          _paginaActual,
-          duration: const Duration(milliseconds: 800),
-          curve: Curves.easeInOutCubic,
-        );
-      }
+    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (_promociones.length < 2 || !_pageController.hasClients) return;
+      _paginaActual = (_paginaActual + 1) % _promociones.length;
+      _pageController.animateToPage(
+        _paginaActual,
+        duration: const Duration(milliseconds: 800),
+        curve: Curves.easeInOutCubic,
+      );
     });
   }
 
@@ -415,119 +500,172 @@ class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: SizedBox(
-        height: 135,
-        child: Stack(
-          children: [
-            PageView.builder(
-              controller: _pageController,
-              onPageChanged: (index) {
-                setState(() {
-                  _paginaActual = index;
-                });
-              },
-              itemCount: _promociones.length,
-              itemBuilder: (context, index) {
-                final promo = _promociones[index];
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.asset(
-                      promo['imagen']!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.black54, Colors.black26, Colors.black45],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            promo['tag']!,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              letterSpacing: 2,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white70,
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: widget.ofertasFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _bannerVacio('Cargando ofertas...');
+        }
+        if (snapshot.hasError) {
+          return _bannerVacio('No se pudieron cargar las ofertas');
+        }
+        _promociones = snapshot.data ?? [];
+        if (_promociones.isEmpty) {
+          return _bannerVacio('Las nuevas ofertas aparecerán aquí');
+        }
+        if (_paginaActual >= _promociones.length) {
+          _paginaActual = 0;
+        }
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: SizedBox(
+            height: 165,
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) =>
+                      setState(() => _paginaActual = index),
+                  itemCount: _promociones.length,
+                  itemBuilder: (context, index) {
+                    final promo = _promociones[index];
+                    final imagen = promo['imagen_url']?.toString() ?? '';
+                    return Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (imagen.isNotEmpty)
+                          Image.network(
+                            imagen,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _fondoBanner(),
+                          )
+                        else
+                          _fondoBanner(),
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.black54,
+                                Colors.black26,
+                                Colors.black45,
+                              ],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
                             ),
                           ),
-                          const SizedBox(height: 2),
-                          Text(
-                            promo['titulo']!,
-                            style: const TextStyle(
-                              fontSize: 23,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const Spacer(),
-                          Column(
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                promo['subtitulo']!,
-                                style: const TextStyle(fontSize: 11, color: Colors.white70),
+                                promo['tag']?.toString() ?? 'OFERTA',
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  letterSpacing: 2,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white70,
+                                ),
                               ),
+                              const SizedBox(height: 2),
                               Text(
-                                promo['detalle']!,
+                                promo['titulo']?.toString() ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 23,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const Spacer(),
+                              Text(
+                                promo['descuento']?.toString() ?? '',
                                 style: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.white,
                                 ),
                               ),
+                              Text(
+                                promo['descripcion']?.toString() ?? '',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.white70,
+                                ),
+                              ),
                             ],
                           ),
-                        ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                if (_promociones.length > 1)
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: Row(
+                      children: List.generate(
+                        _promociones.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.only(left: 5),
+                          height: 6,
+                          width: _paginaActual == index ? 18 : 6,
+                          decoration: BoxDecoration(
+                            color: _paginaActual == index
+                                ? Colors.white
+                                : Colors.white38,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                );
-              },
-            ),
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: Row(
-                children: List.generate(
-                  _promociones.length,
-                  (index) => AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    margin: const EdgeInsets.only(left: 5),
-                    height: 6,
-                    width: _paginaActual == index ? 18 : 6,
-                    decoration: BoxDecoration(
-                      color: _paginaActual == index ? Colors.white : Colors.white38,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
                   ),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
+
+  Widget _bannerVacio(String mensaje) => ClipRRect(
+    borderRadius: BorderRadius.circular(24),
+    child: Container(
+      height: 165,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        mensaje,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ),
+  );
+
+  Widget _fondoBanner() => const DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+  );
 }
 
 class _Circ extends StatelessWidget {
@@ -600,193 +738,87 @@ class _Cat extends StatelessWidget {
   );
 }
 
-class _CatConPlaya extends StatelessWidget {
-  final String titulo, subtitulo;
-  const _CatConPlaya(this.titulo, this.subtitulo);
+class _TipoCalzadoCard extends StatelessWidget {
+  final String titulo;
+  final String subtitulo;
+  final String imagenUrl;
+
+  const _TipoCalzadoCard({
+    required this.titulo,
+    required this.subtitulo,
+    required this.imagenUrl,
+  });
 
   @override
-  Widget build(BuildContext context) => Container(
-    height: 104,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
-      image: const DecorationImage(
-        image: AssetImage('assets/img/playa.jpg'),
-        fit: BoxFit.cover,
-      ),
-    ),
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(16),
     child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+      height: 104,
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            Colors.black.withOpacity(0.90),
-            Colors.black.withOpacity(0.40),
-            Colors.transparent,
-          ],
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
+          colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
       ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        fit: StackFit.expand,
         children: [
+          if (imagenUrl.isNotEmpty)
+            Image.network(
+              imagenUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
           Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.35),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.sunny, size: 16, color: Colors.white),
-          ),
-          const Spacer(),
-          Text(
-            titulo,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black87, Colors.black38, Colors.transparent],
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+              ),
             ),
           ),
-          Text(
-            subtitulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 10,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _CatConInvierno extends StatelessWidget {
-  final String titulo, subtitulo;
-  const _CatConInvierno(this.titulo, this.subtitulo);
-
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 104,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
-      image: const DecorationImage(
-        image: AssetImage('assets/img/invierno.jpg'),
-        fit: BoxFit.cover,
-      ),
-    ),
-    child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            Colors.black.withOpacity(0.90),
-            Colors.black.withOpacity(0.40),
-            Colors.transparent,
-          ],
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-        ),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.35),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.ac_unit, size: 16, color: Colors.white),
-          ),
-          const Spacer(),
-          Text(
-            titulo,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-          Text(
-            subtitulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 10,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-class _CatConZapato extends StatelessWidget {
-  final String titulo, subtitulo;
-  const _CatConZapato(this.titulo, this.subtitulo);
-
-  @override
-  Widget build(BuildContext context) => Container(
-    height: 104,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
-      image: const DecorationImage(
-        image: AssetImage('assets/img/deporte.jpg'),
-        fit: BoxFit.cover,
-      ),
-    ),
-    child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [
-            Colors.black.withOpacity(0.90),
-            Colors.black.withOpacity(0.40),
-            Colors.transparent,
-          ],
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-        ),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.35),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.sports_basketball_outlined, size: 16, color: Colors.white),
-          ),
-          const Spacer(),
-          Text(
-            titulo,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-          Text(
-            subtitulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 10,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.35),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.category_outlined,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  titulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  subtitulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -796,8 +828,8 @@ class _CatConZapato extends StatelessWidget {
 }
 
 class _Destacada extends StatelessWidget {
-  final String asset, titulo, subtitulo, precio;
-  const _Destacada(this.asset, this.titulo, this.subtitulo, this.precio);
+  final String imagenUrl, titulo, subtitulo, precio;
+  const _Destacada(this.imagenUrl, this.titulo, this.subtitulo, this.precio);
 
   @override
   Widget build(BuildContext context) => ClipRRect(
@@ -807,19 +839,21 @@ class _Destacada extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            asset,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
           ),
+          if (imagenUrl.isNotEmpty)
+            Image.network(
+              imagenUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
