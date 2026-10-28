@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/api_config.dart';
 
 class EditarProductoScreen extends StatefulWidget {
   final Map<String, dynamic> producto;
@@ -28,7 +29,7 @@ class _EditarProductoScreenState extends State<EditarProductoScreen> {
   List<String> _tallasList = [];
 
   bool _isLoading = false;
-  final String baseUrl = "http://10.0.2.2:3000";
+  final String baseUrl = "${ApiConfig.baseUrl}/productos"; // URL de tu backend en Node.js
 
   @override
   void initState() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/perfil.dart';
@@ -119,7 +120,9 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: ColoresApp.primary.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -160,12 +163,13 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                   : GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.60,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 14,
-                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 0.60,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 14,
+                          ),
                       itemCount: listaFavoritos.length,
                       itemBuilder: (context, index) {
                         final item = listaFavoritos[index];
@@ -188,25 +192,24 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                     child: SizedBox(
                                       height: 145,
                                       width: double.infinity,
-                                      child: Image.asset(
-                                        item.imagen,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) => Container(
-                                          color: ColoresApp.surfaceVariant,
-                                          child: const Icon(
-                                            Icons.image_not_supported,
-                                            size: 30,
-                                            color: ColoresApp.textSecondary,
-                                          ),
-                                        ),
-                                      ),
+                                      child: item.imagen.startsWith('http')
+                                          ? Image.network(
+                                              item.imagen,
+                                              fit: BoxFit.cover,
+                                              errorBuilder: (_, _, _) =>
+                                                  imagenCatalogoPlaceholder(),
+                                            )
+                                          : imagenCatalogoPlaceholder(),
                                     ),
                                   ),
                                   Positioned(
                                     top: 8,
                                     right: 8,
                                     child: GestureDetector(
-                                      onTap: () => _quitarDeFavoritos(index, item.titulo),
+                                      onTap: () => _quitarDeFavoritos(
+                                        index,
+                                        item.titulo,
+                                      ),
                                       child: Container(
                                         width: 30,
                                         height: 30,
@@ -265,12 +268,17 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                       width: double.infinity,
                                       height: 30,
                                       child: OutlinedButton(
-                                        onPressed: () => _abrirDetalleProducto(item),
+                                        onPressed: () =>
+                                            _abrirDetalleProducto(item),
                                         style: OutlinedButton.styleFrom(
                                           foregroundColor: ColoresApp.primary,
-                                          side: const BorderSide(color: ColoresApp.primary),
+                                          side: const BorderSide(
+                                            color: ColoresApp.primary,
+                                          ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           padding: EdgeInsets.zero,
                                         ),
@@ -297,9 +305,13 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                             subtitulo: item.subtitulo,
                                             precioStr: item.precio,
                                           );
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             const SnackBar(
-                                              content: Text('¡Agregado al carrito con éxito!'),
+                                              content: Text(
+                                                '¡Agregado al carrito con éxito!',
+                                              ),
                                               backgroundColor: Colors.green,
                                             ),
                                           );
@@ -309,7 +321,9 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                           foregroundColor: Colors.white,
                                           elevation: 0,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                           ),
                                           padding: EdgeInsets.zero,
                                         ),
@@ -376,8 +390,9 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight:
-                              _tab == i ? FontWeight.w700 : FontWeight.w400,
+                          fontWeight: _tab == i
+                              ? FontWeight.w700
+                              : FontWeight.w400,
                           color: _tab == i
                               ? ColoresApp.primary
                               : ColoresApp.textSecondary,

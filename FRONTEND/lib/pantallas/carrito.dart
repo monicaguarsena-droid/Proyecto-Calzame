@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
 import 'package:frontend/pantallas/compra.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
@@ -40,24 +41,28 @@ class CarritoService {
     String color = 'Único',
   }) {
     // Limpiamos el string del precio
-    double precio = double.tryParse(precioStr.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+    double precio =
+        double.tryParse(precioStr.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
 
     // Verificamos si ya existe el producto con la misma talla y color para aumentar cantidad
-    final index = itemsCarrito.indexWhere((item) => 
-      item.titulo == titulo && item.talla == talla && item.color == color
+    final index = itemsCarrito.indexWhere(
+      (item) =>
+          item.titulo == titulo && item.talla == talla && item.color == color,
     );
-    
+
     if (index >= 0) {
       itemsCarrito[index].cantidad += 1;
     } else {
-      itemsCarrito.add(ItemCarrito(
-        imagen: imagen,
-        titulo: titulo,
-        subtitulo: subtitulo,
-        precio: precio,
-        talla: talla,
-        color: color,
-      ));
+      itemsCarrito.add(
+        ItemCarrito(
+          imagen: imagen,
+          titulo: titulo,
+          subtitulo: subtitulo,
+          precio: precio,
+          talla: talla,
+          color: color,
+        ),
+      );
     }
   }
 }
@@ -70,7 +75,7 @@ class CarritoScreen extends StatefulWidget {
 }
 
 class _CarritoScreenState extends State<CarritoScreen> {
-  final int _tab = 1; 
+  final int _tab = 1;
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
@@ -93,7 +98,10 @@ class _CarritoScreenState extends State<CarritoScreen> {
   }
 
   double get _totalGeneral {
-    return CarritoService.itemsCarrito.fold(0, (sum, item) => sum + (item.precio * item.cantidad));
+    return CarritoService.itemsCarrito.fold(
+      0,
+      (sum, item) => sum + (item.precio * item.cantidad),
+    );
   }
 
   @override
@@ -117,7 +125,11 @@ class _CarritoScreenState extends State<CarritoScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.shopping_cart_outlined, size: 64, color: ColoresApp.textSecondary),
+                            Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 64,
+                              color: ColoresApp.textSecondary,
+                            ),
                             SizedBox(height: 12),
                             Text(
                               'Tu carrito está vacío',
@@ -131,7 +143,10 @@ class _CarritoScreenState extends State<CarritoScreen> {
                             Text(
                               'Agrega productos desde el inicio, categorías o favoritos.',
                               textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: ColoresApp.textSecondary,
+                              ),
                             ),
                           ],
                         ),
@@ -255,18 +270,23 @@ class _CarritoScreenState extends State<CarritoScreen> {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(14),
-                  child: Image.asset(
-                    item.imagen,
-                    width: 85,
-                    height: 85,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 85,
-                      height: 85,
-                      color: ColoresApp.surfaceVariant,
-                      child: const Icon(Icons.image_not_supported, color: ColoresApp.textSecondary),
-                    ),
-                  ),
+                  child: item.imagen.startsWith('http')
+                      ? Image.network(
+                          item.imagen,
+                          width: 85,
+                          height: 85,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 85,
+                            height: 85,
+                            color: ColoresApp.surfaceVariant,
+                            child: imagenCatalogoPlaceholder(
+                              width: 85,
+                              height: 85,
+                            ),
+                          ),
+                        )
+                      : imagenCatalogoPlaceholder(width: 85, height: 85),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -288,7 +308,10 @@ class _CarritoScreenState extends State<CarritoScreen> {
                         item.subtitulo,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: ColoresApp.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -317,7 +340,11 @@ class _CarritoScreenState extends State<CarritoScreen> {
                     IconButton(
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
-                      icon: const Icon(Icons.delete_outline, size: 20, color: ColoresApp.error),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        size: 20,
+                        color: ColoresApp.error,
+                      ),
                       onPressed: () {
                         setState(() {
                           CarritoService.itemsCarrito.removeAt(index);
@@ -339,13 +366,22 @@ class _CarritoScreenState extends State<CarritoScreen> {
                           },
                           child: Container(
                             padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(border: Border.all(color: ColoresApp.border), borderRadius: BorderRadius.circular(6)),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: ColoresApp.border),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
                             child: const Icon(Icons.remove, size: 13),
                           ),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text('${item.cantidad}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                          child: Text(
+                            '${item.cantidad}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
                         InkWell(
                           onTap: () {
@@ -355,7 +391,10 @@ class _CarritoScreenState extends State<CarritoScreen> {
                           },
                           child: Container(
                             padding: const EdgeInsets.all(5),
-                            decoration: BoxDecoration(border: Border.all(color: ColoresApp.border), borderRadius: BorderRadius.circular(6)),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: ColoresApp.border),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
                             child: const Icon(Icons.add, size: 13),
                           ),
                         ),
@@ -384,10 +423,21 @@ class _CarritoScreenState extends State<CarritoScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Total a pagar:', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: ColoresApp.textSecondary)),
+              const Text(
+                'Total a pagar:',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: ColoresApp.textSecondary,
+                ),
+              ),
               Text(
                 '\$${_totalGeneral.toStringAsFixed(0)}',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: ColoresApp.primary),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: ColoresApp.primary,
+                ),
               ),
             ],
           ),
@@ -412,9 +462,18 @@ class _CarritoScreenState extends State<CarritoScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColoresApp.primary,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Proceder al pago', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+              child: const Text(
+                'Proceder al pago',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
             ),
           ),
         ],
@@ -451,15 +510,21 @@ class _CarritoScreenState extends State<CarritoScreen> {
                       Icon(
                         _tab == i ? items[i].$2 : items[i].$1,
                         size: 22,
-                        color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                        color: _tab == i
+                            ? ColoresApp.primary
+                            : ColoresApp.textSecondary,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
-                          color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
+                          fontWeight: _tab == i
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: _tab == i
+                              ? ColoresApp.primary
+                              : ColoresApp.textSecondary,
                         ),
                       ),
                     ],

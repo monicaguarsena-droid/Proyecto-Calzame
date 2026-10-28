@@ -90,7 +90,7 @@ class _LoginState extends State<Login> {
 
    if (result['success']) {
       // Extraemos el correo que viene de la respuesta de Google / Backend
-      final String userEmail = result['data']?['user']?['email'] ?? ''; 
+      final String userEmail = result['data']?['usuario']?['email'] ?? ''; 
 
       // Validar si el correo de Google es el del administrador
       if (userEmail.toLowerCase() == _adminEmail.toLowerCase()) {
