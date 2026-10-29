@@ -5,7 +5,7 @@ class ApiConfig {
   static const bool useRemote =
       false; // Cambiado a false para usar tu servidor local por IP
 
-  static const String _remoteUrl = 'https://proyecto-mar-y-paz.onrender.com';
+static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/api';
   static const int _port = 3000; // Puerto del servidor local
   static const String? _lanIp = '192.168.1.160'; // Tu IP local de Wi-Fi
 
@@ -27,6 +27,7 @@ class ApiConfig {
 
   static Map<String, String> get headers => {
     'Content-Type': 'application/json',
+    'accept': 'application/json',
   };
 }
 

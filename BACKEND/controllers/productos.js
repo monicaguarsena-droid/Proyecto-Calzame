@@ -38,14 +38,18 @@ export const getProductosPorCategoria = async (req, res) => {
 
 // crear un producto nuevo 
 export const postProducto = async (req, res) => {
+    console.log("BODY RECIBIDO:", req.body);
+    console.log("FILE RECIBIDO:", req.file);
+    
     try {
-        const { Nombre, Categoria, Precio, Stock,  Descripcion, Tallas, Imagen, } = req.body;
+        const { Nombre, Categoria, Precio, Stock,  Descripcion, Tallas } = req.body;
 
         if (!Nombre || !Precio) {
             return res.status(400).json({ error: 'El nombre y el precio son obligatorios' });
-        }
+        } 
+        const imageurl = req.file ? req.file.path :''; 
 
-        const { data, error } = await crearProducto(Nombre, Categoria, Precio, Stock,  Descripcion, Tallas, Imagen,);
+        const { data, error } = await crearProducto(Nombre, Categoria, Precio, Stock,  Descripcion, Tallas, imageurl);
 
         if (error) {
             console.error('Error de Supabase al crear producto:', error);

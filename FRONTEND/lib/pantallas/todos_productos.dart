@@ -4,6 +4,8 @@ import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/models/productoModel.dart';
+import 'package:frontend/servicios/producto_service.dart';
 
 class TodosProductosScreen extends StatefulWidget {
   const TodosProductosScreen({super.key});
@@ -15,86 +17,14 @@ class TodosProductosScreen extends StatefulWidget {
 class _TodosProductosScreenState extends State<TodosProductosScreen> {
   final int _tab = 0;
 
-  // Catálogo completo con 12 productos (Dama, Caballero e Infantil)
-  final List<Map<String, String>> _todosLosProductos = const [
-    // --- DAMA ---
-    {
-      'imagen': 'assets/img/botas.jpg',
-      'titulo': 'Botas altas de cuero',
-      'subtitulo': 'Dama · Cuero suave e invierno',
-      'precio': '\$129',
-    },
-    {
-      'imagen': 'assets/img/tacon.jpg',
-      'titulo': 'Stiletto clásico',
-      'subtitulo': 'Dama · Tacón fino y elegante',
-      'precio': '\$89',
-    },
-    {
-      'imagen': 'assets/img/tacon.jpg',
-      'titulo': 'Sandalia de tacón',
-      'subtitulo': 'Dama · Estilo verano y fiesta',
-      'precio': '\$110',
-    },
-    {
-      'imagen': 'assets/img/botas.jpg',
-      'titulo': 'Botines casuales',
-      'subtitulo': 'Dama · Confort y estilo diario',
-      'precio': '\$135',
-    },
+  final ProductoService _productoService = ProductoService();
+  late Future<List<ProductoModel>> _productosFuture;
 
-    // --- CABALLERO ---
-    {
-      'imagen': 'assets/img/botas.jpg',
-      'titulo': 'Bota formal de vestir',
-      'subtitulo': 'Caballero · Estilo urbano',
-      'precio': '\$149',
-    },
-    {
-      'imagen': 'assets/img/tacon.jpg',
-      'titulo': 'Zapatos casuales',
-      'subtitulo': 'Caballero · Comodidad diaria',
-      'precio': '\$99',
-    },
-    {
-      'imagen': 'assets/img/botas.jpg',
-      'titulo': 'Bota cazadora',
-      'subtitulo': 'Caballero · Todo terreno',
-      'precio': '\$159',
-    },
-    {
-      'imagen': 'assets/img/tacon.jpg',
-      'titulo': 'Mocasines elegantes',
-      'subtitulo': 'Caballero · Cuero genuino',
-      'precio': '\$120',
-    },
-
-    // --- INFANTIL / NIÑOS ---
-    {
-      'imagen': 'assets/img/botas.jpg',
-      'titulo': 'Botines infantiles',
-      'subtitulo': 'Niños · Protección y confort',
-      'precio': '\$69',
-    },
-    {
-      'imagen': 'assets/img/tacon.jpg',
-      'titulo': 'Zapatillas escolares',
-      'subtitulo': 'Niños · Alta durabilidad',
-      'precio': '\$59',
-    },
-    {
-      'imagen': 'assets/img/tacon.jpg',
-      'titulo': 'Sandalias infantiles',
-      'subtitulo': 'Niños · Ligeras y frescas',
-      'precio': '\$48',
-    },
-    {
-      'imagen': 'assets/img/botas.jpg',
-      'titulo': 'Bota acolchada infantil',
-      'subtitulo': 'Niños · Térmica para frío',
-      'precio': '\$75',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _productosFuture = _productoService.obtenerProductos();
+  }
 
   void _onItemTapped(int index) {
     if (index == 0) {
@@ -164,7 +94,7 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Dama, Caballero e Infantil (12 productos)',
+                'Dama, Caballero e Infantil',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -173,23 +103,46 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: GridView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.62,
-                  ),
-                  itemCount: _todosLosProductos.length,
-                  itemBuilder: (context, index) {
-                    final item = _todosLosProductos[index];
-                    return _tarjetaProducto(
-                      context,
-                      item['imagen']!,
-                      item['titulo']!,
-                      item['subtitulo']!,
-                      item['precio']!,
+                child: FutureBuilder<List<ProductoModel>>(
+                  future: _productosFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'No se pudieron cargar los productos: ${snapshot.error}',
+                        ),
+                      );
+                    }
+                    final productos = snapshot.data ?? [];
+                    if (productos.isEmpty) {
+                      return const Center(
+                        child: Text('Aún no hay productos publicados.'),
+                      );
+                    }
+                    return GridView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.62,
+                          ),
+                      itemCount: productos.length,
+                      itemBuilder: (context, index) {
+                        final item = productos[index];
+                        return _tarjetaProducto(
+                          context,
+                          item.id,
+                          item.imagenUrl ?? '',
+                          item.nombre,
+                          '${item.categoria} · ${item.descripcion}',
+                          '\$${item.precio.toStringAsFixed(0)}',
+                        );
+                      },
                     );
                   },
                 ),
@@ -204,6 +157,7 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
 
   Widget _tarjetaProducto(
     BuildContext context,
+    String productoId,
     String asset,
     String titulo,
     String subtitulo,
@@ -223,17 +177,25 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
             borderRadius: BorderRadius.circular(14),
             child: AspectRatio(
               aspectRatio: 1.15,
-              child: Image.asset(
-                asset,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => Container(
-                  color: ColoresApp.surfaceVariant,
-                  child: const Icon(
-                    Icons.image_not_supported,
-                    color: ColoresApp.textSecondary,
-                  ),
-                ),
-              ),
+              child: asset.isEmpty
+                  ? Container(
+                      color: ColoresApp.surfaceVariant,
+                      child: const Icon(
+                        Icons.image_not_supported,
+                        color: ColoresApp.textSecondary,
+                      ),
+                    )
+                  : Image.network(
+                      asset,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Container(
+                        color: ColoresApp.surfaceVariant,
+                        child: const Icon(
+                          Icons.image_not_supported,
+                          color: ColoresApp.textSecondary,
+                        ),
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 8),
@@ -271,13 +233,28 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
             width: double.infinity,
             height: 36,
             child: ElevatedButton(
-              onPressed: () {
-                CarritoService.agregarProducto(
-                  imagen: asset,
-                  titulo: titulo,
-                  subtitulo: subtitulo,
-                  precioStr: precio,
-                );
+              onPressed: () async {
+                try {
+                  await CarritoService.agregarProducto(
+                    productoId: productoId,
+                    imagen: asset,
+                    titulo: titulo,
+                    subtitulo: subtitulo,
+                    precioStr: precio,
+                  );
+                } catch (error) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        error.toString().replaceFirst('Exception: ', ''),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('¡Producto agregado al carrito!'),
