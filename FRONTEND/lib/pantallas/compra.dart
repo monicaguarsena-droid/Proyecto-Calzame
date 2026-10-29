@@ -326,9 +326,22 @@ class _CompraScreenState extends State<CompraScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: () {
-                // Limpiar el carrito tras la compra exitosa
-                CarritoService.itemsCarrito.clear();
+              onPressed: () async {
+                try {
+                  await CarritoService.vaciar();
+                } catch (error) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        error.toString().replaceFirst('Exception: ', ''),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                if (!context.mounted) return;
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const Home()),
                   (route) => false,

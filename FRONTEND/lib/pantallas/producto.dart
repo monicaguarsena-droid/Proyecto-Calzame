@@ -8,6 +8,7 @@ import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/servicios/favoritos_service.dart';
 
 class DetalleProductoScreen extends StatefulWidget {
+  final String? productoId;
   final String imagen;
   final String titulo;
   final String subtitulo;
@@ -15,6 +16,7 @@ class DetalleProductoScreen extends StatefulWidget {
 
   const DetalleProductoScreen({
     super.key,
+    this.productoId,
     required this.imagen,
     required this.titulo,
     required this.subtitulo,
@@ -72,6 +74,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
 
   void _toggleFavorito() {
     FavoritosService.toggleFavorito(
+      productoId: widget.productoId ?? '',
       imagen: widget.imagen,
       titulo: widget.titulo,
       subtitulo: widget.subtitulo,
@@ -335,16 +338,30 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // AQUÍ ENVIAMOS LA TALLA Y EL COLOR SELECCIONADOS POR EL USUARIO
-                    CarritoService.agregarProducto(
-                      imagen: widget.imagen,
-                      titulo: widget.titulo,
-                      subtitulo: widget.subtitulo,
-                      precioStr: widget.precio,
-                      talla: tallaSeleccionada,
-                      color: nombresColores[colorSeleccionado],
-                    );
+                  onPressed: () async {
+                    try {
+                      await CarritoService.agregarProducto(
+                        productoId: widget.productoId ?? '',
+                        imagen: widget.imagen,
+                        titulo: widget.titulo,
+                        subtitulo: widget.subtitulo,
+                        precioStr: widget.precio,
+                        talla: tallaSeleccionada,
+                        color: nombresColores[colorSeleccionado],
+                      );
+                    } catch (error) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            error.toString().replaceFirst('Exception: ', ''),
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(

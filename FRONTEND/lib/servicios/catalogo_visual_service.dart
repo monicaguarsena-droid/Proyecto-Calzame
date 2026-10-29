@@ -6,9 +6,12 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CatalogoVisualService {
+  static String _ruta(String recurso) =>
+      recurso == 'ofertas' ? 'ofertas' : 'catalogo/$recurso';
+
   static Future<List<Map<String, dynamic>>> listar(String recurso) async {
     final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/catalogo/$recurso'),
+      Uri.parse('${ApiConfig.baseUrl}/${_ruta(recurso)}'),
       headers: ApiConfig.headers,
     );
     final body = _decodeResponse(response);
@@ -36,7 +39,7 @@ class CatalogoVisualService {
   }) async {
     final token = await _token();
     final ruta =
-        '${ApiConfig.baseUrl}/catalogo/$recurso${id == null ? '' : '/$id'}';
+        '${ApiConfig.baseUrl}/${_ruta(recurso)}${id == null ? '' : '/$id'}';
     final request = http.MultipartRequest(
       id == null ? 'POST' : 'PUT',
       Uri.parse(ruta),
@@ -62,7 +65,7 @@ class CatalogoVisualService {
   }) async {
     final token = await _token();
     final response = await http.delete(
-      Uri.parse('${ApiConfig.baseUrl}/catalogo/$recurso/$id'),
+      Uri.parse('${ApiConfig.baseUrl}/${_ruta(recurso)}/$id'),
       headers: {'Authorization': 'Bearer $token'},
     );
     final body = _decodeResponse(response);

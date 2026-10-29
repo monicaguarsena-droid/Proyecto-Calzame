@@ -6,66 +6,9 @@ import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/producto.dart';
+import 'package:frontend/servicios/carrito_service.dart';
 
-// Modelo actualizado para incluir talla y color en los ítems del carrito
-class ItemCarrito {
-  final String imagen;
-  final String titulo;
-  final String subtitulo;
-  final double precio;
-  final String talla;
-  final String color;
-  int cantidad;
-
-  ItemCarrito({
-    required this.imagen,
-    required this.titulo,
-    required this.subtitulo,
-    required this.precio,
-    required this.talla,
-    required this.color,
-    this.cantidad = 1,
-  });
-}
-
-// Servicio estático para almacenar y gestionar los ítems del carrito en sesión
-class CarritoService {
-  static final List<ItemCarrito> itemsCarrito = [];
-
-  static void agregarProducto({
-    required String imagen,
-    required String titulo,
-    required String subtitulo,
-    required String precioStr,
-    String talla = 'Única',
-    String color = 'Único',
-  }) {
-    // Limpiamos el string del precio
-    double precio =
-        double.tryParse(precioStr.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
-
-    // Verificamos si ya existe el producto con la misma talla y color para aumentar cantidad
-    final index = itemsCarrito.indexWhere(
-      (item) =>
-          item.titulo == titulo && item.talla == talla && item.color == color,
-    );
-
-    if (index >= 0) {
-      itemsCarrito[index].cantidad += 1;
-    } else {
-      itemsCarrito.add(
-        ItemCarrito(
-          imagen: imagen,
-          titulo: titulo,
-          subtitulo: subtitulo,
-          precio: precio,
-          talla: talla,
-          color: color,
-        ),
-      );
-    }
-  }
-}
+export 'package:frontend/servicios/carrito_service.dart';
 
 class CarritoScreen extends StatefulWidget {
   const CarritoScreen({super.key});
@@ -76,6 +19,65 @@ class CarritoScreen extends StatefulWidget {
 
 class _CarritoScreenState extends State<CarritoScreen> {
   final int _tab = 1;
+  bool _cargando = true;
+  String? _errorCarga;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarCarrito();
+  }
+
+  Future<void> _cargarCarrito() async {
+    setState(() {
+      _cargando = true;
+      _errorCarga = null;
+    });
+    try {
+      await CarritoService.cargarCarrito();
+      if (mounted) setState(() => _cargando = false);
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          _cargando = false;
+          _errorCarga = error.toString().replaceFirst('Exception: ', '');
+        });
+      }
+    }
+  }
+
+  Future<void> _eliminarItem(ItemCarrito item) async {
+    try {
+      await CarritoService.eliminar(item);
+      if (mounted) setState(() {});
+    } catch (error) {
+      _mostrarError(error);
+    }
+  }
+
+  Future<void> _cambiarCantidad(ItemCarrito item, int cantidad) async {
+    if (cantidad < 1) {
+      await _eliminarItem(item);
+      return;
+    }
+    try {
+      await CarritoService.actualizarCantidad(item, cantidad);
+      if (mounted) setState(() {});
+    } catch (error) {
+      _mostrarError(error);
+    }
+  }
+
+  void _mostrarError(Object error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error.toString().replaceFirst('Exception: ', '')),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
@@ -120,7 +122,29 @@ class _CarritoScreenState extends State<CarritoScreen> {
               _subHeader(),
               const SizedBox(height: 16),
               Expanded(
-                child: CarritoService.itemsCarrito.isEmpty
+                child: _cargando
+                    ? const Center(child: CircularProgressIndicator())
+                    : _errorCarga != null
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _errorCarga!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: ColoresApp.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            TextButton(
+                              onPressed: _cargarCarrito,
+                              child: const Text('Reintentar'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : CarritoService.itemsCarrito.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -156,11 +180,13 @@ class _CarritoScreenState extends State<CarritoScreen> {
                         itemCount: CarritoService.itemsCarrito.length,
                         itemBuilder: (context, index) {
                           final item = CarritoService.itemsCarrito[index];
-                          return _tarjetaCarritoItem(item, index);
+                          return _tarjetaCarritoItem(item);
                         },
                       ),
               ),
-              if (CarritoService.itemsCarrito.isNotEmpty) ...[
+              if (!_cargando &&
+                  _errorCarga == null &&
+                  CarritoService.itemsCarrito.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _seccionResumen(),
                 const SizedBox(height: 12),
@@ -238,7 +264,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
     );
   }
 
-  Widget _tarjetaCarritoItem(ItemCarrito item, int index) {
+  Widget _tarjetaCarritoItem(ItemCarrito item) {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
@@ -256,6 +282,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => DetalleProductoScreen(
+                  productoId: item.productoId,
                   imagen: item.imagen,
                   titulo: item.titulo,
                   subtitulo: item.subtitulo,
@@ -346,24 +373,15 @@ class _CarritoScreenState extends State<CarritoScreen> {
                         color: ColoresApp.error,
                       ),
                       onPressed: () {
-                        setState(() {
-                          CarritoService.itemsCarrito.removeAt(index);
-                        });
+                        _eliminarItem(item);
                       },
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         InkWell(
-                          onTap: () {
-                            setState(() {
-                              if (item.cantidad > 1) {
-                                item.cantidad--;
-                              } else {
-                                CarritoService.itemsCarrito.removeAt(index);
-                              }
-                            });
-                          },
+                          onTap: () =>
+                              _cambiarCantidad(item, item.cantidad - 1),
                           child: Container(
                             padding: const EdgeInsets.all(5),
                             decoration: BoxDecoration(
@@ -384,11 +402,8 @@ class _CarritoScreenState extends State<CarritoScreen> {
                           ),
                         ),
                         InkWell(
-                          onTap: () {
-                            setState(() {
-                              item.cantidad++;
-                            });
-                          },
+                          onTap: () =>
+                              _cambiarCantidad(item, item.cantidad + 1),
                           child: Container(
                             padding: const EdgeInsets.all(5),
                             decoration: BoxDecoration(
@@ -453,7 +468,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => CompraScreen(
-                      items: CarritoService.itemsCarrito,
+                      items: List.of(CarritoService.itemsCarrito),
                       total: _totalGeneral,
                     ),
                   ),
