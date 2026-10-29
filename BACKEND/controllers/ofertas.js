@@ -22,9 +22,9 @@ export const OfertaController = {
             const oferta = await OfertaModel.create({
                 titulo: req.body.titulo.trim(),
                 descuento: req.body.descuento?.trim() ?? '',
-                etiqueta: req.body.etiqueta?.trim() || 'OFERTA',
+                etiqueta: req.body.tag?.trim() || 'OFERTA', // Asegúrate de que tu columna en Supabase se llame 'etiqueta'
                 descripcion: req.body.descripcion?.trim() ?? '',
-                imagen_url: req.file.path,
+                imagen: req.file.path, // O imagen_url según corresponda a tu columna real en Supabase
                 estado: 'Activo'
             });
             return res.status(201).json(oferta);
@@ -45,7 +45,7 @@ export const OfertaController = {
                     cambios[campo] = req.body[campo].trim();
                 }
             }
-            if (req.file) cambios.imagen_url = req.file.path;
+            if (req.file) cambios.imagen = req.file.path;
             if (Object.keys(cambios).length === 0) {
                 return res.status(400).json({ message: 'No hay cambios para guardar' });
             }
