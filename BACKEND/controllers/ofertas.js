@@ -22,7 +22,7 @@ export const OfertaController = {
             const oferta = await OfertaModel.create({
                 titulo: req.body.titulo.trim(),
                 descuento: req.body.descuento?.trim() ?? '',
-                tag: req.body.tag?.trim() || 'OFERTA',
+                etiqueta: req.body.etiqueta?.trim() || 'OFERTA',
                 descripcion: req.body.descripcion?.trim() ?? '',
                 imagen_url: req.file.path,
                 estado: 'Activo'
@@ -40,7 +40,7 @@ export const OfertaController = {
             }
 
             const cambios = {};
-            for (const campo of ['titulo', 'descuento', 'tag', 'descripcion']) {
+            for (const campo of ['titulo', 'descuento', 'etiqueta', 'descripcion']) {
                 if (req.body[campo] !== undefined) {
                     cambios[campo] = req.body[campo].trim();
                 }
