@@ -3,11 +3,12 @@ import 'package:flutter/foundation.dart';
 
 class ApiConfig {
   static const bool useRemote =
-      true; // Cambia a false para usar el servidor local
+      false; // Cambiado a false para usar tu servidor local por IP
 
   static const String _remoteUrl = 'https://proyecto-mar-y-paz.onrender.com';
   static const int _port = 3000; // Puerto del servidor local
-  static const String? _lanIp = null;
+  static const String? _lanIp = '192.168.1.160'; // Tu IP local de Wi-Fi
+
   static String get baseUrl {
     if (useRemote) {
       return _remoteUrl;
