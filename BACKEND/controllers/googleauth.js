@@ -62,7 +62,7 @@ export const autenticarConGoogle = async (req, res) => {
 
   // 3. Generar token de sesión JWT
   const token = jwt.sign(
-    { id: usuarioFinal.id, rol: usuarioFinal.rol },
+    { id: usuarioFinal.id, rol: usuarioFinal.rol, cedula: usuarioFinal.cedula },
     process.env.JWT_SECRET,
     { expiresIn: '1d' }
   );

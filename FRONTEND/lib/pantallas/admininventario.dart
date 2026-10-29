@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:frontend/cors/colores.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/api_config.dart';
 
 class InventarioAdminPage extends StatefulWidget {
   const InventarioAdminPage({Key? key}) : super(key: key);
@@ -17,7 +18,8 @@ class InventarioAdminPage extends StatefulWidget {
 class _InventarioAdminPageState extends State<InventarioAdminPage> {
   final Color primaryColor = const Color(0xFF6B1229);
   final Color backgroundColor = const Color(0xFFF9F1EE);
-  final String baseUrl = "http://10.0.2.2:3000";
+
+  final String baseUrl = ApiConfig.baseUrl;
 
   String _categoriaSeleccionada = 'Todos';
   String _filtroBusqueda = '';
@@ -27,7 +29,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
   
   Future<void> _cargarProductos() async {
   try {
-    final response = await http.get(Uri.parse('$baseUrl/api/productos')); // O la ruta que uses
+    final response = await http.get(Uri.parse('$baseUrl/productos')); // O la ruta que uses
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       setState(() {
@@ -46,7 +48,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
 
     // Realiza la petición DELETE al backend
     final response = await http.delete(
-      Uri.parse('$baseUrl/api/productos/eliminar/$id'),
+      Uri.parse('$baseUrl/productos/eliminar/$id'),
       headers: {
         'Authorization': 'Bearer $token',
       },

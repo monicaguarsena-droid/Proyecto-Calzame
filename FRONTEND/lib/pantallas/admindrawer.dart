@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/admininventario.dart';
 import 'package:frontend/pantallas/adminpedido.dart';
+import 'package:frontend/pantallas/admin_ofertas.dart';
+import 'package:frontend/pantallas/admin_tipos_calzado.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart'; // Asegúrate de que apunte a tu archivo de login correcto
 import 'package:frontend/pantallas/paneldeusuarios.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,7 +49,9 @@ class AdminDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String inicial = adminName.isNotEmpty ? adminName[0].toUpperCase() : 'M';
+    final String inicial = adminName.isNotEmpty
+        ? adminName[0].toUpperCase()
+        : 'M';
 
     return Drawer(
       backgroundColor: ColoresApp.background,
@@ -74,44 +78,88 @@ class AdminDrawer extends StatelessWidget {
                   ),
                   accountName: Text(
                     adminName.isNotEmpty ? adminName : 'Mónica Molina',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
                   ),
                   accountEmail: Text(
-                    adminEmail.isNotEmpty ? adminEmail : 'monicaguarsena@gmail.com',
+                    adminEmail.isNotEmpty
+                        ? adminEmail
+                        : 'monicaguarsena@gmail.com',
                     style: const TextStyle(color: Colors.white70, fontSize: 12),
                   ),
                 ),
                 const SizedBox(height: 10),
-                
+
                 // Opción Productos / Inventario
                 _drawerItem(
                   icon: Icons.inventory_2_outlined,
                   title: 'Inventario de Productos',
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => InventarioAdminPage())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => InventarioAdminPage(),
+                    ),
+                  ),
                 ),
-                
+
                 // Opción Usuarios
                 _drawerItem(
                   icon: Icons.people_alt_outlined,
                   title: 'Usuarios y Clientes',
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ClientesAdminPage())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ClientesAdminPage(),
+                    ),
+                  ),
                 ),
-                
+
                 // Opción Pedidos
                 _drawerItem(
                   icon: Icons.receipt_long_outlined,
                   title: 'Pedidos de Clientes',
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PedidosAdmin())),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => PedidosAdmin()),
+                  ),
                 ),
-                
+
+                _drawerItem(
+                  icon: Icons.local_offer_outlined,
+                  title: 'Ofertas y Banners',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminOfertasScreen(),
+                    ),
+                  ),
+                ),
+
+                _drawerItem(
+                  icon: Icons.category_outlined,
+                  title: 'Tipos de Calzado',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminTiposCalzadoPage(),
+                    ),
+                  ),
+                ),
+
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
                   child: Divider(),
                 ),
               ],
             ),
           ),
-          
+
           // Separador visual inferior
           const Divider(height: 1),
 

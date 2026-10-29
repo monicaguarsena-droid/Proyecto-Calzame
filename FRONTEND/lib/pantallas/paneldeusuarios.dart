@@ -4,6 +4,7 @@ import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/admin_panel.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/api_config.dart';
 
 class ClientesAdminPage extends StatefulWidget {
   const ClientesAdminPage({Key? key}) : super(key: key);
@@ -13,7 +14,7 @@ class ClientesAdminPage extends StatefulWidget {
 }
 
 class _ClientesAdminPageState extends State<ClientesAdminPage> {
-  final String baseUrl = "http://10.0.2.2:3000"; // Tu URL base para el emulador
+  final String baseUrl = ApiConfig.baseUrl;
   
   List<Map<String, dynamic>> _usuarios = [];
   bool _isLoading = true;
@@ -37,7 +38,7 @@ class _ClientesAdminPageState extends State<ClientesAdminPage> {
 
       // Ruta de tu backend que lista los usuarios o clientes
       final response = await http.get(
-        Uri.parse('$baseUrl/api/usuarios'), // Ajusta la ruta si en tu backend es /api/clientes o /api/users
+        Uri.parse('$baseUrl/usuarios'), // Ajusta la ruta si en tu backend es /api/clientes o /api/users
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

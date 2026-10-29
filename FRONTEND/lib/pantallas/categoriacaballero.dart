@@ -5,6 +5,9 @@ import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/producto.dart';
+import 'package:frontend/models/productoModel.dart';
+import 'package:frontend/servicios/producto_service.dart';
+import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
 
 class CategoriaCaballero extends StatefulWidget {
   const CategoriaCaballero({super.key});
@@ -16,19 +19,47 @@ class CategoriaCaballero extends StatefulWidget {
 class _CategoriaCaballeroState extends State<CategoriaCaballero> {
   final int _tab = 0;
 
-  final List<Map<String, dynamic>> _productosCaballero = [];
+  late Future<List<ProductoModel>> _productosCaballero;
+  final ProductoService _productoService = ProductoService();
+
+  @override
+  void initState() {
+    super.initState();
+    _productosCaballero = _cargarProductosCaballero();
+  }
+
+  Future<List<ProductoModel>> _cargarProductosCaballero() async {
+    final productos = await _productoService.obtenerProductos();
+    return productos
+        .where(
+          (producto) => producto.categoria.trim().toLowerCase() == 'caballero',
+        )
+        .toList();
+  }
 
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
     if (index == 0) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
     } else if (index == 1) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CarritoScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const CarritoScreen()),
+      );
     } else if (index == 2) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FavoritosScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FavoritosScreen()),
+      );
     } else if (index == 3) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const PerfilScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const PerfilScreen()),
+      );
     }
   }
 
@@ -51,36 +82,72 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
                     child: Container(
                       width: 40,
                       height: 40,
-                      decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                      child: const Icon(Icons.arrow_back, color: ColoresApp.primary, size: 20),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back,
+                        color: ColoresApp.primary,
+                        size: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   const Text(
                     'CALZADO DE CABALLERO',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: ColoresApp.primary, letterSpacing: 0.5),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: ColoresApp.primary,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               const Text(
                 'Explora nuestra colección',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: ColoresApp.primary),
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: ColoresApp.primary,
+                ),
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: GridView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 0.56,
-                  ),
-                  itemCount: _productosCaballero.length,
-                  itemBuilder: (context, index) {
-                    final item = _productosCaballero[index];
-                    return _tarjetaProducto(context, item, index);
+                child: FutureBuilder<List<ProductoModel>>(
+                  future: _productosCaballero,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          'No se pudieron cargar los productos: ${snapshot.error}',
+                        ),
+                      );
+                    }
+                    final productos = snapshot.data ?? [];
+                    if (productos.isEmpty) {
+                      return const Center(
+                        child: Text('Aún no hay productos en esta categoría.'),
+                      );
+                    }
+                    return GridView.builder(
+                      physics: const BouncingScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.56,
+                          ),
+                      itemCount: productos.length,
+                      itemBuilder: (context, index) =>
+                          _tarjetaProducto(context, productos[index], index),
+                    );
                   },
                 ),
               ),
@@ -92,11 +159,11 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
     );
   }
 
-  Widget _tarjetaProducto(BuildContext context, Map<String, dynamic> item, int index) {
-    final asset = item['imagen'] as String;
-    final titulo = item['titulo'] as String;
-    final subtitulo = item['subtitulo'] as String;
-    final precio = item['precio'] as String;
+  Widget _tarjetaProducto(BuildContext context, ProductoModel item, int index) {
+    final imagen = item.imagenUrl ?? '';
+    final titulo = item.nombre;
+    final subtitulo = item.descripcion;
+    final precio = '\$${item.precio.toStringAsFixed(0)}';
 
     return Container(
       padding: const EdgeInsets.all(10),
@@ -114,26 +181,48 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
                 borderRadius: BorderRadius.circular(14),
                 child: AspectRatio(
                   aspectRatio: 1.15,
-                  child: Image.asset(
-                    asset,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: ColoresApp.surfaceVariant,
-                      child: const Icon(Icons.image_not_supported, color: ColoresApp.textSecondary),
-                    ),
-                  ),
+                  child: imagen.isEmpty
+                      ? imagenCatalogoPlaceholder()
+                      : Image.network(
+                          imagen,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) =>
+                              imagenCatalogoPlaceholder(),
+                        ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(titulo, maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: ColoresApp.primary)),
+          Text(
+            titulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: ColoresApp.primary,
+            ),
+          ),
           const SizedBox(height: 2),
-          Text(subtitulo, maxLines: 1, overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: ColoresApp.textSecondary)),
+          Text(
+            subtitulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 11,
+              color: ColoresApp.textSecondary,
+            ),
+          ),
           const SizedBox(height: 6),
-          Text(precio, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: ColoresApp.primary)),
+          Text(
+            precio,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: ColoresApp.primary,
+            ),
+          ),
           const Spacer(),
           // Botón Ver producto (Navega a la pantalla producto.dart)
           SizedBox(
@@ -145,7 +234,8 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => DetalleProductoScreen(
-                      imagen: asset,
+                      productoId: item.id,
+                      imagen: imagen,
                       titulo: titulo,
                       subtitulo: subtitulo,
                       precio: precio,
@@ -155,10 +245,19 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
               },
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: ColoresApp.primary),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 padding: EdgeInsets.zero,
               ),
-              child: const Text('Ver producto', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: ColoresApp.primary)),
+              child: const Text(
+                'Ver producto',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: ColoresApp.primary,
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 6),
@@ -167,19 +266,52 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
             width: double.infinity,
             height: 34,
             child: ElevatedButton(
-              onPressed: () {
-                CarritoService.agregarProducto(imagen: asset, titulo: titulo, subtitulo: subtitulo, precioStr: precio);
+              onPressed: () async {
+                try {
+                  await CarritoService.agregarProducto(
+                    productoId: item.id,
+                    imagen: imagen,
+                    titulo: titulo,
+                    subtitulo: subtitulo,
+                    precioStr: precio,
+                  );
+                } catch (error) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        error.toString().replaceFirst('Exception: ', ''),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('¡Producto agregado al carrito!'), backgroundColor: Colors.green, duration: Duration(seconds: 1)),
+                  const SnackBar(
+                    content: Text('¡Producto agregado al carrito!'),
+                    backgroundColor: Colors.green,
+                    duration: Duration(seconds: 1),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColoresApp.primary,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 padding: EdgeInsets.zero,
               ),
-              child: const Text('Agregar al carrito', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Colors.white)),
+              child: const Text(
+                'Agregar al carrito',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ],
@@ -213,9 +345,26 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_tab == i ? items[i].$2 : items[i].$1, size: 22, color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary),
+                      Icon(
+                        _tab == i ? items[i].$2 : items[i].$1,
+                        size: 22,
+                        color: _tab == i
+                            ? ColoresApp.primary
+                            : ColoresApp.textSecondary,
+                      ),
                       const SizedBox(height: 2),
-                      Text(items[i].$3, style: TextStyle(fontSize: 11, fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400, color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary)),
+                      Text(
+                        items[i].$3,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: _tab == i
+                              ? FontWeight.w700
+                              : FontWeight.w400,
+                          color: _tab == i
+                              ? ColoresApp.primary
+                              : ColoresApp.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),

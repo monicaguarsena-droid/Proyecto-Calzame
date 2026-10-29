@@ -30,7 +30,6 @@ class _MenuPageState extends State<MenuPage> {
     _cargarRol();
   }
 
-  
   void _recargar() {
     setState(() {
       _productosFuture = _productoService.obtenerProductos();
@@ -125,6 +124,7 @@ class _MenuPageState extends State<MenuPage> {
             context,
             MaterialPageRoute(
               builder: (context) => DetalleProductoScreen(
+                productoId: productos[i].id,
                 imagen: productos[i].imagenUrl ?? '',
                 titulo: productos[i].nombre,
                 subtitulo: productos[i].descripcion,

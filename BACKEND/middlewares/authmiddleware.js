@@ -1,9 +1,6 @@
 import jwt from 'jsonwebtoken';
-import multer from 'multer';
 
-const upload = multer({dest: 'upload/'});
-
-//verificamos que exita un token valido 
+// Verificamos que exista un token válido
 export const verificarToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -21,12 +18,10 @@ export const verificarToken = (req, res, next) => {
     });
 };
 
-//solo deja pasar si el usuario tiene rol de admi
+// Solo deja pasar si el usuario tiene rol de admin
 export const verificarAdmin = (req, res, next) => {
     if (req.usuario?.rol !== 'admin') {
         return res.status(403).json({ error: 'No tienes permisos de administrador.' });
     }
     next();
 };
-
-export default upload;

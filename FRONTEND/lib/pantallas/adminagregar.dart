@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/cors/colores.dart'; // Ajusta la ruta de tus colores si es necesario
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Para gestionar el token de autenticación
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/api_config.dart'; // Asegúrate de tener esta importación para usar ApiConfig
 
 class AgregarProductoScreen extends StatefulWidget {
   const AgregarProductoScreen({super.key});
@@ -69,16 +70,28 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
           child: Wrap(
             children: [
               ListTile(
-                leading: const Icon(Icons.photo_library, color: ColoresApp.primary),
-                title: const Text('Galería', style: TextStyle(color: ColoresApp.textPrimary)),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: ColoresApp.primary,
+                ),
+                title: const Text(
+                  'Galería',
+                  style: TextStyle(color: ColoresApp.textPrimary),
+                ),
                 onTap: () {
                   Navigator.of(context).pop();
                   _seleccionarImagen(ImageSource.gallery);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_camera, color: ColoresApp.primary),
-                title: const Text('Cámara', style: TextStyle(color: ColoresApp.textPrimary)),
+                leading: const Icon(
+                  Icons.photo_camera,
+                  color: ColoresApp.primary,
+                ),
+                title: const Text(
+                  'Cámara',
+                  style: TextStyle(color: ColoresApp.textPrimary),
+                ),
                 onTap: () {
                   Navigator.of(context).pop();
                   _seleccionarImagen(ImageSource.camera);
@@ -93,15 +106,57 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
 
   String _categoriaSeleccionada = 'Dama';
   final List<String> _categorias = ['Dama', 'Caballero', 'Infantil'];
-  
+
   // Tallas disponibles y seleccionadas
-  final List<String> _tallasDisponibles = ['16','17','18','19','20','21','22','23','24','25','26','27','28','29','30', '31', '32','33','34','35', '36', '37', '38', '39','40', '41', '42', '43', '44', '45'];
+  final List<String> _tallasDisponibles = [
+    '16',
+    '17',
+    '18',
+    '19',
+    '20',
+    '21',
+    '22',
+    '23',
+    '24',
+    '25',
+    '26',
+    '27',
+    '28',
+    '29',
+    '30',
+    '31',
+    '32',
+    '33',
+    '34',
+    '35',
+    '36',
+    '37',
+    '38',
+    '39',
+    '40',
+    '41',
+    '42',
+    '43',
+    '44',
+    '45',
+  ];
   final List<String> _tallasSeleccionadas = [];
 
   bool _isLoading = false;
-  final String baseUrl = 'http://10.0.2.2:3000/api/productos'; // URL de tu backend en Node.js
+  final String baseUrl =
+      ApiConfig.baseUrl + '/productos'; // URL de tu backend en Node.js
 
   Future<void> _guardarProductoConImagen() async {
+    if (_imagenSeleccionada == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecciona una foto para el producto.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -110,14 +165,9 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token') ?? '';
 
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$baseUrl/crear'),
-      );
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/crear'));
 
-      request.headers.addAll({
-        'Authorization': 'Bearer $token',
-      });
+      request.headers.addAll({'Authorization': 'Bearer $token'});
 
       // Adjuntar los campos de texto
       request.fields['Nombre'] = _nombreController.text.trim();
@@ -146,7 +196,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
         Navigator.pop(context, true); // Regresa al inventario y recarga
       } else {
         final errorData = json.decode(response.body);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorData['error'] ?? 'Error al guardar el producto'),
@@ -169,7 +219,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
       });
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -179,13 +229,24 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
         elevation: 0,
         leading: TextButton.icon(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back, color: ColoresApp.primary, size: 18),
-          label: const Text('Atrás', style: TextStyle(color: ColoresApp.primary)),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: ColoresApp.primary,
+            size: 18,
+          ),
+          label: const Text(
+            'Atrás',
+            style: TextStyle(color: ColoresApp.primary),
+          ),
         ),
         leadingWidth: 90,
         title: const Text(
           'Agregar Producto',
-          style: TextStyle(color: ColoresApp.primary, fontWeight: FontWeight.w800, fontSize: 20),
+          style: TextStyle(
+            color: ColoresApp.primary,
+            fontWeight: FontWeight.w800,
+            fontSize: 20,
+          ),
         ),
         centerTitle: true,
       ),
@@ -216,11 +277,18 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: const [
-                          Icon(Icons.camera_alt_outlined, size: 40, color: ColoresApp.primary),
+                          Icon(
+                            Icons.camera_alt_outlined,
+                            size: 40,
+                            color: ColoresApp.primary,
+                          ),
                           SizedBox(height: 8),
                           Text(
                             'Subir imagen del calzado',
-                            style: TextStyle(color: ColoresApp.primary, fontWeight: FontWeight.w500),
+                            style: TextStyle(
+                              color: ColoresApp.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
@@ -229,7 +297,13 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             const SizedBox(height: 16),
 
             // Nombre del producto
-            const Text('Nombre del producto', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
+            const Text(
+              'Nombre del producto',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: ColoresApp.primary,
+              ),
+            ),
             const SizedBox(height: 6),
             TextField(
               controller: _nombreController,
@@ -238,7 +312,13 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             const SizedBox(height: 16),
 
             // Categoría
-            const Text('Categoría', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
+            const Text(
+              'Categoría',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: ColoresApp.primary,
+              ),
+            ),
             const SizedBox(height: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -254,7 +334,8 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                   items: _categorias.map((cat) {
                     return DropdownMenuItem(value: cat, child: Text(cat));
                   }).toList(),
-                  onChanged: (val) => setState(() => _categoriaSeleccionada = val!),
+                  onChanged: (val) =>
+                      setState(() => _categoriaSeleccionada = val!),
                 ),
               ),
             ),
@@ -267,7 +348,13 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Precio (\$)', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
+                      const Text(
+                        'Precio (\$)',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: ColoresApp.primary,
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _precioController,
@@ -282,7 +369,13 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Stock (Unidades)', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
+                      const Text(
+                        'Stock (Unidades)',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: ColoresApp.primary,
+                        ),
+                      ),
                       const SizedBox(height: 6),
                       TextField(
                         controller: _stockController,
@@ -297,7 +390,13 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             const SizedBox(height: 16),
 
             // Descripción
-            const Text('Descripción del calzado', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
+            const Text(
+              'Descripción del calzado',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: ColoresApp.primary,
+              ),
+            ),
             const SizedBox(height: 6),
             TextField(
               controller: _descripcionController,
@@ -307,7 +406,13 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             const SizedBox(height: 16),
 
             // Tallas
-            const Text('Tallas disponibles', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
+            const Text(
+              'Tallas disponibles',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: ColoresApp.primary,
+              ),
+            ),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -317,7 +422,9 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                   label: Text(talla),
                   selected: seleccionada,
                   selectedColor: ColoresApp.primary,
-                  labelStyle: TextStyle(color: seleccionada ? Colors.white : ColoresApp.primary),
+                  labelStyle: TextStyle(
+                    color: seleccionada ? Colors.white : ColoresApp.primary,
+                  ),
                   onSelected: (bool selected) {
                     setState(() {
                       if (selected) {
@@ -339,12 +446,21 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColoresApp.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 onPressed: _isLoading ? null : _guardarProductoConImagen,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text('Guardar Producto', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                    : const Text(
+                        'Guardar Producto',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
               ),
             ),
           ],

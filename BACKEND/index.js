@@ -11,6 +11,8 @@ import direccionesRouter from "./routers/direcciones.js";
 import carritoRouter from "./routers/carrito.js";
 import adminRouter from "./routers/admin.js";
 import chatRoutes from './routers/chatRouters.js';
+import catalogoVisualRouter from "./routers/catalogo_visual.js";
+import ofertasRouter from "./routers/ofertas.js";
 
 dotenv.config();
 conectaDB();
@@ -41,6 +43,8 @@ app.use('/api/direcciones', direccionesRouter);
 app.use('/api/carrito', carritoRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/chat', chatRoutes);
+app.use('/api/catalogo', catalogoVisualRouter);
+app.use('/api/ofertas', ofertasRouter);
 
 
 
