@@ -23,8 +23,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
   // Datos de la cuenta (iniciales vacíos o por defecto mientras cargan de la BD)
   String _nombre = '';
   String _email = '';
-  String _telefono = 'No registrada';
-  String _direccion = 'No registrada';
+  String _telefono = 'No registrado';
+  String _direccion = 'No registrado';
   bool _notificacionesActivas = true;
   bool _isLoading = true;
 
@@ -256,8 +256,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
               const SizedBox(height: 10),
               TextField(controller: telefonoCtrl, decoration: const InputDecoration(labelText: 'Teléfono')),
               const SizedBox(height: 10),
-              TextField(controller: direccionCtrl, decoration: const InputDecoration(labelText: 'Dirección de entrega')),
-              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -271,7 +269,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       _nombre = nombreCtrl.text;
                       _email = emailCtrl.text;
                       _telefono = telefonoCtrl.text;
-                      _direccion = direccionCtrl.text;
                     });
 
                     // Guardar cambios en el backend y base de datos
@@ -354,7 +351,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     _tarjetaOpcion(
                       icon: Icons.person_outline,
                       titulo: 'Editar información personal',
-                      subtitulo: 'Nombre, Gmail, teléfono y dirección',
+                      subtitulo: 'Nombre, Gmail, teléfono',
                       onTap: _mostrarModalEdicion,
                     ),
                     const SizedBox(height: 12),

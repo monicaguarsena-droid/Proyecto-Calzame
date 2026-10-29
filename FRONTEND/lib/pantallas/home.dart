@@ -355,17 +355,7 @@ class _HomeState extends State<Home> {
                 ),
               ),
             ),
-            GestureDetector(
-              onTap: verTodoOnTap,
-              child: const Text(
-                'Ver todo',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: ColoresApp.primary,
-                ),
-              ),
-            ),
+
           ],
         ),
         const SizedBox(height: 10),
