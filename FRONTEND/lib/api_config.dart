@@ -2,8 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  static const bool useRemote =
-      false; // Cambiado a false para usar tu servidor local por IP
+  static const bool useRemote = true; // Cambiado a false para usar tu servidor local por IP
 
 static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/api';
   static const int _port = 3000; // Puerto del servidor local
