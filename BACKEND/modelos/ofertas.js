@@ -21,6 +21,6 @@ export const OfertaModel = {
             .select();
 
         if (error) throw error;
-        return data[0];
+        return data && data.length > 0 ? data[0] : {titulo, descuento, etiqueta, descripcion, imagen};
     }
 };
