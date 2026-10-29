@@ -136,6 +136,7 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
                         final item = productos[index];
                         return _tarjetaProducto(
                           context,
+                          item.id,
                           item.imagenUrl ?? '',
                           item.nombre,
                           '${item.categoria} · ${item.descripcion}',
@@ -156,6 +157,7 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
 
   Widget _tarjetaProducto(
     BuildContext context,
+    String productoId,
     String asset,
     String titulo,
     String subtitulo,
@@ -231,13 +233,28 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
             width: double.infinity,
             height: 36,
             child: ElevatedButton(
-              onPressed: () {
-                CarritoService.agregarProducto(
-                  imagen: asset,
-                  titulo: titulo,
-                  subtitulo: subtitulo,
-                  precioStr: precio,
-                );
+              onPressed: () async {
+                try {
+                  await CarritoService.agregarProducto(
+                    productoId: productoId,
+                    imagen: asset,
+                    titulo: titulo,
+                    subtitulo: subtitulo,
+                    precioStr: precio,
+                  );
+                } catch (error) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        error.toString().replaceFirst('Exception: ', ''),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('¡Producto agregado al carrito!'),

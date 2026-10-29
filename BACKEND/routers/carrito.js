@@ -1,15 +1,20 @@
 import express from 'express';
-import { postItemCarrito, getCarritoUsuario, deleteItemCarrito } from '../controllers/carrito.js';
+import {
+    postItemCarrito,
+    getCarritoUsuario,
+    putItemCarrito,
+    deleteItemCarrito,
+    deleteCarritoUsuario
+} from '../controllers/carrito.js';
+import { verificarToken } from '../middlewares/authmiddleware.js';
 
 const router = express.Router();
 
-// Agregar producto al carrito
+router.use(verificarToken);
+router.get('/', getCarritoUsuario);
 router.post('/agregar', postItemCarrito);
-
-// Obtener carrito por ID de usuario
-router.get('/usuario/:usuario_id', getCarritoUsuario);
-
-// Eliminar un producto del carrito por su ID de item
+router.delete('/vaciar', deleteCarritoUsuario);
+router.put('/:id', putItemCarrito);
 router.delete('/:id', deleteItemCarrito);
 
 export default router;

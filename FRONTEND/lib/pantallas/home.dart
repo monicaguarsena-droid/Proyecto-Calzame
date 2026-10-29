@@ -266,6 +266,7 @@ class _HomeState extends State<Home> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => DetalleProductoScreen(
+                          productoId: producto.id,
                           imagen: producto.imagenUrl ?? '',
                           titulo: producto.nombre,
                           subtitulo: producto.descripcion,

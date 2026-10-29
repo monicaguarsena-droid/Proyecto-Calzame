@@ -1,26 +1,48 @@
 import { supabase } from '../config/supabase.js';
 
 export const OfertaModel = {
-    // Obtener todas las ofertas
     async getAll() {
         const { data, error } = await supabase
             .from('ofertas')
-            .select('*');
+            .select('*')
+            .order('created_at', { ascending: false });
 
         if (error) throw error;
         return data;
     },
 
-    // Crear una nueva oferta
     async create(ofertaData) {
-        const { titulo, descuento, etiqueta, descripcion, imagen } = ofertaData;
-
         const { data, error } = await supabase
             .from('ofertas')
-            .insert([{ titulo, descuento, etiqueta, descripcion, imagen }])
-            .select();
+            .insert([ofertaData])
+            .select()
+            .single();
 
         if (error) throw error;
-        return data && data.length > 0 ? data[0] : {titulo, descuento, etiqueta, descripcion, imagen};
+        return data;
+    },
+
+    async update(id, cambios) {
+        const { data, error } = await supabase
+            .from('ofertas')
+            .update(cambios)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    },
+
+    async delete(id) {
+        const { data, error } = await supabase
+            .from('ofertas')
+            .delete()
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
     }
 };

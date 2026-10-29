@@ -232,6 +232,7 @@ class _CategoriaDamaState extends State<CategoriaDama> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => DetalleProductoScreen(
+                      productoId: item.id,
                       imagen: imagen,
                       titulo: titulo,
                       subtitulo: subtitulo,
@@ -263,13 +264,28 @@ class _CategoriaDamaState extends State<CategoriaDama> {
             width: double.infinity,
             height: 34,
             child: ElevatedButton(
-              onPressed: () {
-                CarritoService.agregarProducto(
-                  imagen: imagen,
-                  titulo: titulo,
-                  subtitulo: subtitulo,
-                  precioStr: precio,
-                );
+              onPressed: () async {
+                try {
+                  await CarritoService.agregarProducto(
+                    productoId: item.id,
+                    imagen: imagen,
+                    titulo: titulo,
+                    subtitulo: subtitulo,
+                    precioStr: precio,
+                  );
+                } catch (error) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        error.toString().replaceFirst('Exception: ', ''),
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('¡Producto agregado al carrito!'),

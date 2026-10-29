@@ -53,6 +53,7 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => DetalleProductoScreen(
+          productoId: producto.productoId,
           imagen: producto.imagen,
           titulo: producto.titulo,
           subtitulo: producto.subtitulo,
@@ -298,13 +299,33 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                                       width: double.infinity,
                                       height: 32,
                                       child: ElevatedButton(
-                                        onPressed: () {
-                                          CarritoService.agregarProducto(
-                                            imagen: item.imagen,
-                                            titulo: item.titulo,
-                                            subtitulo: item.subtitulo,
-                                            precioStr: item.precio,
-                                          );
+                                        onPressed: () async {
+                                          try {
+                                            await CarritoService.agregarProducto(
+                                              productoId: item.productoId,
+                                              imagen: item.imagen,
+                                              titulo: item.titulo,
+                                              subtitulo: item.subtitulo,
+                                              precioStr: item.precio,
+                                            );
+                                          } catch (error) {
+                                            if (!context.mounted) return;
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  error.toString().replaceFirst(
+                                                    'Exception: ',
+                                                    '',
+                                                  ),
+                                                ),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                            return;
+                                          }
+                                          if (!context.mounted) return;
                                           ScaffoldMessenger.of(
                                             context,
                                           ).showSnackBar(

@@ -1,10 +1,12 @@
 class ProductoFavorito {
+  final String productoId;
   final String imagen;
   final String titulo;
   final String subtitulo;
   final String precio;
 
   ProductoFavorito({
+    required this.productoId,
     required this.imagen,
     required this.titulo,
     required this.subtitulo,
@@ -25,6 +27,7 @@ class FavoritosService {
 
   // Agrega o quita el producto de la lista global
   static void toggleFavorito({
+    required String productoId,
     required String imagen,
     required String titulo,
     required String subtitulo,
@@ -37,13 +40,16 @@ class FavoritosService {
     } else {
       _favoritos.add(
         ProductoFavorito(
+          productoId: productoId,
           imagen: imagen,
           titulo: titulo,
           subtitulo: subtitulo,
           precio: precio,
         ),
       ); // Si no estaba, lo añade
-      print("Producto guardado: $titulo. Total en favoritos: ${_favoritos.length}");
+      print(
+        "Producto guardado: $titulo. Total en favoritos: ${_favoritos.length}",
+      );
     }
   }
 }
