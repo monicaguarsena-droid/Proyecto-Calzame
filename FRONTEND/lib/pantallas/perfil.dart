@@ -8,7 +8,8 @@ import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/pedido.dart';
 import 'package:frontend/pantallas/detalle_pedido.dart';
-import 'package:frontend/pantallas/inicio_sesion.dart'; // Asegúrate de tener la ruta correcta al Login
+import 'package:frontend/pantallas/inicio_sesion.dart';
+import 'package:frontend/pantallas/ubicacion_tienda.dart'; // Importa la pantalla del mapa
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -24,7 +25,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
   String _nombre = '';
   String _email = '';
   String _telefono = 'No registrado';
-  String _direccion = 'No registrado';
   bool _notificacionesActivas = true;
   bool _isLoading = true;
 
@@ -39,23 +39,21 @@ class _PerfilScreenState extends State<PerfilScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       
-      // Intentamos recuperar lo que se guardó localmente al hacer login
       String? emailGuardado = prefs.getString('email');
       String? nombreGuardado = prefs.getString('nombre');
       String? token = prefs.getString('token');
 
       if (mounted) {
-      setState(() {
-        if (nombreGuardado != null && nombreGuardado.isNotEmpty) {
-          _nombre = nombreGuardado;
-        }
-        if (emailGuardado != null && emailGuardado.isNotEmpty) {
-          _email = emailGuardado;
-        }
-      });
-    }
+        setState(() {
+          if (nombreGuardado != null && nombreGuardado.isNotEmpty) {
+            _nombre = nombreGuardado;
+          }
+          if (emailGuardado != null && emailGuardado.isNotEmpty) {
+            _email = emailGuardado;
+          }
+        });
+      }
 
-      // Opcional: Si tienes un endpoint en tu backend Node.js (ej. /api/usuarios/perfil)
       if (emailGuardado != null && emailGuardado.isNotEmpty) {
         final response = await http.get(
           Uri.parse('http://10.0.2.2:3000/usuarios/perfil?email=$emailGuardado'),
@@ -66,59 +64,52 @@ class _PerfilScreenState extends State<PerfilScreen> {
         );
 
         if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        print('RESPUESTA DEL BACKEND: $data');
-        // Mapeo flexible según cómo devuelva los datos tu controlador en Node.js
-        final usuarioBD = (data is Map && data.containsKey('usuario'))
-            ? data['usuario']
-            : data;
+          final data = jsonDecode(response.body);
+          final usuarioBD = (data is Map && data.containsKey('usuario'))
+              ? data['usuario']
+              : data;
 
-        if (mounted && usuarioBD != null) {
-          setState(() {
-            _nombre = usuarioBD['nombre'] ?? usuarioBD['nombre_completo'] ?? usuarioBD['name'] ?? 'sin nombre';
-            _email = usuarioBD['email'] ?? usuarioBD['correo'] ?? _email;
-            _telefono = usuarioBD['telefono'] ?? usuarioBD['phone'] ?? _telefono;
-            _direccion = usuarioBD['direccion'] ?? usuarioBD['address'] ?? _direccion;
-          });
+          if (mounted && usuarioBD != null) {
+            setState(() {
+              _nombre = usuarioBD['nombre'] ?? usuarioBD['nombre_completo'] ?? usuarioBD['name'] ?? 'sin nombre';
+              _email = usuarioBD['email'] ?? usuarioBD['correo'] ?? _email;
+              _telefono = usuarioBD['telefono'] ?? usuarioBD['phone'] ?? _telefono;
+            });
+          }
         }
-      } else {
-        print('Error en la petición: ${response.statusCode} - ${response.body}');
+      }
+    } catch (e) {
+      print('Excepción al cargar el perfil desde la BD: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
       }
     }
-  } catch (e) {
-    print('Excepción al cargar el perfil desde la BD: $e');
-  } finally {
-    if (mounted) {
-      setState(() {
-        _isLoading = false; // Desactiva el estado de carga
-      });
-    }
   }
-}
 
-  // 2. Función para actualizar los datos en el Backend (Opcional pero recomendado)
-  Future<void> _actualizarDatosEnBD(String nuevoNombre, String nuevoEmail, String nuevoTelefono, String nuevaDireccion) async {
+  // 2. Función para actualizar los datos en el Backend
+  Future<void> _actualizarDatosEnBD(String nuevoNombre, String nuevoEmail, String nuevoTelefono) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
       final response = await http.put(
-        Uri.parse('http://10.0.2.2:3000/api/usuarios/actualizar'), // Ajusta tu ruta del backend
+        Uri.parse('http://10.0.2.2:3000/api/usuarios/actualizar'),
         headers: {
           'Content-Type': 'application/json',
           if (token != null) 'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'emailActual': _email, // Para identificar al usuario
+          'emailActual': _email,
           'nombre': nuevoNombre,
           'email': nuevoEmail,
           'telefono': nuevoTelefono,
-          'direccion': nuevaDireccion,
         }),
       );
 
       if (response.statusCode == 200) {
-        // Actualizamos SharedPreferences también
         await prefs.setString('nombre', nuevoNombre);
         await prefs.setString('email', nuevoEmail);
       }
@@ -227,12 +218,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  // Modal para editar Nombre, Correo, Teléfono y Dirección
+  // Modal para editar Nombre, Correo y Teléfono
   void _mostrarModalEdicion() {
     final nombreCtrl = TextEditingController(text: _nombre);
     final emailCtrl = TextEditingController(text: _email);
     final telefonoCtrl = TextEditingController(text: _telefono);
-    final direccionCtrl = TextEditingController(text: _direccion);
 
     showModalBottomSheet(
       context: context,
@@ -271,8 +261,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       _telefono = telefonoCtrl.text;
                     });
 
-                    // Guardar cambios en el backend y base de datos
-                    await _actualizarDatosEnBD(_nombre, _email, _telefono, _direccion);
+                    await _actualizarDatosEnBD(_nombre, _email, _telefono);
 
                     if (!context.mounted) return;
                     Navigator.pop(context);
@@ -355,11 +344,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       onTap: _mostrarModalEdicion,
                     ),
                     const SizedBox(height: 12),
+                    // Tarjeta modificada para ver la ubicación del local en Garzón Huila
                     _tarjetaOpcion(
-                      icon: Icons.location_on_outlined,
-                      titulo: 'Dirección de entrega principal',
-                      subtitulo: _direccion,
-                      onTap: _mostrarModalEdicion,
+                      icon: Icons.storefront_outlined,
+                      titulo: 'Ubicación de la tienda',
+                      subtitulo: 'Garzón, Huila (Recogida en local)',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const UbicacionTiendaScreen(),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
 
@@ -406,7 +403,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Botón Cerrar Sesión (Limpia SharedPreferences y regresa al Login o Home)
+                    // Botón Cerrar Sesión
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -418,11 +415,11 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         ),
                         onPressed: () async {
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs.clear(); // Limpia los datos de sesión almacenados
+                          await prefs.clear();
 
                           if (!context.mounted) return;
                           Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(builder: (context) => const Login()), // O pon tu pantalla de Login
+                            MaterialPageRoute(builder: (context) => const Login()),
                             (route) => false,
                           );
                         },

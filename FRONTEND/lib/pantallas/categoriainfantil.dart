@@ -8,6 +8,7 @@ import 'package:frontend/pantallas/producto.dart';
 import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/servicios/producto_service.dart';
 import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
+import 'package:frontend/models/guia_tallas.dart';
 
 class CategoriaInfantil extends StatefulWidget {
   const CategoriaInfantil({super.key});
@@ -75,32 +76,69 @@ class _CategoriaInfantilState extends State<CategoriaInfantil> {
             children: [
               const SizedBox(height: 12),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: ColoresApp.primary,
+                            size: 20,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'INFANTIL',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: ColoresApp.primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Botón Guía de Tallas idéntico al solicitado
                   InkWell(
-                    onTap: () => Navigator.pop(context),
+                    onTap: () => mostrarGuiaTallasModal(context, 'Infantil'),
                     borderRadius: BorderRadius.circular(20),
                     child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
                         color: Colors.white,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFEEDFDB)),
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: ColoresApp.primary,
-                        size: 20,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            Icons.checkroom_rounded,
+                            size: 18,
+                            color: ColoresApp.primary,
+                          ),
+                          SizedBox(width: 6),
+                          Text(
+                            'Guía de Tallas',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: ColoresApp.primary,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'CALZADO INFANTIL',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: ColoresApp.primary,
-                      letterSpacing: 0.5,
                     ),
                   ),
                 ],
