@@ -21,15 +21,18 @@ export const obtenerCategoriaPorId = async (req, res) => {
 
 export const crearCategoria = async (req, res) => {
     try {
-        const { nombre, descripcion } = req.body;
-        const imagenUrl = req.file ? req.file.path : null;
+        // Verificamos que req.body exista antes de leer sus propiedades
+        const nombre = req.body ? req.body.nombre : null;
+        const imagenUrl = req.file ? req.file.path : null; // O la URL que retorne tu servicio de subida
 
-        const nuevaCategoriaData = {
+        if (!nombre) {
+            return res.status(400).json({ error: "El nombre de la categoría es obligatorio" });
+        }
+
+        const nuevaCategoria = await Categoria.create({
             nombre,
             imagen_url: imagenUrl,
-        };
-
-        const nuevaCategoria = await Categoria.create(nuevaCategoriaData);
+        });
 
         res.status(201).json({
             mensaje: "Categoría creada con éxito",
