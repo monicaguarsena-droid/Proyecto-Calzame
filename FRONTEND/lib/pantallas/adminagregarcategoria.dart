@@ -1,8 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:frontend/cors/colores.dart'; 
+import 'package:frontend/cors/colores.dart';
+import 'package:frontend/servicios/catalogo_visual_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AdminAgregarCategoria extends StatefulWidget {
-  final Map<String, dynamic>? categoria; // Recibe la categoría si es para editar
+  final Map<String, dynamic>? categoria;
 
   const AdminAgregarCategoria({Key? key, this.categoria}) : super(key: key);
 
@@ -14,20 +17,33 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
   late TextEditingController _nombreController;
   late TextEditingController _descripcionController;
 
+  File? _imagenSeleccionada;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _nombreController = TextEditingController(
-      text: widget.categoria != null ? widget.categoria!['nombre'] : '',
+      text: widget.categoria != null ? widget.categoria!['nombre'] ?? widget.categoria!['titulo'] ?? '' : '',
     );
     _descripcionController = TextEditingController(
       text: widget.categoria != null ? (widget.categoria!['descripcion'] ?? '') : '',
     );
   }
 
-  void _guardarCategoria() {
+  //Método para seleccionar imagen desde galería o cámara
+  Future<void> _seleccionarImagen() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    
+    if (pickedFile != null) {
+      setState(() {
+        _imagenSeleccionada = File(pickedFile.path);
+      });
+    }
+  }
+
+  Future<void> _guardarCategoria() async {
     if (_nombreController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -41,29 +57,47 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
 
     setState(() => _isLoading = true);
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+    try {
+      await CatalogoVisualService.guardar(
+        recurso: 'categorias',
+        id: widget.categoria?['id']?.toString(),
+        imagen: _imagenSeleccionada,
+        campos: {
+          'nombre': _nombreController.text.trim(),
+          //'descripcion': _descripcionController.text.trim(),
+        },
+      );
 
-      final mensaje = widget.categoria == null
-          ? '¡Categoría agregada exitosamente!'
-          : '¡Categoría actualizada exitosamente!';
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(mensaje),
+          content: Text(
+            widget.categoria == null
+                ? '¡Categoría agregada exitosamente!'
+                : '¡Categoría actualizada exitosamente!',
+          ),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
         ),
       );
 
-      // Devolvemos los datos limpios sin campos sobrantes
-      Navigator.pop(context, {
-        'nombre': _nombreController.text.trim(),
-        'descripcion': _descripcionController.text.trim(),
-        'productos': widget.categoria != null ? widget.categoria!['productos'] : 0,
-      });
-    });
+      // Cerramos la pantalla y retornamos 'true' para avisar al panel administrador que recargue la lista
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al guardar: $error'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
@@ -76,6 +110,7 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
   @override
   Widget build(BuildContext context) {
     final bool esEdicion = widget.categoria != null;
+    final String? imagenActual = widget.categoria?['imagen_url']?.toString();
 
     return Scaffold(
       backgroundColor: ColoresApp.background,
@@ -123,46 +158,29 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
               ),
               const SizedBox(height: 24),
 
-              // Contenedor de Imagen
-              Container(
-                width: double.infinity,
-                height: 140,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: ColoresApp.primary.withOpacity(0.08),
-                        shape: BoxShape.circle,
+              GestureDetector(
+                onTap: _seleccionarImagen,
+                child: Container(
+                  width: double.infinity,
+                  height: 140,
+                  clipBehavior: Clip.antiAlias,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
                       ),
-                      child: const Icon(
-                        Icons.add_a_photo_outlined,
-                        size: 28,
-                        color: ColoresApp.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Subir imagen representativa',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: ColoresApp.primary,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: _imagenSeleccionada != null
+                      ? Image.file(_imagenSeleccionada!, fit: BoxFit.cover)
+                      : (imagenActual != null && imagenActual.isNotEmpty
+                          ? Image.network(imagenActual, fit: BoxFit.cover, errorBuilder: (_, _, __) => _placeholderImagen())
+                          : _placeholderImagen()),
                 ),
               ),
               const SizedBox(height: 20),
@@ -193,30 +211,30 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
               const SizedBox(height: 16),
 
               // Descripción
-              const Text(
-                'Descripción (opcional)',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: ColoresApp.primary),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: _descripcionController,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  hintText: 'Escribe una breve descripción...',
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey.shade200),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: ColoresApp.primary, width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
+              // const Text(
+              //   'Descripción (opcional)',
+              //   style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: ColoresApp.primary),
+              // ),
+              // const SizedBox(height: 8),
+              // TextField(
+              //   controller: _descripcionController,
+              //   maxLines: 3,
+              //   decoration: InputDecoration(
+              //     hintText: 'Escribe una breve descripción...',
+              //     filled: true,
+              //     fillColor: Colors.white,
+              //     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              //     enabledBorder: OutlineInputBorder(
+              //       borderRadius: BorderRadius.circular(14),
+              //       borderSide: BorderSide(color: Colors.grey.shade200),
+              //     ),
+              //     focusedBorder: OutlineInputBorder(
+              //       borderRadius: BorderRadius.circular(14),
+              //       borderSide: const BorderSide(color: ColoresApp.primary, width: 1.5),
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(height: 32),
 
               // Botón Guardar
               SizedBox(
@@ -249,4 +267,31 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
       ),
     );
   }
+
+  Widget _placeholderImagen() => Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: ColoresApp.primary.withOpacity(0.08),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.add_a_photo_outlined,
+              size: 28,
+              color: ColoresApp.primary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Subir imagen representativa',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: ColoresApp.primary,
+            ),
+          ),
+        ],
+      );
 }

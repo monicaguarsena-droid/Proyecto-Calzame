@@ -6,8 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class CatalogoVisualService {
-  static String _ruta(String recurso) =>
-      recurso == 'ofertas' ? 'ofertas' : 'catalogo/$recurso';
+  static String _ruta(String recurso) => recurso;
 
   static Future<List<Map<String, dynamic>>> listar(String recurso) async {
     final response = await http.get(
@@ -33,19 +32,30 @@ class CatalogoVisualService {
 
   static Future<void> guardar({
     required String recurso,
-    required Map<String, String> campos,
+    required Map<String, dynamic> campos, // 👈 Cambiado a dynamic para aceptar cualquier tipo de dato
     required File? imagen,
     String? id,
   }) async {
     final token = await _token();
     final ruta =
         '${ApiConfig.baseUrl}/${_ruta(recurso)}${id == null ? '' : '/$id'}';
+    
+    print('🌐 URL DE PETICIÓN: $ruta');
+
     final request = http.MultipartRequest(
       id == null ? 'POST' : 'PUT',
       Uri.parse(ruta),
     );
+    
     request.headers['Authorization'] = 'Bearer $token';
-    request.fields.addAll(campos);
+    
+    // Convertimos cada valor del mapa a String de forma segura
+    campos.forEach((key, value) {
+      if (value != null) {
+        request.fields[key] = value.toString();
+      }
+    });
+
     if (imagen != null) {
       request.files.add(
         await http.MultipartFile.fromPath('imagen', imagen.path),
