@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/servicios/catalogo_visual_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,19 +11,19 @@ class AdminOfertasScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: ColoresApp.background,
-    appBar: AppBar(
-      title: const Text('Ofertas y banners'),
-      foregroundColor: ColoresApp.primary,
-      backgroundColor: ColoresApp.background,
-    ),
-    body: const SafeArea(
-      child: SingleChildScrollView(
-        padding: EdgeInsets.all(20),
-        child: AdminOfertasPage(),
-      ),
-    ),
-  );
+        backgroundColor: ColoresApp.background,
+        appBar: AppBar(
+          title: const Text('Ofertas y banners'),
+          foregroundColor: ColoresApp.primary,
+          backgroundColor: ColoresApp.background,
+        ),
+        body: const SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(20),
+            child: AdminOfertasPage(),
+          ),
+        ),
+      );
 }
 
 class AdminOfertasPage extends StatefulWidget {
@@ -33,7 +34,7 @@ class AdminOfertasPage extends StatefulWidget {
 }
 
 class _AdminOfertasPageState extends State<AdminOfertasPage> {
-  late Future<List<Map<String, dynamic>>> _ofertasFuture;
+late Future<List<dynamic>> _ofertasFuture;
 
   @override
   void initState() {
@@ -45,20 +46,17 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
     _ofertasFuture = CatalogoVisualService.listar('ofertas');
   }
 
-  Future<void> _editarOferta({Map<String, dynamic>? oferta}) async {
+  void _editarOferta({Map<String, dynamic>? oferta}) {
     final titulo = TextEditingController(text: oferta?['titulo']?.toString());
-    final descuento = TextEditingController(
-      text: oferta?['descuento']?.toString(),
-    );
-    final descripcion = TextEditingController(
-      text: oferta?['descripcion']?.toString(),
-    );
-    final tag = TextEditingController(text: oferta?['tag']?.toString());
+    final descuento = TextEditingController(text: oferta?['descuento']?.toString());
+    final descripcion = TextEditingController(text: oferta?['descripcion']?.toString());
+    final tag = TextEditingController(text: oferta?['etiqueta']?.toString());
+    
     File? imagen;
     bool guardando = false;
     final formKey = GlobalKey<FormState>();
 
-    await showModalBottomSheet<void>(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
@@ -66,12 +64,12 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setModalState) => Padding(
+        builder: (modalContext, setModalState) => Padding(
           padding: EdgeInsets.only(
             left: 20,
             right: 20,
             top: 20,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+            bottom: MediaQuery.of(modalContext).viewInsets.bottom + 20,
           ),
           child: Form(
             key: formKey,
@@ -90,11 +88,16 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
                   ),
                   const SizedBox(height: 16),
                   _selectorImagen(
-                    context,
+                    modalContext,
                     imagen: imagen,
                     imagenActual: oferta?['imagen_url']?.toString(),
-                    alSeleccionar: (archivo) =>
-                        setModalState(() => imagen = archivo),
+                    alSeleccionar: (archivo) {
+                      if (modalContext.mounted) {
+                        setModalState(() {
+                          imagen = archivo;
+                        });
+                      }
+                    },
                   ),
                   if (oferta == null && imagen == null)
                     const Padding(
@@ -107,7 +110,24 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
                   const SizedBox(height: 14),
                   _campo(titulo, 'Título de la oferta', obligatorio: true),
                   const SizedBox(height: 10),
-                  _campo(descuento, 'Descuento (ej. 20% OFF)'),
+                  _campo(
+                    descuento, 
+                    'Descuento % (Ej. 20)', 
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Ingresa el descuento';
+                      }
+                      final numero = int.tryParse(value);
+                      if (numero == null || numero < 1 || numero > 100) {
+                        return 'Debe ser un número entre 1 y 100';
+                      }
+                      return null;
+                    },
+                  ),
                   const SizedBox(height: 10),
                   _campo(tag, 'Etiqueta del banner (ej. NUEVA COLECCIÓN)'),
                   const SizedBox(height: 10),
@@ -124,7 +144,13 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
                                 setModalState(() {});
                                 return;
                               }
-                              setModalState(() => guardando = true);
+                              
+                              if (modalContext.mounted) {
+                                setModalState(() {
+                                  guardando = true;
+                                });
+                              }
+
                               try {
                                 await CatalogoVisualService.guardar(
                                   recurso: 'ofertas',
@@ -133,23 +159,25 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
                                   campos: {
                                     'titulo': titulo.text.trim(),
                                     'descuento': descuento.text.trim(),
-                                    'tag': tag.text.trim().isEmpty
-                                        ? 'OFERTA'
-                                        : tag.text.trim(),
+                                    'etiqueta': tag.text.trim().isEmpty ? 'OFERTA' : tag.text.trim(),
                                     'descripcion': descripcion.text.trim(),
                                   },
                                 );
+
                                 if (!mounted || !sheetContext.mounted) return;
-                                setState(_cargarOfertas);
+                                
                                 Navigator.pop(sheetContext);
+                                setState(() {
+                                  _cargarOfertas();
+                                });
                                 _mostrarMensaje(
-                                  oferta == null
-                                      ? 'Oferta guardada.'
-                                      : 'Oferta actualizada.',
+                                  oferta == null ? 'Oferta guardada.' : 'Oferta actualizada.',
                                 );
                               } catch (error) {
-                                if (sheetContext.mounted) {
-                                  setModalState(() => guardando = false);
+                                if (modalContext.mounted) {
+                                  setModalState(() {
+                                    guardando = false;
+                                  });
                                 }
                                 _mostrarMensaje(error.toString(), error: true);
                               }
@@ -159,12 +187,15 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
                         foregroundColor: Colors.white,
                       ),
                       child: guardando
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Text(
-                              oferta == null
-                                  ? 'Guardar oferta'
-                                  : 'Guardar cambios',
-                            ),
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(oferta == null ? 'Guardar oferta' : 'Guardar cambios'),
                     ),
                   ),
                 ],
@@ -174,10 +205,6 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
         ),
       ),
     );
-    titulo.dispose();
-    descuento.dispose();
-    descripcion.dispose();
-    tag.dispose();
   }
 
   Widget _selectorImagen(
@@ -205,18 +232,12 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
                   ),
                 ),
                 ListTile(
-                  leading: const Icon(
-                    Icons.photo_library_outlined,
-                    color: ColoresApp.primary,
-                  ),
+                  leading: const Icon(Icons.photo_library_outlined, color: ColoresApp.primary),
                   title: const Text('Elegir de la galería'),
                   onTap: () => Navigator.pop(sheetContext, ImageSource.gallery),
                 ),
                 ListTile(
-                  leading: const Icon(
-                    Icons.camera_alt_outlined,
-                    color: ColoresApp.primary,
-                  ),
+                  leading: const Icon(Icons.camera_alt_outlined, color: ColoresApp.primary),
                   title: const Text('Tomar con la cámara'),
                   onTap: () => Navigator.pop(sheetContext, ImageSource.camera),
                 ),
@@ -257,62 +278,72 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
         child: imagen != null
             ? Image.file(imagen, fit: BoxFit.cover)
             : imagenActual != null && imagenActual.isNotEmpty
-            ? Image.network(
-                imagenActual,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => _placeholderImagen(),
-              )
-            : _placeholderImagen(),
+                ? Image.network(
+                    imagenActual,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => _placeholderImagen(),
+                  )
+                : _placeholderImagen(),
       ),
     );
   }
 
   Widget _placeholderImagen() => const Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          Icons.add_photo_alternate_outlined,
-          size: 30,
-          color: ColoresApp.primary,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add_photo_alternate_outlined, size: 30, color: ColoresApp.primary),
+            SizedBox(height: 6),
+            Text('Seleccionar foto de la oferta'),
+          ],
         ),
-        SizedBox(height: 6),
-        Text('Seleccionar foto de la oferta'),
-      ],
-    ),
-  );
+      );
 
   Widget _campo(
     TextEditingController controller,
     String etiqueta, {
     bool obligatorio = false,
     int maxLines = 1,
-  }) => TextFormField(
-    controller: controller,
-    maxLines: maxLines,
-    decoration: InputDecoration(
-      labelText: etiqueta,
-      border: const OutlineInputBorder(),
-    ),
-    validator: obligatorio
-        ? (value) => value == null || value.trim().isEmpty
-              ? 'Este campo es obligatorio'
-              : null
-        : null,
-  );
-
-  Future<void> _eliminarOferta(Map<String, dynamic> oferta) async {
-    try {
-      await CatalogoVisualService.eliminar(
-        recurso: 'ofertas',
-        id: oferta['id'].toString(),
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
+    String? suffixText,
+  }) =>
+      TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        decoration: InputDecoration(
+          labelText: etiqueta,
+          border: const OutlineInputBorder(),
+          suffixText: suffixText,
+        ),
+        validator: validator ??
+            (value) {
+              if (obligatorio && (value == null || value.trim().isEmpty)) {
+                return 'Este campo es obligatorio';
+              }
+              return null;
+            },
       );
-      if (!mounted) return;
-      setState(_cargarOfertas);
-      _mostrarMensaje('Oferta eliminada.');
-    } catch (error) {
-      _mostrarMensaje(error.toString(), error: true);
-    }
+
+  void _eliminarOferta(Map<String, dynamic> oferta) {
+    () async {
+      try {
+        await CatalogoVisualService.eliminar(
+          recurso: 'ofertas',
+          id: oferta['id'].toString(),
+        );
+        if (!mounted) return;
+        setState(() {
+          _cargarOfertas();
+        });
+        _mostrarMensaje('Oferta eliminada.');
+      } catch (error) {
+        _mostrarMensaje(error.toString(), error: true);
+      }
+    }();
   }
 
   void _mostrarMensaje(String mensaje, {bool error = false}) {
@@ -353,16 +384,14 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
           ],
         ),
         const SizedBox(height: 16),
-        FutureBuilder<List<Map<String, dynamic>>>(
+        FutureBuilder<List<dynamic>>(
           future: _ofertasFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              return Text(
-                'No se pudieron cargar las ofertas: ${snapshot.error}',
-              );
+              return Text('No se pudieron cargar las ofertas: ${snapshot.error}');
             }
             final ofertas = snapshot.data ?? [];
             if (ofertas.isEmpty) {
@@ -421,8 +450,7 @@ class _AdminOfertasPageState extends State<AdminOfertasPage> {
                             Row(
                               children: [
                                 TextButton.icon(
-                                  onPressed: () =>
-                                      _editarOferta(oferta: oferta),
+                                  onPressed: () => _editarOferta(oferta: oferta),
                                   icon: const Icon(Icons.edit_outlined),
                                   label: const Text('Editar'),
                                 ),

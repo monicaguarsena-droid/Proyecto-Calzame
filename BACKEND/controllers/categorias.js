@@ -21,7 +21,16 @@ export const obtenerCategoriaPorId = async (req, res) => {
 
 export const crearCategoria = async (req, res) => {
     try {
-        const nuevaCategoria = await Categoria.create(req.body);
+        const { nombre, descripcion } = req.body;
+        const imagenUrl = req.file ? req.file.path : null;
+
+        const nuevaCategoriaData = {
+            nombre,
+            imagen_url: imagenUrl,
+        };
+
+        const nuevaCategoria = await Categoria.create(nuevaCategoriaData);
+
         res.status(201).json({
             mensaje: "Categoría creada con éxito",
             data: nuevaCategoria
