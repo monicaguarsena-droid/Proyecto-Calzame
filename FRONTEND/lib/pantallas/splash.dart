@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-//import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart';
 
 class PantallaInicio extends StatefulWidget {
@@ -93,11 +92,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   const Text(
-                    "Elegancia a cada paso",
+                    "Garzón Huila",
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 16,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -113,7 +112,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    "Su mejor tienda de Calzado",
+                    "Su mejor tienda de Calzado en Garzón Huila",
                     style: TextStyle(color: Colors.white60, fontSize: 14),
                   ),
                   const SizedBox(height: 30),
@@ -148,7 +147,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Navega directamente a Home al hacer clic
+                        // Navega directamente al Login al hacer clic
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => Login()),

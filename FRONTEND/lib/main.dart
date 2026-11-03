@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/splash.dart'; // Importa el splash (PantallaInicio)
+import 'package:frontend/pantallas/splash.dart'; // Importa la pantalla principal
 
-void main() {
+void main() async {
+  
+  WidgetsFlutterBinding.ensureInitialized();
+  
   runApp(const MyApp());
 }
 
@@ -12,7 +15,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: PantallaInicio(), // <--  splash pantalla iniciual
+      home: PantallaInicio(), // <-- Pantalla principal
     );
   }
 }
