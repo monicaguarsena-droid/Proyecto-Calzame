@@ -107,6 +107,18 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   String _categoriaSeleccionada = 'Dama';
   final List<String> _categorias = ['Dama', 'Caballero', 'Infantil'];
 
+  // Tipos de calzado solicitados
+  String _tipoCalzadoSeleccionado = 'Bolicheros en cuero';
+  final List<String> _tiposCalzado = [
+    'Bolicheros en cuero',
+    'Sandalias planas',
+    'Plataformas en yute',
+    'Mocasín en cuero',
+    'Canoas en suelas semi ortopédica',
+    'Tacón elegantes para eventos especiales',
+    'Sandalias niña',
+  ];
+
   // Tallas disponibles y seleccionadas
   final List<String> _tallasDisponibles = [
     '16',
@@ -172,6 +184,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
       // Adjuntar los campos de texto
       request.fields['Nombre'] = _nombreController.text.trim();
       request.fields['Categoria'] = _categoriaSeleccionada;
+      request.fields['TipoCalzado'] = _tipoCalzadoSeleccionado;
       request.fields['Precio'] = _precioController.text.trim();
       request.fields['Stock'] = _stockController.text.trim();
       request.fields['Descripcion'] = _descripcionController.text.trim();
@@ -336,6 +349,35 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                   }).toList(),
                   onChanged: (val) =>
                       setState(() => _categoriaSeleccionada = val!),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            const Text(
+              'Tipo de Calzado',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: ColoresApp.primary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ColoresApp.border),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _tipoCalzadoSeleccionado,
+                  isExpanded: true,
+                  items: _tiposCalzado.map((tipo) {
+                    return DropdownMenuItem(value: tipo, child: Text(tipo));
+                  }).toList(),
+                  onChanged: (val) =>
+                      setState(() => _tipoCalzadoSeleccionado = val!),
                 ),
               ),
             ),
