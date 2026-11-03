@@ -38,31 +38,27 @@ export const getProductosPorCategoria = async (req, res) => {
 
 // crear un producto nuevo 
 export const postProducto = async (req, res) => {
-    console.log("BODY RECIBIDO:", req.body);
-    console.log("FILE RECIBIDO:", req.file);
-    
     try {
-        const { Nombre, Categoria,tipoCalzado, Precio, Stock,  Descripcion, Tallas } = req.body;
+        const { Nombre, Categoria, TipoCalzado, Precio, Stock, Descripcion, Tallas } = req.body;
+        const imagenUrl = req.file ? req.file.path : null; 
 
-        if (!Nombre || !Precio) {
-            return res.status(400).json({ error: 'El nombre y el precio son obligatorios' });
-        } 
-        const imageurl = req.file ? req.file.path :''; 
+        const nuevoProducto = await Producto.create({
+            nombre: Nombre,
+            categoria: Categoria,
+            tipo_calzado: TipoCalzado,
+            precio: parseFloat(Precio),
+            stock: parseInt(Stock),
+            descripcion: Descripcion,
+            tallas: JSON.parse(Tallas || '[]'),
+            imagen_url: imagenUrl
+        });
 
-        const { data, error } = await crearProducto(Nombre, Categoria, tipoCalzado, Precio, Stock,  Descripcion, Tallas, imageurl);
-
-        if (error) {
-            console.error('Error de Supabase al crear producto:', error);
-            return res.status(500).json({ error: 'Error al crear el producto', detalle: error.message });
-        }
-
-        return res.status(201).json({
-            mensaje: 'Producto registrado exitosamente',
-            producto: data ? data[0] : null
+        res.status(201).json({
+            mensaje: "Producto creado con éxito",
+            data: nuevoProducto
         });
     } catch (error) {
-        console.error('Error en postProducto:', error);
-        return res.status(500).json({ error: error.message });
+        res.status(400).json({ error: error.message });
     }
 };
 
