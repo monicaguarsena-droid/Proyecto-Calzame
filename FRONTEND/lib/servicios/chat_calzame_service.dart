@@ -1,30 +1,40 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../api_config.dart';
+// Asegúrate de importar tu archivo de configuración donde tengas tu baseUrl (ej: localhost o Render)
+import '../api_config.dart'; 
 
 class ChatCalzameService {
-  // Concatena directamente con tu baseUrl existente
-  static String get _chatUrl => '${ApiConfig.baseUrl}/chat';
+  // Mantenemos una variable estática opcional para conservar la sesión activa en memoria durante el uso
+  static String? _sesionIdActual;
 
-  static Future<String> enviarMensaje(String mensaje, {String? sesionId}) async {
+  static Future<String> enviarMensaje(String mensaje) async {
     try {
+      final url = Uri.parse('${ApiConfig.baseUrl}/chat'); // Endpoint en tu backend Node.js
+      
       final response = await http.post(
-        Uri.parse(_chatUrl),
-        headers: ApiConfig.headers,
-        body: jsonEncode({
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
           'mensaje': mensaje,
-          'sesionId': sesionId ?? 'calzame_cliente_${DateTime.now().millisecondsSinceEpoch}',
+          'sesionId': _sesionIdActual, // Si es nulo, el backend generará uno nuevo
+          'usuarioId': null,           // Opcional: pásalo si manejas ID de usuario autenticado
         }),
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(utf8.decode(response.bodyBytes));
-        return data['respuesta'] ?? 'No se recibió respuesta.';
+        final data = json.decode(response.body);
+        
+        // Guardamos el sesionId que retorna el backend para mantener la continuidad
+        if (data['sesionId'] != null) {
+          _sesionIdActual = data['sesionId'];
+        }
+
+        return data['respuesta'] ?? '¡Hola! Bienvenido a Calzame.';
       } else {
-        return 'En este momento no pudimos procesar tu solicitud.';
+        return 'Lo siento, ocurrió un error al procesar tu consulta en el servidor.';
       }
     } catch (e) {
-      return 'Error de conexión con la zapatería. Revisa tu servidor.';
+      return 'Error de conexión con el servidor de CalzaMe. Verifica tu red.';
     }
   }
 }

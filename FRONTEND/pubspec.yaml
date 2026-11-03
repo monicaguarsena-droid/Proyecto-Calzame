@@ -46,6 +46,7 @@ dependencies:
   desktop_drop: ^0.7.1
   photo_manager: ^3.12.0
   http_parser: ^4.1.2
+  url_launcher: ^6.2.5
 
 
 dev_dependencies:
@@ -72,6 +73,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/img/
     - assets/video/
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -101,7 +103,7 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 flutter_launcher_icons:
-  image_path: "assets/img/marypaz.jpg"
+  image_path: "assets/img/marypazz.jpg"
   android: true
   ios: true
   web:
