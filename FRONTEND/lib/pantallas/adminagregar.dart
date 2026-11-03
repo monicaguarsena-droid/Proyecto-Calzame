@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:frontend/servicios/categorias_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:frontend/cors/colores.dart'; // Ajusta la ruta de tus colores si es necesario
 import 'package:image_picker/image_picker.dart';
@@ -108,16 +109,36 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   final List<String> _categorias = ['Dama', 'Caballero', 'Infantil'];
 
   // Tipos de calzado solicitados
-  String _tipoCalzadoSeleccionado = 'Bolicheros en cuero';
-  final List<String> _tiposCalzado = [
-    'Bolicheros en cuero',
-    'Sandalias planas',
-    'Plataformas en yute',
-    'Mocasín en cuero',
-    'Canoas en suelas semi ortopédica',
-    'Tacón elegantes para eventos especiales',
-    'Sandalias niña',
-  ];
+  // 1. Declara la lista vacía y una variable para el valor seleccionado
+List<String> _tiposCalzado = [];
+String? _tipoCalzadoSeleccionado;
+bool _isLoadingCategorias = true;
+
+@override
+void initState() {
+  super.initState();
+  _cargarTiposCalzadoDesdeBD();
+}
+
+// 2. Método para cargar las categorías desde el backend
+Future<void> _cargarTiposCalzadoDesdeBD() async {
+  try {
+    final categoriasList = await CategoriaService.listar();
+    setState(() {
+      // Extraemos el campo 'nombre' de cada categoría obtenida de la BD
+      _tiposCalzado = categoriasList.map((cat) => cat['nombre'].toString()).toList();
+      if (_tiposCalzado.isNotEmpty) {
+        _tipoCalzadoSeleccionado = _tiposCalzado.first;
+      }
+      _isLoadingCategorias = false;
+    });
+  } catch (e) {
+    setState(() {
+      _isLoadingCategorias = false;
+    });
+    print("Error cargando categorías para productos: $e");
+  }
+}
 
   // Tallas disponibles y seleccionadas
   final List<String> _tallasDisponibles = [
@@ -184,7 +205,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
       // Adjuntar los campos de texto
       request.fields['Nombre'] = _nombreController.text.trim();
       request.fields['Categoria'] = _categoriaSeleccionada;
-      request.fields['TipoCalzado'] = _tipoCalzadoSeleccionado;
+      request.fields['tipoCalzado'] = _tipoCalzadoSeleccionado ?? '';
       request.fields['Precio'] = _precioController.text.trim();
       request.fields['Stock'] = _stockController.text.trim();
       request.fields['Descripcion'] = _descripcionController.text.trim();
@@ -354,34 +375,39 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             ),
             const SizedBox(height: 16),
 
-            const Text(
-              'Tipo de Calzado',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: ColoresApp.primary,
-              ),
+           // Tipo de Calzado dinámico desde la BD
+          const Text(
+            'Tipo de Calzado',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: ColoresApp.primary,
             ),
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: ColoresApp.border),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _tipoCalzadoSeleccionado,
-                  isExpanded: true,
-                  items: _tiposCalzado.map((tipo) {
-                    return DropdownMenuItem(value: tipo, child: Text(tipo));
-                  }).toList(),
-                  onChanged: (val) =>
-                      setState(() => _tipoCalzadoSeleccionado = val!),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+          ),
+          const SizedBox(height: 6),
+          _isLoadingCategorias
+              ? const Center(child: CircularProgressIndicator())
+              : _tiposCalzado.isEmpty
+                  ? const Text('No hay categorías registradas en el panel administrativo.')
+                  : Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: ColoresApp.border),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _tipoCalzadoSeleccionado,
+                          isExpanded: true,
+                          items: _tiposCalzado.map((tipo) {
+                            return DropdownMenuItem(value: tipo, child: Text(tipo));
+                          }).toList(),
+                          onChanged: (val) =>
+                              setState(() => _tipoCalzadoSeleccionado = val),
+                        ),
+                      ),
+                    ),
+          const SizedBox(height: 16),
 
             // Precio y Stock
             Row(
