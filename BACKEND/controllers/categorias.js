@@ -57,7 +57,12 @@ export const actualizarCategoria = async (req, res) => {
 
 export const eliminarCategoria = async (req, res) => {
     try {
-        await Categoria.delete(req.params.id);
+        const { id } = req.params;
+        
+        const { error } = await supabase.from('categorias').delete().eq('id', id);
+        
+        if (error) throw error;
+        
         res.status(200).json({ mensaje: "Categoría eliminada con éxito" });
     } catch (error) {
         res.status(400).json({ error: error.message });

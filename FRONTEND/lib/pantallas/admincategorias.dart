@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart'; 
 import 'package:frontend/pantallas/admin_ofertas.dart';
 import 'package:frontend/pantallas/adminagregarcategoria.dart';
+import 'package:frontend/servicios/categorias_service.dart';
 
 class AdminCategorias extends StatefulWidget {
   const AdminCategorias({Key? key}) : super(key: key);
@@ -13,8 +14,32 @@ class AdminCategorias extends StatefulWidget {
 class _AdminCategoriasState extends State<AdminCategorias> {
   int _tabIndex = 0;
 
-  // Lista totalmente vacía
-  final List<Map<String, dynamic>> _categorias = [];
+  List<dynamic> _categorias = [];
+  bool _isLoadingList = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarCategorias();
+  }
+
+  // Método para obtener las categorías desde el backend
+  Future<void> _cargarCategorias() async {
+    setState(() => _isLoadingList = true);
+    try {
+      final resultado = await CategoriaService.listar();
+      setState(() {
+        _categorias = resultado;
+        _isLoadingList = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingList = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al cargar categorías: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
 
   // Modal para ver los detalles de la categoría creada
   void _mostrarDetalles(Map<String, dynamic> cat) {
@@ -230,19 +255,19 @@ class _AdminCategoriasState extends State<AdminCategorias> {
                         final resultado = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const AdminAgregarCategoria(),
+                            builder: (_) => const AdminAgregarCategoria(),
                           ),
                         );
-                        if (resultado != null && resultado is Map<String, dynamic>) {
-                          setState(() {
-                            _categorias.add(resultado);
-                          });
+                        
+                        // Si guardó con éxito (retornó true), recargamos la lista completa del servidor
+                        if (resultado == true) {
+                          _cargarCategorias();
                         }
                       },
                       icon: const Icon(Icons.add, color: Colors.white, size: 18),
                       label: const Text(
                         'Agregar categoría',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: ColoresApp.primary,

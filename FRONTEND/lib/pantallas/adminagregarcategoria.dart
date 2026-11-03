@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
-import 'package:frontend/servicios/catalogo_visual_service.dart';
+import 'package:frontend/servicios/categorias_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AdminAgregarCategoria extends StatefulWidget {
@@ -58,8 +58,7 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
     setState(() => _isLoading = true);
 
     try {
-      await CatalogoVisualService.guardar(
-        recurso: 'categorias',
+      await CategoriaService.guardar(
         id: widget.categoria?['id']?.toString(),
         imagen: _imagenSeleccionada,
         campos: {
@@ -209,32 +208,6 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // Descripción
-              // const Text(
-              //   'Descripción (opcional)',
-              //   style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: ColoresApp.primary),
-              // ),
-              // const SizedBox(height: 8),
-              // TextField(
-              //   controller: _descripcionController,
-              //   maxLines: 3,
-              //   decoration: InputDecoration(
-              //     hintText: 'Escribe una breve descripción...',
-              //     filled: true,
-              //     fillColor: Colors.white,
-              //     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              //     enabledBorder: OutlineInputBorder(
-              //       borderRadius: BorderRadius.circular(14),
-              //       borderSide: BorderSide(color: Colors.grey.shade200),
-              //     ),
-              //     focusedBorder: OutlineInputBorder(
-              //       borderRadius: BorderRadius.circular(14),
-              //       borderSide: const BorderSide(color: ColoresApp.primary, width: 1.5),
-              //     ),
-              //   ),
-              // ),
-              // const SizedBox(height: 32),
 
               // Botón Guardar
               SizedBox(
