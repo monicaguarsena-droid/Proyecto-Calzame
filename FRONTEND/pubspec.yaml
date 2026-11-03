@@ -73,6 +73,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/img/
     - assets/video/
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -102,7 +103,7 @@ flutter:
   # see https://flutter.dev/to/font-from-package
 
 flutter_launcher_icons:
-  image_path: "assets/img/marypaz.jpg"
+  image_path: "assets/img/marypazz.jpg"
   android: true
   ios: true
   web:
