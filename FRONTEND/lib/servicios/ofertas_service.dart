@@ -5,12 +5,11 @@ import 'package:frontend/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-class CatalogoVisualService {
-  static String _ruta(String recurso) => recurso;
+class OfertasService {
 
-  static Future<List<Map<String, dynamic>>> listar(String recurso) async {
+  static Future<List> listar() async {
     final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/${_ruta(recurso)}'),
+      Uri.parse('${ApiConfig.baseUrl}/ofertas'),
       headers: ApiConfig.headers,
     );
     final body = _decodeResponse(response);
@@ -18,27 +17,23 @@ class CatalogoVisualService {
       throw Exception(_mensajeError(body, response.statusCode));
     }
     if (body is! List) {
-      throw Exception('El servidor no devolvió una lista de $recurso');
+      throw Exception('El servidor no devolvió una lista de ofertas');
     }
     return body.map((item) {
       if (item is! Map<String, dynamic>) {
-        throw Exception(
-          'El servidor devolvió un registro inválido en $recurso',
-        );
+        throw Exception('El servidor devolvió un registro inválido en ofertas');
       }
       return item;
     }).toList();
   }
 
   static Future<void> guardar({
-    required String recurso,
-    required Map<String, dynamic> campos, // 👈 Cambiado a dynamic para aceptar cualquier tipo de dato
+    required Map<String, dynamic> campos, 
     required File? imagen,
     String? id,
   }) async {
     final token = await _token();
-    final ruta =
-        '${ApiConfig.baseUrl}/${_ruta(recurso)}${id == null ? '' : '/$id'}';
+    final ruta = '${ApiConfig.baseUrl}/ofertas${id == null ? '' : '/$id'}';
     
     print('🌐 URL DE PETICIÓN: $ruta');
 
@@ -49,7 +44,6 @@ class CatalogoVisualService {
     
     request.headers['Authorization'] = 'Bearer $token';
     
-    // Convertimos cada valor del mapa a String de forma segura
     campos.forEach((key, value) {
       if (value != null) {
         request.fields[key] = value.toString();
@@ -70,12 +64,15 @@ class CatalogoVisualService {
   }
 
   static Future<void> eliminar({
-    required String recurso,
     required String id,
   }) async {
     final token = await _token();
+    final urlEliminar = '${ApiConfig.baseUrl}/ofertas/$id';
+    
+    print('🗑️ URL ELIMINAR: $urlEliminar');
+
     final response = await http.delete(
-      Uri.parse('${ApiConfig.baseUrl}/${_ruta(recurso)}/$id'),
+      Uri.parse(urlEliminar),
       headers: {'Authorization': 'Bearer $token'},
     );
     final body = _decodeResponse(response);

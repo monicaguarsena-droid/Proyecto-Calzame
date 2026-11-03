@@ -10,8 +10,9 @@ import 'package:frontend/pantallas/categoriainfantil.dart';
 import 'package:frontend/pantallas/todos_productos.dart';
 import 'package:frontend/pantallas/producto.dart';
 import 'package:frontend/models/productoModel.dart';
-import 'package:frontend/servicios/catalogo_visual_service.dart';
+import 'package:frontend/servicios/categorias_service.dart';
 import 'package:frontend/servicios/producto_service.dart';
+import 'package:frontend/servicios/ofertas_service.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -29,11 +30,10 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    _ofertasFuture = CatalogoVisualService.listar('ofertas');
-    _tiposCalzadoFuture = CatalogoVisualService.listar('tipos-calzado');
+    _ofertasFuture = OfertasService.listar().then((value) => value.cast());
+    _tiposCalzadoFuture = CategoriaService.listar().then((value) => value.cast());
     _productosFuture = _productoService.obtenerProductos();
   }
-
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
@@ -57,8 +57,8 @@ class _HomeState extends State<Home> {
 
   Future<void> _actualizarCatalogo() async {
     setState(() {
-      _ofertasFuture = CatalogoVisualService.listar('ofertas');
-      _tiposCalzadoFuture = CatalogoVisualService.listar('tipos-calzado');
+      _ofertasFuture = OfertasService.listar().then((value) => value.cast());
+      _tiposCalzadoFuture = CategoriaService.listar().then((value) => value.cast());
       _productosFuture = _productoService.obtenerProductos();
     });
     try {
@@ -145,7 +145,7 @@ class _HomeState extends State<Home> {
   }
 
   Widget _tiposCalzado() {
-    return FutureBuilder<List<Map<String, dynamic>>>(
+    return FutureBuilder<List>(
       future: _tiposCalzadoFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -168,32 +168,23 @@ class _HomeState extends State<Home> {
         }
         final tipos = snapshot.data ?? [];
         final mostrados = tipos.isEmpty
-            ? [
-                {'nombre': 'Sandalias', 'descripcion': 'Verano y playa'},
-                {'nombre': 'Botas', 'descripcion': 'Invierno y noche'},
-                {'nombre': 'Zapatillas', 'descripcion': 'Deporte y diario'},
-              ]
+            ? []
             : tipos;
-        if (mostrados.length <= 3) {
-          return Row(
-            children: [
-              for (var i = 0; i < mostrados.length; i++) ...[
-                if (i > 0) const SizedBox(width: 10),
-                Expanded(child: _tipoCalzadoCard(mostrados[i])),
-              ],
-            ],
-          );
-        }
         return SizedBox(
           height: 104,
-          child: ListView.separated(
+          width: double.infinity,
+          child: ListView.builder(
             scrollDirection: Axis.horizontal,
+            shrinkWrap: true,
+            physics: const AlwaysScrollableScrollPhysics(),
             itemCount: mostrados.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, index) => SizedBox(
-              width: MediaQuery.sizeOf(context).width * 0.39,
-              child: _tipoCalzadoCard(mostrados[index]),
-            ),
+            itemBuilder: (context, index) {
+              return Container(
+                width: 150,
+                margin: const EdgeInsets.only(right: 10),
+                child: _tipoCalzadoCard(mostrados[index]),
+              );
+            },
           ),
         );
       },
@@ -204,10 +195,15 @@ class _HomeState extends State<Home> {
     final nombre = tipo['nombre']?.toString() ?? '';
     final descripcion = tipo['descripcion']?.toString() ?? '';
     final imagen = tipo['imagen_url']?.toString() ?? '';
+    
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
+        MaterialPageRoute(
+          builder: (context) => TodosProductosScreen(
+            categoriaSeleccionada: nombre, 
+          ),
+        ),
       ),
       child: _TipoCalzadoCard(
         titulo: nombre,

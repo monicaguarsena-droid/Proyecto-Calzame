@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
-import 'package:frontend/servicios/catalogo_visual_service.dart';
+import 'package:frontend/servicios/categorias_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AdminTiposCalzadoPage extends StatefulWidget {
@@ -22,7 +22,7 @@ class _AdminTiposCalzadoPageState extends State<AdminTiposCalzadoPage> {
   }
 
   void _cargarTipos() {
-    _tiposFuture = CatalogoVisualService.listar('tipos-calzado');
+    _tiposFuture = CategoriaService.listar().then((value) => value.cast<Map<String, dynamic>>());
   }
 
   Future<void> _editarTipo({Map<String, dynamic>? tipo}) async {
@@ -137,8 +137,7 @@ class _AdminTiposCalzadoPageState extends State<AdminTiposCalzadoPage> {
                               }
                               setModalState(() => guardando = true);
                               try {
-                                await CatalogoVisualService.guardar(
-                                  recurso: 'tipos-calzado',
+                                await CategoriaService.guardar(
                                   id: tipo?['id']?.toString(),
                                   imagen: imagen,
                                   campos: {
@@ -210,18 +209,27 @@ class _AdminTiposCalzadoPageState extends State<AdminTiposCalzadoPage> {
   );
 
   Future<void> _eliminarTipo(Map<String, dynamic> tipo) async {
-    try {
-      await CatalogoVisualService.eliminar(
-        recurso: 'tipos-calzado',
-        id: tipo['id'].toString(),
-      );
-      if (!mounted) return;
-      setState(_cargarTipos);
-      _mostrarMensaje('Tipo de calzado eliminado.');
-    } catch (error) {
-      _mostrarMensaje(error.toString(), error: true);
-    }
+  print("🟡 1. Se presionó eliminar para el ID: ${tipo['id']}");
+  
+  try {
+    print("🟡 2. Intentando conectar con CatalogoVisualService...");
+    
+    await CategoriaService.eliminar(
+      id: tipo['id'].toString(),
+    );
+    
+    print("🟢 3. ¡Eliminación exitosa en el backend!");
+    
+    if (!mounted) return;
+    setState(_cargarTipos);
+    _mostrarMensaje('Categoría eliminada con éxito.');
+    
+  } catch (error) {
+    print("🔴 4. Ocurrió un error en el catch: $error");
+    if (!mounted) return;
+    _mostrarMensaje('Error: ${error.toString().replaceFirst('Exception: ', '')}', error: true);
   }
+}
 
   void _mostrarMensaje(String mensaje, {bool error = false}) {
     if (!mounted) return;

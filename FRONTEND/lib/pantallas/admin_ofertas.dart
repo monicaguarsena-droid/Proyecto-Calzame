@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/cors/colores.dart';
-import 'package:frontend/servicios/catalogo_visual_service.dart';
+import 'package:frontend/servicios/ofertas_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AdminOfertasScreen extends StatelessWidget {
@@ -43,7 +43,7 @@ late Future<List<dynamic>> _ofertasFuture;
   }
 
   void _cargarOfertas() {
-    _ofertasFuture = CatalogoVisualService.listar('ofertas');
+    _ofertasFuture = OfertasService.listar();
   }
 
   void _editarOferta({Map<String, dynamic>? oferta}) {
@@ -152,8 +152,7 @@ late Future<List<dynamic>> _ofertasFuture;
                               }
 
                               try {
-                                await CatalogoVisualService.guardar(
-                                  recurso: 'ofertas',
+                                await OfertasService.guardar(
                                   id: oferta?['id']?.toString(),
                                   imagen: imagen,
                                   campos: {
@@ -331,8 +330,7 @@ late Future<List<dynamic>> _ofertasFuture;
   void _eliminarOferta(Map<String, dynamic> oferta) {
     () async {
       try {
-        await CatalogoVisualService.eliminar(
-          recurso: 'ofertas',
+        await OfertasService.eliminar(
           id: oferta['id'].toString(),
         );
         if (!mounted) return;

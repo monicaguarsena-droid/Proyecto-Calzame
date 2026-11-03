@@ -8,7 +8,9 @@ import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/servicios/producto_service.dart';
 
 class TodosProductosScreen extends StatefulWidget {
-  const TodosProductosScreen({super.key});
+  final String? categoriaSeleccionada; // 👈 1. Parámetro opcional para la categoría
+
+  const TodosProductosScreen({super.key, this.categoriaSeleccionada});
 
   @override
   State<TodosProductosScreen> createState() => _TodosProductosScreenState();
@@ -52,6 +54,8 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final categoriaFiltro = widget.categoriaSeleccionada;
+
     return Scaffold(
       backgroundColor: ColoresApp.background,
       body: SafeArea(
@@ -81,21 +85,27 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Text(
-                    'TODAS LAS CATEGORÍAS',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: ColoresApp.primary,
-                      letterSpacing: 0.5,
+                  Expanded(
+                    child: Text(
+                      categoriaFiltro != null && categoriaFiltro.isNotEmpty
+                          ? categoriaFiltro.toUpperCase()
+                          : 'TODAS LAS CATEGORÍAS',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: ColoresApp.primary,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Dama, Caballero e Infantil',
-                style: TextStyle(
+              Text(
+                categoriaFiltro ?? 'Dama, Caballero e Infantil',
+                style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: ColoresApp.primary,
@@ -116,21 +126,39 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
                         ),
                       );
                     }
-                    final productos = snapshot.data ?? [];
+                    
+                    final todosLosProductos = snapshot.data ?? [];
+
+                   final productos = categoriaFiltro == null || categoriaFiltro.isEmpty
+                        ? todosLosProductos
+                        : todosLosProductos.where((p) {
+                            final catProducto = p.categoria.toLowerCase().trim();
+                            final nombreProducto = p.nombre.toLowerCase().trim();
+                            final catBuscada = categoriaFiltro.toLowerCase().trim();
+                            
+                            return catProducto.contains(catBuscada) || 
+                                   catBuscada.contains(catProducto) ||
+                                   nombreProducto.contains(catBuscada);
+                          }).toList();
+
                     if (productos.isEmpty) {
-                      return const Center(
-                        child: Text('Aún no hay productos publicados.'),
+                      return Center(
+                        child: Text(
+                          categoriaFiltro != null
+                              ? 'No hay productos en "$categoriaFiltro".'
+                              : 'Aún no hay productos publicados.',
+                        ),
                       );
                     }
                     return GridView.builder(
                       physics: const BouncingScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.62,
-                          ),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.62,
+                      ),
                       itemCount: productos.length,
                       itemBuilder: (context, index) {
                         final item = productos[index];
@@ -233,35 +261,8 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
             width: double.infinity,
             height: 36,
             child: ElevatedButton(
-              onPressed: () async {
-                try {
-                  await CarritoService.agregarProducto(
-                    productoId: productoId,
-                    imagen: asset,
-                    titulo: titulo,
-                    subtitulo: subtitulo,
-                    precioStr: precio,
-                  );
-                } catch (error) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        error.toString().replaceFirst('Exception: ', ''),
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  return;
-                }
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('¡Producto agregado al carrito!'),
-                    backgroundColor: ColoresApp.success,
-                    duration: Duration(seconds: 1),
-                  ),
-                );
+              onPressed: () {
+                // Lógica de agregar al carrito
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColoresApp.primary,
