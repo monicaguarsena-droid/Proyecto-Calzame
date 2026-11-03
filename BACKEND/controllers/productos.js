@@ -39,13 +39,13 @@ export const getProductosPorCategoria = async (req, res) => {
 // crear un producto nuevo 
 export const postProducto = async (req, res) => {
     try {
-        const { Nombre, Categoria, TipoCalzado, Precio, Stock, Descripcion, Tallas } = req.body;
+        const { Nombre, Categoria, tipoCalzado, Precio, Stock, Descripcion, Tallas } = req.body;
         const imagenUrl = req.file ? req.file.path : null; 
 
-        const nuevoProducto = await Producto.create({
+        const nuevoProducto = await crearProducto({
             nombre: Nombre,
             categoria: Categoria,
-            tipo_calzado: TipoCalzado,
+            tipocalzado: tipoCalzado,
             precio: parseFloat(Precio),
             stock: parseInt(Stock),
             descripcion: Descripcion,
