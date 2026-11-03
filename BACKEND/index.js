@@ -11,7 +11,6 @@ import direccionesRouter from "./routers/direcciones.js";
 import carritoRouter from "./routers/carrito.js";
 import adminRouter from "./routers/admin.js";
 import chatRoutes from './routers/chatRouters.js';
-import catalogoVisualRouter from "./routers/catalogo_visual.js";
 import ofertasRouter from "./routers/ofertas.js";
 
 dotenv.config();
@@ -33,6 +32,7 @@ app.get('/health', (req, res) => {
     res.status(200).send('ok');
 });
 
+
 app.use('/api/auth', authRoutes); // Cambiado de '/auth' a '/api/auth'
 app.use('/api/usuarios', userRouter);
 app.use('/api/productos', productosRouter);
@@ -43,7 +43,6 @@ app.use('/api/direcciones', direccionesRouter);
 app.use('/api/carrito', carritoRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/chat', chatRoutes);
-app.use('/api/catalogo', catalogoVisualRouter);
 app.use('/api/ofertas', ofertasRouter);
 
 
