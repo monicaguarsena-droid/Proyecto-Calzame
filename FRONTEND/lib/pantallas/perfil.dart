@@ -232,7 +232,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final nombreCtrl = TextEditingController(text: _nombre);
     final emailCtrl = TextEditingController(text: _email);
     final telefonoCtrl = TextEditingController(text: _telefono);
-    final direccionCtrl = TextEditingController(text: _direccion);
 
     showModalBottomSheet(
       context: context,
