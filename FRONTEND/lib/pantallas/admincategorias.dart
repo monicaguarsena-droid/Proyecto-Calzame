@@ -407,10 +407,50 @@ class _AdminCategoriasState extends State<AdminCategorias> {
                                         const SizedBox(width: 10),
                                         Expanded(
                                           child: OutlinedButton.icon(
-                                            onPressed: () {
-                                              setState(() {
-                                                _categorias.removeAt(index);
-                                              });
+                                            onPressed: () async {
+                                              final idCategoria = cat['id']?.toString();
+                                              if (idCategoria == null) return;
+
+                                              // Confirmación opcional de seguridad
+                                              final confirmar = await showDialog<bool>(
+                                                context: context,
+                                                builder: (context) => AlertDialog(
+                                                  title: const Text('Eliminar categoría'),
+                                                  content: const Text('¿Estás seguro de que deseas eliminar esta categoría?'),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(context, false),
+                                                      child: const Text('Cancelar'),
+                                                    ),
+                                                    TextButton(
+                                                      onPressed: () => Navigator.pop(context, true),
+                                                      child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+
+                                              if (confirmar != true) return;
+
+                                              try {
+                                                // 1. Elimina de la base de datos a través del servicio
+                                                await CategoriaService.eliminar(id: idCategoria);
+
+                                                // 2. Elimina de la lista visual en el panel administrativo
+                                                setState(() {
+                                                  _categorias.removeAt(index);
+                                                });
+
+                                                if (!mounted) return;
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(content: Text('Categoría eliminada con éxito'), backgroundColor: Colors.green),
+                                                );
+                                              } catch (e) {
+                                                if (!mounted) return;
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: Colors.red),
+                                                );
+                                              }
                                             },
                                             icon: const Icon(Icons.delete_outline, size: 16),
                                             label: const Text('Eliminar', style: TextStyle(fontSize: 12)),

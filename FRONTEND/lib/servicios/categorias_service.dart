@@ -63,9 +63,7 @@ class CategoriaService {
     }
   }
 
-  static Future<void> eliminar({
-    required String id,
-  }) async {
+  static Future<void> eliminar({required String id}) async {
     final token = await _token();
     final urlEliminar = '${ApiConfig.baseUrl}/categorias/$id';
     
