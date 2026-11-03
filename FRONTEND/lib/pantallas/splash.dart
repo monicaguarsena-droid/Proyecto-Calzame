@@ -54,14 +54,23 @@ class _PantallaInicioState extends State<PantallaInicio> {
               });
             },
             itemBuilder: (context, index) {
+              // En la segunda página (index == 1), muestra la imagen marypazz.jpg
+              if (index == 1) {
+                return Image.asset(
+                  'assets/img/marypazz.jpg',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                );
+              }
+
+              // En la primera página (index == 0), mantiene el degradado
               return Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: index == 0
-                        ? const [Color(0xFF8A5962), Color(0xFF3E2723)]
-                        : const [Color(0xFF6B2D3C), Color(0xFF25151A)],
+                    colors: [Color(0xFF8A5962), Color(0xFF3E2723)],
                   ),
                 ),
               );
@@ -147,7 +156,6 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Navega directamente al Login al hacer clic
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => Login()),
