@@ -8,6 +8,7 @@ import 'package:frontend/pantallas/producto.dart';
 import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/servicios/producto_service.dart';
 import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
+import 'package:frontend/models/guia_tallas.dart';
 
 class CategoriaDama extends StatefulWidget {
   const CategoriaDama({super.key});
@@ -73,34 +74,60 @@ class _CategoriaDamaState extends State<CategoriaDama> {
             children: [
               const SizedBox(height: 12),
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  InkWell(
-                    onTap: () => Navigator.pop(context),
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: ColoresApp.primary,
+                            size: 20,
+                          ),
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        color: ColoresApp.primary,
-                        size: 20,
+                      const SizedBox(width: 12),
+                      const Text(
+                        'CALZADO DE DAMA',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: ColoresApp.primary,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                // Botón superior actualizado con icono elegante y texto "Guía de Tallas"
+                    TextButton.icon(
+                      onPressed: () => mostrarGuiaTallasModal(context, 'Dama'),
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: ColoresApp.border),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      ),
+                      icon: const Icon(Icons.checkroom_rounded, color: ColoresApp.primary, size: 16),
+                      label: const Text(
+                        'Guía de Tallas',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: ColoresApp.primary,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'CALZADO DE DAMA',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: ColoresApp.primary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 16),

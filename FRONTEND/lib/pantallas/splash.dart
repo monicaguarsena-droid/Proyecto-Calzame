@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-//import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart';
 
 class PantallaInicio extends StatefulWidget {
@@ -55,14 +54,23 @@ class _PantallaInicioState extends State<PantallaInicio> {
               });
             },
             itemBuilder: (context, index) {
+              // En la segunda página (index == 1), muestra la imagen marypazz.jpg
+              if (index == 1) {
+                return Image.asset(
+                  'assets/img/marypazz.jpg',
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  height: double.infinity,
+                );
+              }
+
+              // En la primera página (index == 0), mantiene el degradado
               return Container(
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: index == 0
-                        ? const [Color(0xFF8A5962), Color(0xFF3E2723)]
-                        : const [Color(0xFF6B2D3C), Color(0xFF25151A)],
+                    colors: [Color(0xFF8A5962), Color(0xFF3E2723)],
                   ),
                 ),
               );
@@ -93,11 +101,11 @@ class _PantallaInicioState extends State<PantallaInicio> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   const Text(
-                    "Elegancia a cada paso",
+                    "Garzón Huila",
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 16,
-                      fontWeight: FontWeight.w400,
+                      fontWeight: FontWeight.w500,
                       letterSpacing: 1.2,
                     ),
                   ),
@@ -113,7 +121,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    "Su mejor tienda de Calzado",
+                    "Su mejor tienda de Calzado en Garzón Huila",
                     style: TextStyle(color: Colors.white60, fontSize: 14),
                   ),
                   const SizedBox(height: 30),
@@ -148,7 +156,6 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     height: 52,
                     child: ElevatedButton(
                       onPressed: () {
-                        // Navega directamente a Home al hacer clic
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => Login()),
