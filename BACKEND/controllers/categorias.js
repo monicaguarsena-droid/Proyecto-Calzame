@@ -22,8 +22,12 @@ export const obtenerCategoriaPorId = async (req, res) => {
 export const crearCategoria = async (req, res) => {
     try {
         const nombre = req.body ? req.body.nombre : null;
-
-        const imagenUrl = req.file ? req.file.path : null; 
+        
+        // 👇 Obtenemos la URL segura directamente desde la respuesta de Cloudinary Storage
+        let imagenUrl = null;
+        if (req.file) {
+            imagenUrl = req.file.path || req.file.secure_url;
+        }
 
         if (!nombre) {
             return res.status(400).json({ error: "El nombre de la categoría es obligatorio" });
@@ -31,7 +35,7 @@ export const crearCategoria = async (req, res) => {
 
         const nuevaCategoria = await Categoria.create({
             nombre,
-            imagen_url: imagenUrl, // Se guarda la URL completa (ej: https://res.cloudinary.com/...)
+            imagen_url: imagenUrl, // Se guardará https://res.cloudinary.com/...
         });
 
         res.status(201).json({
@@ -48,7 +52,10 @@ export const actualizarCategoria = async (req, res) => {
         const { id } = req.params;
         const { nombre, descripcion } = req.body;
         
-        const imagenUrl = req.file ? req.file.path : undefined;
+        let imagenUrl = undefined;
+        if (req.file) {
+            imagenUrl = req.file.path || req.file.secure_url;
+        }
 
         const datosActualizar = {
             nombre,
@@ -60,8 +67,7 @@ export const actualizarCategoria = async (req, res) => {
         }
 
         const categoriaActualizada = await Categoria.update(id, datosActualizar);
-        
-        // ¡Importante! Asegúrate de enviar un JSON de respuesta explícito
+
         return res.status(200).json({
             mensaje: "Categoría actualizada con éxito",
             data: categoriaActualizada
