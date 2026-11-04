@@ -1,87 +1,105 @@
-import { Categoria } from "../modelos/categorias.js";
+import { obtenerCategorias, obtenerCategoriaPorId, crearCategoria, actualizarCategoria, eliminarCategoria } from '../modelos/categorias.js';
 
-export const obtenerCategorias = async (req, res) => {
+// Trae todas las categorías
+export const getCategorias = async (req, res) => {
     try {
-        const categorias = await Categoria.getAll();
-        res.status(200).json(categorias);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
+        const { data, error } = await obtenerCategorias();
 
-export const obtenerCategoriaPorId = async (req, res) => {
-    try {
-        const categoria = await Categoria.getById(req.params.id);
-        if (!categoria) return res.status(404).json({ error: "Categoría no encontrada" });
-        res.status(200).json(categoria);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-
-export const crearCategoria = async (req, res) => {
-    try {
-        const nombre = req.body ? req.body.nombre : null;
-        
-        // 👇 Obtenemos la URL segura directamente desde la respuesta de Cloudinary Storage
-        let imagenUrl = null;
-        if (req.file) {
-            imagenUrl = req.file.path || req.file.secure_url;
+        if (error) {
+            console.error('Error de Supabase en getCategorias:', error);
+            return res.status(500).json({ error: 'Error al obtener las categorías', detalle: error.message });
         }
+
+        return res.status(200).json({ categorias: data });
+    } catch (error) {
+        console.error('Error en getCategorias:', error);
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+// Trae una categoría por su ID
+export const getCategoriaPorId = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { data, error } = await obtenerCategoriaPorId(id);
+
+        if (error) {
+            return res.status(404).json({ error: "Categoría no encontrada", detalle: error.message });
+        }
+
+        return res.status(200).json({ categoria: data });
+    } catch (error) {
+        console.error('Error en getCategoriaPorId:', error);
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+// Crear una categoría nueva
+export const postCategoria = async (req, res) => {
+    try {
+        const { nombre, descripcion } = req.body;
+        const imagenUrl = req.file ? (req.file.path || req.file.secure_url) : null;
 
         if (!nombre) {
             return res.status(400).json({ error: "El nombre de la categoría es obligatorio" });
         }
 
-        const nuevaCategoria = await Categoria.create({
-            nombre,
-            imagen_url: imagenUrl, // Se guardará https://res.cloudinary.com/...
-        });
+        const { data, error } = await crearCategoria(nombre, descripcion, imagenUrl);
 
-        res.status(201).json({
+        if (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        return res.status(201).json({
             mensaje: "Categoría creada con éxito",
-            data: nuevaCategoria
+            data: data ? data[0] : null
         });
     } catch (error) {
-        res.status(400).json({ error: error.message });
-    }
-};
-
-export const actualizarCategoria = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { nombre, descripcion } = req.body;
-        
-        let imagenUrl = undefined;
-        if (req.file) {
-            imagenUrl = req.file.path || req.file.secure_url;
-        }
-
-        const datosActualizar = {
-            nombre,
-            descripcion,
-        };
-
-        if (imagenUrl) {
-            datosActualizar.imagen_url = imagenUrl;
-        }
-
-        const categoriaActualizada = await Categoria.update(id, datosActualizar);
-
-        return res.status(200).json({
-            mensaje: "Categoría actualizada con éxito",
-            data: categoriaActualizada
-        });
-    } catch (error) {
+        console.error('Error en postCategoria:', error);
         return res.status(400).json({ error: error.message });
     }
 };
 
-export const eliminarCategoria = async (req, res) => {
+// Actualizar una categoría
+export const putCategoria = async (req, res) => {
     try {
-        await Categoria.delete(req.params.id);
+        const { id } = req.params;
+        const categoriaData = req.body;
+        
+        // Si viene un archivo nuevo en la petición, lo agregamos al objeto de datos
+        if (req.file) {
+            categoriaData.imagen_url = req.file.path || req.file.secure_url;
+        }
+
+        const { data, error } = await actualizarCategoria(id, categoriaData);
+
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        return res.status(200).json({
+            mensaje: "Categoría actualizada con éxito",
+            categoria: data ? data[0] : null
+        });
+    } catch (error) {
+        console.error('Error en putCategoria:', error);
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+// Eliminar una categoría
+export const deleteCategoria = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { data, error } = await eliminarCategoria(id);
+
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
         return res.status(200).json({ mensaje: "Categoría eliminada con éxito" });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('Error en deleteCategoria:', error);
+        return res.status(500).json({ error: error.message });
     }
 };
