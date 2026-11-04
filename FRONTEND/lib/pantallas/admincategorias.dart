@@ -17,6 +17,22 @@ class _AdminCategoriasState extends State<AdminCategorias> {
   List<dynamic> _categorias = [];
   bool _isLoadingList = false;
 
+  String _obtenerImagenUrl(String? urlParcial) {
+    if (urlParcial == null || urlParcial.isEmpty) return '';
+    if (urlParcial.startsWith('http')) return urlParcial;
+    
+    // Limpiamos cualquier barra o prefijo extra
+    final limpia = urlParcial.startsWith('/') ? urlParcial.substring(1) : urlParcial;
+    
+    // Si la ruta ya contiene 'upload/', reemplazamos o aseguramos la estructura limpia
+    if (limpia.startsWith('upload/')) {
+      return 'https://res.cloudinary.com/vicsxzqj/image/$limpia';
+    }
+    
+    // Forzamos la estructura oficial de Cloudinary con tipo 'image' y 'upload'
+    return 'https://res.cloudinary.com/vicsxzqj/image/upload/$limpia';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -259,7 +275,6 @@ class _AdminCategoriasState extends State<AdminCategorias> {
                           ),
                         );
                         
-                        // Si guardó con éxito (retornó true), recargamos la lista completa del servidor
                         if (resultado == true) {
                           _cargarCategorias();
                         }
@@ -320,7 +335,11 @@ class _AdminCategoriasState extends State<AdminCategorias> {
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: _categorias.length,
                               itemBuilder: (context, index) {
-                                final cat = _categorias[index];
+                                  final cat = _categorias[index];
+                                  print('📦 OBJETO CATEGORIA COMPLETO: $cat'); // 👈 Esto te dirá el nombre exacto de la llave de la imagen
+                                  
+                                  final String? imagenUrl = cat['imagen_url']?.toString();
+
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 14),
                                   decoration: BoxDecoration(
@@ -345,7 +364,26 @@ class _AdminCategoriasState extends State<AdminCategorias> {
                                             padding: const EdgeInsets.symmetric(vertical: 4.0),
                                             child: Row(
                                               children: [
-                                                // Aquí puedes integrar la visualización de la imagen de la categoría si lo deseas
+                                                // 🖼️ IMAGEN DE LA CATEGORÍA CORREGIDA Y VISIBLE
+                                                ClipRRect(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                  child: imagenUrl != null && imagenUrl.isNotEmpty
+                                                      ? Image.network(
+                                                          _obtenerImagenUrl(imagenUrl),
+                                                          width: 60,
+                                                          height: 60,
+                                                          fit: BoxFit.cover,
+                                                          errorBuilder: (context, error, stackTrace) =>
+                                                              const Icon(Icons.broken_image, size: 40),
+                                                        )
+                                                      : Container(
+                                                          width: 60,
+                                                          height: 60,
+                                                          color: Colors.grey.shade200,
+                                                          child: const Icon(Icons.category, color: Colors.grey),
+                                                        ),
+                                                ),
+                                                const SizedBox(width: 12),
                                                 Expanded(
                                                   child: Column(
                                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,10 +435,9 @@ class _AdminCategoriasState extends State<AdminCategorias> {
                                                       builder: (context) => AdminAgregarCategoria(categoria: cat),
                                                     ),
                                                   );
-                                                  if (resultado != null && resultado is Map<String, dynamic>) {
-                                                    setState(() {
-                                                      _categorias[index] = resultado;
-                                                    });
+                                                  
+                                                  if (resultado == true) {
+                                                    _cargarCategorias();
                                                   }
                                                 },
                                                 icon: const Icon(Icons.edit_outlined, size: 16),

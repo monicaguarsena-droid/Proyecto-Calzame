@@ -33,17 +33,23 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
 
   // Método auxiliar para construir la URL completa de Cloudinary
   String _obtenerImagenUrl(String? urlParcial) {
-    if (urlParcial == null || urlParcial.isEmpty) {
-      return '';
-    }
-    if (urlParcial.startsWith('http')) {
-      return urlParcial;
-    }
-    // Añade el dominio completo de Cloudinary usando tu cloud name 'vicsxzqj'
-    return 'https://res.cloudinary.com/vicsxzqj/image/$urlParcial';
+    print('🌐 URL PARCIAL RECIBIDA: $urlParcial');
+  if (urlParcial == null || urlParcial.isEmpty) return '';
+  if (urlParcial.startsWith('http')) return urlParcial;
+  
+  // Limpiamos si por casualidad trae una barra inicial
+  final limpia = urlParcial.startsWith('/') ? urlParcial.substring(1) : urlParcial;
+  
+  // Si la ruta ya contiene 'upload/', solo anteponemos el dominio base del cloud
+  if (limpia.startsWith('upload/')) {
+    return 'https://res.cloudinary.com/vicsxzqj/$limpia';
   }
+  
+  // Si es una ruta totalmente limpia sin 'upload/', la estructuramos completa:
+  return 'https://res.cloudinary.com/vicsxzqj/image/upload/$limpia';
+}
 
-  //Método para seleccionar imagen desde galería o cámara
+  // Método para seleccionar imagen desde galería o cámara
   Future<void> _seleccionarImagen() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
@@ -120,8 +126,9 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
 
   @override
   Widget build(BuildContext context) {
+    // En tu método build de adminagregarcategoria.dart, cámbialo por esto:
     final bool esEdicion = widget.categoria != null;
-    final String? imagenActual = widget.categoria?['imagen_url']?.toString();
+    final String? imagenActual = widget.categoria?['imagen_url']?.toString() ?? widget.categoria?['imagen']?.toString();
 
     return Scaffold(
       backgroundColor: ColoresApp.background,
@@ -193,7 +200,7 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
                           ? Image.network(
                               _obtenerImagenUrl(imagenActual),
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _placeholderImagen(),
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 40),
                             )
                           : _placeholderImagen()),
                 ),

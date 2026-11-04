@@ -21,9 +21,9 @@ export const obtenerCategoriaPorId = async (req, res) => {
 
 export const crearCategoria = async (req, res) => {
     try {
-        // Verificamos que req.body exista antes de leer sus propiedades
         const nombre = req.body ? req.body.nombre : null;
-        const imagenUrl = req.file ? req.file.path : null; // O la URL que retorne tu servicio de subida
+
+        const imagenUrl = req.file ? req.file.path : null; 
 
         if (!nombre) {
             return res.status(400).json({ error: "El nombre de la categoría es obligatorio" });
@@ -31,7 +31,7 @@ export const crearCategoria = async (req, res) => {
 
         const nuevaCategoria = await Categoria.create({
             nombre,
-            imagen_url: imagenUrl,
+            imagen_url: imagenUrl, // Se guarda la URL completa (ej: https://res.cloudinary.com/...)
         });
 
         res.status(201).json({
