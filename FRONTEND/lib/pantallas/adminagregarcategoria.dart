@@ -31,6 +31,18 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
     );
   }
 
+  // Método auxiliar para construir la URL completa de Cloudinary
+  String _obtenerImagenUrl(String? urlParcial) {
+    if (urlParcial == null || urlParcial.isEmpty) {
+      return '';
+    }
+    if (urlParcial.startsWith('http')) {
+      return urlParcial;
+    }
+    // Añade el dominio completo de Cloudinary usando tu cloud name 'vicsxzqj'
+    return 'https://res.cloudinary.com/vicsxzqj/image/$urlParcial';
+  }
+
   //Método para seleccionar imagen desde galería o cámara
   Future<void> _seleccionarImagen() async {
     final picker = ImagePicker();
@@ -178,7 +190,11 @@ class _AdminAgregarCategoriaState extends State<AdminAgregarCategoria> {
                   child: _imagenSeleccionada != null
                       ? Image.file(_imagenSeleccionada!, fit: BoxFit.cover)
                       : (imagenActual != null && imagenActual.isNotEmpty
-                          ? Image.network(imagenActual, fit: BoxFit.cover, errorBuilder: (_, _, __) => _placeholderImagen())
+                          ? Image.network(
+                              _obtenerImagenUrl(imagenActual),
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _placeholderImagen(),
+                            )
                           : _placeholderImagen()),
                 ),
               ),
