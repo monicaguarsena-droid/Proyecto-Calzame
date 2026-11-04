@@ -52,7 +52,7 @@ class CategoriaService {
 
     if (imagen != null) {
       request.files.add(
-        await http.MultipartFile.fromPath('imagen', imagen.path), // 👈 Debe coincidir con upload.single('imagen')
+        await http.MultipartFile.fromPath('imagen', imagen.path),
       );
     }
 

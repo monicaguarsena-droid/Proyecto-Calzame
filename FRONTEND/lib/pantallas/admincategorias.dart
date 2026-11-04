@@ -5,7 +5,7 @@ import 'package:frontend/pantallas/adminagregarcategoria.dart';
 import 'package:frontend/servicios/categorias_service.dart';
 
 class AdminCategorias extends StatefulWidget {
-  const AdminCategorias({Key? key}) : super(key: key);
+  const AdminCategorias({super.key});
 
   @override
   State<AdminCategorias> createState() => _AdminCategoriasState();
@@ -283,195 +283,201 @@ class _AdminCategoriasState extends State<AdminCategorias> {
                 const SizedBox(height: 16),
               ],
 
-              // 4. Listado o Mensaje Vacío
-              _tabIndex == 0
-                  ? (_categorias.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 60.0),
-                          child: Center(
-                            child: Column(
-                              children: [
-                                Icon(Icons.category_outlined, size: 60, color: Colors.grey.shade400),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'No hay categorías registradas',
-                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500),
-                                ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Presiona "Agregar categoría" para crear una.',
-                                  style: TextStyle(color: Colors.grey, fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _categorias.length,
-                          itemBuilder: (context, index) {
-                            final cat = _categorias[index];
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 14),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.02),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(12),
+              // 4. Listado, Mensaje Vacío o Indicador de Carga
+              _isLoadingList
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 60.0),
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: ColoresApp.primary,
+                        ),
+                      ),
+                    )
+                  : (_tabIndex == 0
+                      ? (_categorias.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 60.0),
+                              child: Center(
                                 child: Column(
                                   children: [
-                                    InkWell(
-                                      onTap: () => _mostrarDetalles(cat),
-                                      borderRadius: BorderRadius.circular(12),
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 4.0),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    cat['nombre'] ?? '',
-                                                    style: const TextStyle(
-                                                      color: ColoresApp.primary,
-                                                      fontWeight: FontWeight.bold,
-                                                      fontSize: 16,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    '0 productos',
-                                                    style: TextStyle(
-                                                      color: Colors.grey.shade600,
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Container(
-                                              padding: const EdgeInsets.all(6),
-                                              decoration: BoxDecoration(
-                                                color: ColoresApp.primary.withOpacity(0.06),
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: const Icon(
-                                                Icons.chevron_right,
-                                                color: ColoresApp.primary,
-                                                size: 20,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
+                                    Icon(Icons.category_outlined, size: 60, color: Colors.grey.shade400),
                                     const SizedBox(height: 12),
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: OutlinedButton.icon(
-                                            onPressed: () async {
-                                              final resultado = await Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) => AdminAgregarCategoria(categoria: cat),
-                                                ),
-                                              );
-                                              if (resultado != null && resultado is Map<String, dynamic>) {
-                                                setState(() {
-                                                  _categorias[index] = resultado;
-                                                });
-                                              }
-                                            },
-                                            icon: const Icon(Icons.edit_outlined, size: 16),
-                                            label: const Text('Editar', style: TextStyle(fontSize: 12)),
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor: ColoresApp.primary,
-                                              side: BorderSide(color: Colors.grey.shade300),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Expanded(
-                                          child: OutlinedButton.icon(
-                                            onPressed: () async {
-                                              final idCategoria = cat['id']?.toString();
-                                              if (idCategoria == null) return;
-
-                                              // Confirmación opcional de seguridad
-                                              final confirmar = await showDialog<bool>(
-                                                context: context,
-                                                builder: (context) => AlertDialog(
-                                                  title: const Text('Eliminar categoría'),
-                                                  content: const Text('¿Estás seguro de que deseas eliminar esta categoría?'),
-                                                  actions: [
-                                                    TextButton(
-                                                      onPressed: () => Navigator.pop(context, false),
-                                                      child: const Text('Cancelar'),
-                                                    ),
-                                                    TextButton(
-                                                      onPressed: () => Navigator.pop(context, true),
-                                                      child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-
-                                              if (confirmar != true) return;
-
-                                              try {
-                                                // 1. Elimina de la base de datos a través del servicio
-                                                await CategoriaService.eliminar(id: idCategoria);
-
-                                                // 2. Elimina de la lista visual en el panel administrativo
-                                                setState(() {
-                                                  _categorias.removeAt(index);
-                                                });
-
-                                                if (!mounted) return;
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Categoría eliminada con éxito'), backgroundColor: Colors.green),
-                                                );
-                                              } catch (e) {
-                                                if (!mounted) return;
-                                                ScaffoldMessenger.of(context).showSnackBar(
-                                                  SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: Colors.red),
-                                                );
-                                              }
-                                            },
-                                            icon: const Icon(Icons.delete_outline, size: 16),
-                                            label: const Text('Eliminar', style: TextStyle(fontSize: 12)),
-                                            style: OutlinedButton.styleFrom(
-                                              foregroundColor: ColoresApp.primary,
-                                              side: BorderSide(color: Colors.grey.shade300),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(12),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                    Text(
+                                      'No hay categorías registradas',
+                                      style: TextStyle(color: Colors.grey.shade600, fontSize: 15, fontWeight: FontWeight.w500),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Presiona "Agregar categoría" para crear una.',
+                                      style: TextStyle(color: Colors.grey, fontSize: 12),
                                     ),
                                   ],
                                 ),
                               ),
-                            );
-                          },
-                        ))
-                  : const AdminOfertasPage(),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _categorias.length,
+                              itemBuilder: (context, index) {
+                                final cat = _categorias[index];
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 14),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.02),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12),
+                                    child: Column(
+                                      children: [
+                                        InkWell(
+                                          onTap: () => _mostrarDetalles(cat),
+                                          borderRadius: BorderRadius.circular(12),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                                            child: Row(
+                                              children: [
+                                                // Aquí puedes integrar la visualización de la imagen de la categoría si lo deseas
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        cat['nombre'] ?? '',
+                                                        style: const TextStyle(
+                                                          color: ColoresApp.primary,
+                                                          fontWeight: FontWeight.bold,
+                                                          fontSize: 16,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        '0 productos',
+                                                        style: TextStyle(
+                                                          color: Colors.grey.shade600,
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Container(
+                                                  padding: const EdgeInsets.all(6),
+                                                  decoration: BoxDecoration(
+                                                    color: ColoresApp.primary.withOpacity(0.06),
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.chevron_right,
+                                                    color: ColoresApp.primary,
+                                                    size: 20,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                onPressed: () async {
+                                                  final resultado = await Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => AdminAgregarCategoria(categoria: cat),
+                                                    ),
+                                                  );
+                                                  if (resultado != null && resultado is Map<String, dynamic>) {
+                                                    setState(() {
+                                                      _categorias[index] = resultado;
+                                                    });
+                                                  }
+                                                },
+                                                icon: const Icon(Icons.edit_outlined, size: 16),
+                                                label: const Text('Editar', style: TextStyle(fontSize: 12)),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: ColoresApp.primary,
+                                                  side: BorderSide(color: Colors.grey.shade300),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: OutlinedButton.icon(
+                                                onPressed: () async {
+                                                  final idCategoria = cat['id']?.toString();
+                                                  if (idCategoria == null) return;
+
+                                                  final confirmar = await showDialog<bool>(
+                                                    context: context,
+                                                    builder: (context) => AlertDialog(
+                                                      title: const Text('Eliminar categoría'),
+                                                      content: const Text('¿Estás seguro de que deseas eliminar esta categoría?'),
+                                                      actions: [
+                                                        TextButton(
+                                                          onPressed: () => Navigator.pop(context, false),
+                                                          child: const Text('Cancelar'),
+                                                        ),
+                                                        TextButton(
+                                                          onPressed: () => Navigator.pop(context, true),
+                                                          child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  );
+
+                                                  if (confirmar != true) return;
+
+                                                  try {
+                                                    await CategoriaService.eliminar(id: idCategoria);
+                                                    setState(() {
+                                                      _categorias.removeAt(index);
+                                                    });
+
+                                                    if (!mounted) return;
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(content: Text('Categoría eliminada con éxito'), backgroundColor: Colors.green),
+                                                    );
+                                                  } catch (e) {
+                                                    if (!mounted) return;
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(content: Text('Error al eliminar: $e'), backgroundColor: Colors.red),
+                                                    );
+                                                  }
+                                                },
+                                                icon: const Icon(Icons.delete_outline, size: 16),
+                                                label: const Text('Eliminar', style: TextStyle(fontSize: 12)),
+                                                style: OutlinedButton.styleFrom(
+                                                  foregroundColor: ColoresApp.primary,
+                                                  side: BorderSide(color: Colors.grey.shade300),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            ))
+                      : const AdminOfertasPage()),
             ],
           ),
         ),
