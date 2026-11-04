@@ -45,20 +45,36 @@ export const crearCategoria = async (req, res) => {
 
 export const actualizarCategoria = async (req, res) => {
     try {
-        const categoriaActualizada = await Categoria.update(req.params.id, req.body);
-        res.status(200).json({
+        const { id } = req.params;
+        const { nombre, descripcion } = req.body;
+        
+        const imagenUrl = req.file ? req.file.path : undefined;
+
+        const datosActualizar = {
+            nombre,
+            descripcion,
+        };
+
+        if (imagenUrl) {
+            datosActualizar.imagen_url = imagenUrl;
+        }
+
+        const categoriaActualizada = await Categoria.update(id, datosActualizar);
+        
+        // ¡Importante! Asegúrate de enviar un JSON de respuesta explícito
+        return res.status(200).json({
             mensaje: "Categoría actualizada con éxito",
             data: categoriaActualizada
         });
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        return res.status(400).json({ error: error.message });
     }
 };
 
 export const eliminarCategoria = async (req, res) => {
     try {
         await Categoria.delete(req.params.id);
-        res.status(200).json({ mensaje: "Categoría eliminada con éxito" });
+        return res.status(200).json({ mensaje: "Categoría eliminada con éxito" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
