@@ -7,8 +7,8 @@ const router = express.Router();
 
 router.get("/", obtenerCategorias);
 router.get("/:id", obtenerCategoriaPorId);
-router.post("/", upload.single('imagen'),crearCategoria);
-router.put("/:id", actualizarCategoria);
+router.post("/", upload.single('imagen'), crearCategoria);
+router.put("/:id", upload.single('imagen'), actualizarCategoria);
 router.delete("/:id", eliminarCategoria);
 
 export default router;

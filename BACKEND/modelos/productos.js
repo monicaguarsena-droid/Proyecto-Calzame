@@ -7,14 +7,14 @@ export const obtenerProductos = async () => {
     return { data, error };
 };
 
-export const crearProducto = async (Nombre, Categoria, tipoCalzado, Precio, Stock,  Descripcion, Tallas, Imagen) => {
+export const crearProducto = async (Nombre, Categoria, TipoCalzado, Precio, Stock,  Descripcion, Tallas, Imagen) => {
     const { data, error } = await supabase
         .from('Productos')
         .insert([
             { 
                 Nombre: Nombre,
                 Categoria: Categoria,
-                tipoCalzado: tipoCalzado,
+                TipoCalzado: TipoCalzado,
                 Precio: Precio,
                 Stock: Stock,
                 Descripcion: Descripcion,

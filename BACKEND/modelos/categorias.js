@@ -23,13 +23,14 @@ export const Categoria = {
     },
 
     update: async (id, categoriaData) => {
-        const { data, error } = await supabase
-            .from("categorias")
-            .update(categoriaData)
-            .eq("id", id)
-            .select();
-        if (error) throw error;
-        return data;
+    const { data, error } = await supabase
+        .from("categorias")
+        .update(categoriaData)
+        .eq("id", id)
+        .select();
+
+    if (error) throw error;
+    return data;
     },
 
     delete: async (id) => {
