@@ -16,10 +16,17 @@ class CategoriaService {
     if (response.statusCode != 200) {
       throw Exception(_mensajeError(body, response.statusCode));
     }
-    if (body is! List) {
-      throw Exception('El servidor no devolvió una lista de categorías');
+    
+    List<dynamic> lista;
+    if (body is Map<String, dynamic> && body.containsKey('categorias')) {
+      lista = body['categorias'];
+    } else if (body is List) {
+      lista = body;
+    } else {
+      throw Exception('El servidor no devolvió una lista de categorías válida');
     }
-    return body.map((item) {
+
+    return lista.map((item) {
       if (item is! Map<String, dynamic>) {
         throw Exception('El servidor devolvió un registro inválido en categorías');
       }

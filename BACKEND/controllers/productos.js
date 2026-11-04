@@ -38,28 +38,42 @@ export const getProductosPorCategoria = async (req, res) => {
 
 // crear un producto nuevo 
 export const postProducto = async (req, res) => {
-    try {
-        const { Nombre, Categoria, TipoCalzado, Precio, Stock, Descripcion, Tallas } = req.body;
-        const imagenUrl = req.file ? req.file.path : null; 
+  try {
+    // Extraemos los campos enviando soporte para 'tipoCalzado' en minúscula que envía Flutter
+    const { Nombre, Categoria, TipoCalzado, tipoCalzado, Precio, Stock, Descripcion, Tallas } = req.body;
 
-        const nuevoProducto = await crearProducto({
-            nombre: Nombre,
-            categoria: Categoria,
-            tipoCalzado: TipoCalzado,
-            precio: parseFloat(Precio),
-            stock: parseInt(Stock),
-            descripcion: Descripcion,
-            tallas: JSON.parse(Tallas || '[]'),
-            imagen_url: imagenUrl
-        });
+    // Obtenemos la URL de la imagen de Cloudinary / Multer
+    const imagenUrl = req.file ? (req.file.path || req.file.secure_url) : null;
 
-        res.status(201).json({
-            mensaje: "Producto creado con éxito",
-            data: nuevoProducto
-        });
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+    // Preparamos los datos con los tipos correctos
+    const productoData = {
+      Nombre: Nombre ? Nombre.trim() : '',
+      Categoria: Categoria ? Categoria.trim() : '',
+      TipoCalzado: (TipoCalzado || tipoCalzado || '').trim(), // Acepta ambas variantes
+      Precio: Precio ? parseFloat(Precio) : 0,
+      Stock: Stock ? parseInt(Stock) : 0,
+      Descripcion: Descripcion ? Descripcion.trim() : '',
+      Tallas: Tallas ? (typeof Tallas === 'string' ? JSON.parse(Tallas) : Tallas) : [],
+      Imagen: imagenUrl
+    };
+
+    // Llamamos a la función del modelo
+    const { data, error } = await crearProducto(productoData);
+
+    if (error) {
+      console.error('Error de Supabase:', error);
+      return res.status(400).json({ error: error.message });
     }
+
+    return res.status(201).json({
+      mensaje: "Producto creado con éxito",
+      producto: data ? data[0] : null
+    });
+
+  } catch (error) {
+    console.error('Error en servidor:', error);
+    return res.status(500).json({ error: error.message });
+  }
 };
 
 //actualizar un zapato

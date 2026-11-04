@@ -1,30 +1,29 @@
 import { supabase } from '../config/supabase.js';
 
 export const obtenerProductos = async () => {
-    const { data, error } = await supabase
-        .from('Productos')
-        .select('*');
-    return { data, error };
+  const { data, error } = await supabase
+    .from('Productos')
+    .select('*');
+  return { data, error };
 };
 
-export const crearProducto = async (Nombre, Categoria, TipoCalzado, Precio, Stock,  Descripcion, Tallas, Imagen) => {
-    const { data, error } = await supabase
-        .from('Productos')
-        .insert([
-            { 
-                Nombre: Nombre,
-                Categoria: Categoria,
-                TipoCalzado: TipoCalzado,
-                Precio: Precio,
-                Stock: Stock,
-                Descripcion: Descripcion,
-                Tallas: Tallas,
-                Imagen: Imagen,
-                
-            }
-        ])
-        .select();
-    return { data, error };
+export const crearProducto = async (productoData) => {
+  const { data, error } = await supabase
+    .from('Productos')
+    .insert([
+      {
+        Nombre: productoData.Nombre,
+        Categoria: productoData.Categoria,
+        TipoCalzado: productoData.TipoCalzado,
+        Precio: productoData.Precio,
+        Stock: productoData.Stock,
+        Descripcion: productoData.Descripcion,
+        Tallas: productoData.Tallas,
+        Imagen: productoData.Imagen,
+      }
+    ])
+    .select();
+  return { data, error };
 };
 
 export const actualizarProducto = async (id, campos) => {

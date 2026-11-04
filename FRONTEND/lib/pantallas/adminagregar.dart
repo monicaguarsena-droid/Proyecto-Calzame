@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:frontend/servicios/categorias_service.dart';
 import 'package:http/http.dart' as http;
-import 'package:frontend/cors/colores.dart'; // Ajusta la ruta de tus colores si es necesario
+import 'package:frontend/cors/colores.dart'; 
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:frontend/api_config.dart'; // Asegúrate de tener esta importación para usar ApiConfig
+import 'package:frontend/api_config.dart';
 
 class AgregarProductoScreen extends StatefulWidget {
   const AgregarProductoScreen({super.key});
@@ -41,17 +41,16 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
     );
   }
 
-  // Función para abrir el selector (Galería o Cámara)
   Future<void> _seleccionarImagen(ImageSource source) async {
     try {
-      final XFile? Imagen = await _picker.pickImage(
+      final XFile? imagen = await _picker.pickImage(
         source: source,
-        imageQuality: 80, // Comprime un poco la imagen para optimizar la subida
+        imageQuality: 80,
       );
 
-      if (Imagen != null) {
+      if (imagen != null) {
         setState(() {
-          _imagenSeleccionada = File(Imagen.path);
+          _imagenSeleccionada = File(imagen.path);
         });
       }
     } catch (e) {
@@ -108,76 +107,49 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   String _categoriaSeleccionada = 'Dama';
   final List<String> _categorias = ['Dama', 'Caballero', 'Infantil'];
 
-  // Tipos de calzado solicitados
-  // 1. Declara la lista vacía y una variable para el valor seleccionado
-List<String> _tiposCalzado = [];
-String? _tipoCalzadoSeleccionado;
-bool _isLoadingCategorias = true;
+  List<String> _tiposCalzado = [];
+  String? _tipoCalzadoSeleccionado;
+  bool _isLoadingCategorias = true;
 
-@override
-void initState() {
-  super.initState();
-  _cargarTiposCalzadoDesdeBD();
-}
-
-// 2. Método para cargar las categorías desde el backend
-Future<void> _cargarTiposCalzadoDesdeBD() async {
-  try {
-    final categoriasList = await CategoriaService.listar();
-    setState(() {
-      // Extraemos el campo 'nombre' de cada categoría obtenida de la BD
-      _tiposCalzado = categoriasList.map((cat) => cat['nombre'].toString()).toList();
-      if (_tiposCalzado.isNotEmpty) {
-        _tipoCalzadoSeleccionado = _tiposCalzado.first;
-      }
-      _isLoadingCategorias = false;
-    });
-  } catch (e) {
-    setState(() {
-      _isLoadingCategorias = false;
-    });
-    print("Error cargando categorías para productos: $e");
+  @override
+  void initState() {
+    super.initState();
+    _cargarTiposCalzadoDesdeBD();
   }
-}
 
-  // Tallas disponibles y seleccionadas
+  Future<void> _cargarTiposCalzadoDesdeBD() async {
+    try {
+      final categoriasList = await CategoriaService.listar();
+      setState(() {
+        _tiposCalzado = categoriasList.map((cat) => cat['nombre'].toString()).toList();
+        
+        // Validamos que la lista tenga elementos y que el seleccionado sea válido
+        if (_tiposCalzado.isNotEmpty) {
+          if (_tipoCalzadoSeleccionado == null || !_tiposCalzado.contains(_tipoCalzadoSeleccionado)) {
+            _tipoCalzadoSeleccionado = _tiposCalzado.first;
+          }
+        } else {
+          _tipoCalzadoSeleccionado = null;
+        }
+        _isLoadingCategorias = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingCategorias = false;
+      });
+      print("Error cargando categorías para productos: $e");
+    }
+  }
+
   final List<String> _tallasDisponibles = [
-    '16',
-    '17',
-    '18',
-    '19',
-    '20',
-    '21',
-    '22',
-    '23',
-    '24',
-    '25',
-    '26',
-    '27',
-    '28',
-    '29',
-    '30',
-    '31',
-    '32',
-    '33',
-    '34',
-    '35',
-    '36',
-    '37',
-    '38',
-    '39',
-    '40',
-    '41',
-    '42',
-    '43',
-    '44',
-    '45',
+    '16','17','18','19','20','21','22','23','24','25','26',
+    '27','28','29','30','31','32','33','34','35','36','37',
+    '38','39','40','41','42','43','44','45',
   ];
   final List<String> _tallasSeleccionadas = [];
 
   bool _isLoading = false;
-  final String baseUrl =
-      ApiConfig.baseUrl + '/productos'; // URL de tu backend en Node.js
+  final String baseUrl = ApiConfig.baseUrl + '/productos';
 
   Future<void> _guardarProductoConImagen() async {
     if (_imagenSeleccionada == null) {
@@ -185,6 +157,18 @@ Future<void> _cargarTiposCalzadoDesdeBD() async {
         const SnackBar(
           content: Text('Selecciona una foto para el producto.'),
           backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_nombreController.text.trim().isEmpty || 
+        _precioController.text.trim().isEmpty || 
+        _stockController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Por favor completa los campos obligatorios (Nombre, Precio, Stock).'),
+          backgroundColor: Colors.orange,
         ),
       );
       return;
@@ -199,23 +183,21 @@ Future<void> _cargarTiposCalzadoDesdeBD() async {
       final token = prefs.getString('token') ?? '';
 
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/crear'));
-
       request.headers.addAll({'Authorization': 'Bearer $token'});
 
-      // Adjuntar los campos de texto
+      // Adjuntar los campos de texto respetando las mayúsculas/minúsculas que espera tu backend
       request.fields['Nombre'] = _nombreController.text.trim();
       request.fields['Categoria'] = _categoriaSeleccionada;
-      request.fields['tipoCalzado'] = _tipoCalzadoSeleccionado ?? '';
+      request.fields['TipoCalzado'] = _tipoCalzadoSeleccionado ?? '';
       request.fields['Precio'] = _precioController.text.trim();
       request.fields['Stock'] = _stockController.text.trim();
       request.fields['Descripcion'] = _descripcionController.text.trim();
       request.fields['Tallas'] = json.encode(_tallasSeleccionadas);
 
-      // Adjuntar la imagen si el usuario seleccionó una
       if (_imagenSeleccionada != null) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'Imagen', // El nombre del campo que espera tu backend (ej. Multer en Node.js)
+            'Imagen', 
             _imagenSeleccionada!.path,
           ),
         );
@@ -230,7 +212,6 @@ Future<void> _cargarTiposCalzadoDesdeBD() async {
         Navigator.pop(context, true); // Regresa al inventario y recarga
       } else {
         final errorData = json.decode(response.body);
-
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorData['error'] ?? 'Error al guardar el producto'),
@@ -375,39 +356,39 @@ Future<void> _cargarTiposCalzadoDesdeBD() async {
             ),
             const SizedBox(height: 16),
 
-           // Tipo de Calzado dinámico desde la BD
-          const Text(
-            'Tipo de Calzado',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: ColoresApp.primary,
+            // Tipo de Calzado dinámico desde la BD
+            const Text(
+              'Tipo de Calzado',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: ColoresApp.primary,
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          _isLoadingCategorias
-              ? const Center(child: CircularProgressIndicator())
-              : _tiposCalzado.isEmpty
-                  ? const Text('No hay categorías registradas en el panel administrativo.')
-                  : Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: ColoresApp.border),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _tipoCalzadoSeleccionado,
-                          isExpanded: true,
-                          items: _tiposCalzado.map((tipo) {
-                            return DropdownMenuItem(value: tipo, child: Text(tipo));
-                          }).toList(),
-                          onChanged: (val) =>
-                              setState(() => _tipoCalzadoSeleccionado = val),
+            const SizedBox(height: 6),
+            _isLoadingCategorias
+                ? const Center(child: CircularProgressIndicator())
+                : _tiposCalzado.isEmpty
+                    ? const Text('No hay categorías registradas en el panel administrativo.')
+                    : Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: ColoresApp.border),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _tipoCalzadoSeleccionado,
+                            isExpanded: true,
+                            items: _tiposCalzado.map((tipo) {
+                              return DropdownMenuItem(value: tipo, child: Text(tipo));
+                            }).toList(),
+                            onChanged: (val) =>
+                                setState(() => _tipoCalzadoSeleccionado = val),
+                          ),
                         ),
                       ),
-                    ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Precio y Stock
             Row(

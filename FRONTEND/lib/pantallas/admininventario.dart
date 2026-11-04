@@ -1,9 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/admin_panel.dart';
 import 'package:frontend/pantallas/adminagregar.dart';
 import 'package:frontend/pantallas/editar_producto.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:frontend/cors/colores.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/api_config.dart';
@@ -24,58 +24,54 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
   String _categoriaSeleccionada = 'Todos';
   String _filtroBusqueda = '';
 
-  // Lista vacía para que no tenga productos por defecto
-  List<Map<String, dynamic>> _productos = [];
+  List _productos = [];
   
   Future<void> _cargarProductos() async {
-  try {
-    final response = await http.get(Uri.parse('$baseUrl/productos')); // O la ruta que uses
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        // Asegúrate de asignarlo a tu lista según cómo te devuelva los datos el backend
-        _productos = List<Map<String, dynamic>>.from(data['productos'] ?? data);
-      });
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/productos'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _productos = List.from(data['productos'] ?? data);
+        });
+      }
+    } catch (e) {
+      print("Error al cargar productos: $e");
     }
-  } catch (e) {
-    print("Error al cargar productos: $e");
   }
-}
+
   Future<void> _eliminarProducto(String id) async {
-  try {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
 
-    // Realiza la petición DELETE al backend
-    final response = await http.delete(
-      Uri.parse('$baseUrl/productos/eliminar/$id'),
-      headers: {
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      // Recarga tu lista de productos o remueve el elemento de la UI
-      setState(() {
-        // Vuelve a llamar a tu función que obtiene los productos de la API
-        _cargarProductos(); 
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Producto eliminado con éxito')),
+      final response = await http.delete(
+        Uri.parse('$baseUrl/productos/eliminar/$id'),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
       );
-    } else {
-      final errorData = json.decode(response.body);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _cargarProductos(); 
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Producto eliminado con éxito')),
+        );
+      } else {
+        final errorData = json.decode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorData['error'] ?? 'No se pudo eliminar')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorData['error'] ?? 'No se pudo eliminar')),
+        SnackBar(content: Text('Error de conexión: $e')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error de conexión: $e')),
-    );
   }
-}
 
   @override
   void initState() {
@@ -85,11 +81,13 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
   
   @override
   Widget build(BuildContext context) {
-    // Filtrar productos según la categoría y búsqueda
+    // Filtrado cubriendo tanto mayúsculas como minúsculas
     final productosFiltrados = _productos.where((prod) {
-      final coincideCategoria = _categoriaSeleccionada == 'Todos' || prod['Categoria'] == _categoriaSeleccionada;
-      // Si 'nombre' es null, le asignamos un texto vacío ('') para que no falle
-      final nombreProducto = prod['Nombre']?.toString() ?? '';
+      final categoriaProd = (prod['Categoria'] ?? prod['categoria'] ?? '').toString();
+      final coincideCategoria = _categoriaSeleccionada == 'Todos' || 
+          categoriaProd.toLowerCase() == _categoriaSeleccionada.toLowerCase();
+      
+      final nombreProducto = (prod['Nombre'] ?? prod['nombre'] ?? '').toString();
       final coincideTexto = nombreProducto.toLowerCase().contains(_filtroBusqueda.toLowerCase());
       return coincideCategoria && coincideTexto;
     }).toList();
@@ -109,7 +107,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                     icon: const Icon(Icons.arrow_back, color: ColoresApp.primary),
                     onPressed: () => Navigator.pop(context, MaterialPageRoute(builder: (context) => const AdminPanel())),
                   ),
-                  const SizedBox(width: 4), // Espacio sutil entre la flecha y el texto
+                  const SizedBox(width: 4),
                   const Text(
                     'Calzado Mar&Paz',
                     style: TextStyle(
@@ -247,7 +245,6 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
               ),
               const SizedBox(height: 12),
 
-              // Si no hay productos, mostramos un mensaje indicándole al administrador que agregue uno
               productosFiltrados.isEmpty
                   ? Padding(
                       padding: const EdgeInsets.symmetric(vertical: 40.0),
@@ -293,7 +290,8 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                       height: 85,
                                       color: Colors.grey[200],
                                       child: Image.network(
-                                        prod['Imagen'] ?? '',
+                                        // Lectura robusta de la imagen
+                                        prod['Imagen'] ?? prod['imagen'] ?? prod['imagen_url'] ?? '',
                                         fit: BoxFit.cover,
                                         errorBuilder: (context, error, stackTrace) =>
                                             Icon(Icons.image, color: primaryColor),
@@ -306,12 +304,12 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          prod['Categoria'] ?? '',
+                                          prod['Categoria'] ?? prod['categoria'] ?? '',
                                           style: const TextStyle(color: Colors.grey, fontSize: 11),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(
-                                          prod['Nombre'] ?? '',
+                                          prod['Nombre'] ?? prod['nombre'] ?? '',
                                           style: TextStyle(
                                             color: primaryColor,
                                             fontWeight: FontWeight.bold,
@@ -335,7 +333,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                               ),
                                             const SizedBox(width: 4),
                                             Text(
-                                              '${prod['Stock']} en stock${prod['stockBajo'] == true ? ' · Stock bajo' : ''}',
+                                              '${prod['Stock'] ?? prod['stock'] ?? 0} en stock${prod['stockBajo'] == true ? ' · Stock bajo' : ''}',
                                               style: TextStyle(
                                                 color: prod['stockBajo'] == true ? Colors.orange[800] : Colors.grey[600],
                                                 fontSize: 11,
@@ -346,7 +344,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          '\$${prod['Precio']}',
+                                          '\$${prod['Precio'] ?? prod['precio'] ?? 0}',
                                           style: TextStyle(
                                             color: primaryColor,
                                             fontSize: 18,
@@ -364,7 +362,6 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                   Expanded(
                                     child: ElevatedButton.icon(
                                       onPressed: () async {
-                                        // 1. Navegamos pasando el mapa del producto actual
                                         final resultado = await Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -372,7 +369,6 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                           ),
                                         );
 
-                                        // 2. Si se guardó correctamente, recargamos el inventario de forma automática
                                         if (resultado == true) {
                                           _cargarProductos();
                                         }
@@ -388,9 +384,8 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
-                                    child:TextButton.icon(
+                                    child: TextButton.icon(
                                       onPressed: () {
-                                        // Muestra una alerta de confirmación antes de borrar (opcional pero recomendado)
                                         showDialog(
                                           context: context,
                                           builder: (context) => AlertDialog(
@@ -404,7 +399,8 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                               TextButton(
                                                 onPressed: () {
                                                   Navigator.pop(context);
-                                                  final idProducto = productosFiltrados[index]['id'] ?? productosFiltrados[index]['_id'];                                                  _eliminarProducto(idProducto.toString()); // 👈 Asegúrate de pasar el ID real
+                                                  final idProducto = productosFiltrados[index]['id'] ?? productosFiltrados[index]['_id'];                          
+                                                  _eliminarProducto(idProducto.toString());
                                                 },
                                                 child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
                                               ),
@@ -414,7 +410,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                       },
                                       icon: const Icon(Icons.delete_outline, color: Colors.red),
                                       label: const Text('Eliminar', style: TextStyle(color: Colors.red)),
-                                    )
+                                    ),
                                   ),
                                 ],
                               ),
