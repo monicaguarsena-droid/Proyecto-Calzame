@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/servicios/categorias_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/api_config.dart';
@@ -20,34 +21,40 @@ class _EditarProductoScreenState extends State<EditarProductoScreen> {
   late TextEditingController _stockController;
   late TextEditingController _descripcionController;
   
-  // Categoría seleccionada por defecto (conviene tener las opciones estándar)
+  // Categoría seleccionada por defecto
   String _categoriaSeleccionada = 'Dama';
   final List<String> _categoriasDisponibles = ['Dama', 'Caballero', 'Infantil'];
+
+  // Tipo de Calzado dinámico desde la BD
+  List<String> _tiposCalzado = [];
+  String? _tipoCalzadoSeleccionado;
+  bool _isLoadingCategorias = true;
 
   // Controladores y lista para gestionar las tallas de forma interactiva
   final TextEditingController _nuevaTallaController = TextEditingController();
   List<String> _tallasList = [];
 
   bool _isLoading = false;
-  final String baseUrl = "${ApiConfig.baseUrl}/productos"; // URL de tu backend en Node.js
+  final String baseUrl = "${ApiConfig.baseUrl}/productos";
 
   @override
   void initState() {
     super.initState();
     _nombreController = TextEditingController(text: widget.producto['nombre'] ?? widget.producto['Nombre'] ?? '');
     
-    // Cargar la categoría actual de forma segura validando que exista en las opciones
     String catActual = widget.producto['categoria'] ?? widget.producto['Categoria'] ?? 'Dama';
-    // Capitalizamos la primera letra para que coincida con el Dropdown si es necesario
     if (_categoriasDisponibles.contains(catActual)) {
       _categoriaSeleccionada = catActual;
     } else {
-      _categoriaSeleccionada = 'Dama'; // Valor por defecto si viene diferente
+      _categoriaSeleccionada = 'Dama';
     }
 
     _precioController = TextEditingController(text: (widget.producto['precio'] ?? widget.producto['Precio'] ?? '').toString());
     _stockController = TextEditingController(text: (widget.producto['stock'] ?? widget.producto['Stock'] ?? '').toString());
     _descripcionController = TextEditingController(text: widget.producto['descripcion'] ?? widget.producto['Descripcion'] ?? '');
+
+    // Cargar tipos de calzado desde la base de datos
+    _cargarTiposCalzadoDesdeBD();
 
     // Parsear las tallas existentes de forma segura
     var tallasRaw = widget.producto['tallas'] ?? widget.producto['Tallas'];
@@ -64,6 +71,29 @@ class _EditarProductoScreenState extends State<EditarProductoScreen> {
       } catch (_) {
         _tallasList = tallasRaw.split(',').map((t) => t.trim()).toList();
       }
+    }
+  }
+
+  Future<void> _cargarTiposCalzadoDesdeBD() async {
+    try {
+      final categoriasList = await CategoriaService.listar();
+      setState(() {
+        _tiposCalzado = categoriasList.map((cat) => cat['nombre'].toString()).toList();
+        
+        // Recuperar el tipo de calzado actual del producto
+        String? tipoActual = widget.producto['TipoCalzado'] ?? widget.producto['tipo_calzado'];
+        if (tipoActual != null && _tiposCalzado.contains(tipoActual)) {
+          _tipoCalzadoSeleccionado = tipoActual;
+        } else if (_tiposCalzado.isNotEmpty) {
+          _tipoCalzadoSeleccionado = _tiposCalzado.first;
+        }
+        _isLoadingCategorias = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingCategorias = false;
+      });
+      print("Error cargando tipos de calzado: $e");
     }
   }
 
@@ -103,15 +133,23 @@ class _EditarProductoScreenState extends State<EditarProductoScreen> {
       final token = prefs.getString('token') ?? '';
 
       final productoId = widget.producto['id'] ?? widget.producto['_id'];
-      final url = Uri.parse('$baseUrl/api/productos/actualizar/$productoId');
+      final url = Uri.parse('$baseUrl/actualizar/$productoId');
 
       final bodyData = {
         'nombre': _nombreController.text.trim(),
-        'categoria': _categoriaSeleccionada, // Enviamos la categoría seleccionada del menú
+        'Nombre': _nombreController.text.trim(),
+        'categoria': _categoriaSeleccionada,
+        'Categoria': _categoriaSeleccionada,
+        'tipoCalzado': _tipoCalzadoSeleccionado ?? '',
+        'TipoCalzado': _tipoCalzadoSeleccionado ?? '',
         'precio': double.tryParse(_precioController.text.trim()) ?? 0.0,
+        'Precio': double.tryParse(_precioController.text.trim()) ?? 0.0,
         'stock': int.tryParse(_stockController.text.trim()) ?? 0,
+        'Stock': int.tryParse(_stockController.text.trim()) ?? 0,
         'descripcion': _descripcionController.text.trim(),
+        'Descripcion': _descripcionController.text.trim(),
         'tallas': _tallasList,
+        'Tallas': _tallasList,
       };
 
       final response = await http.put(
@@ -203,6 +241,41 @@ class _EditarProductoScreenState extends State<EditarProductoScreen> {
                 },
               ),
             ),
+            const SizedBox(height: 20),
+
+            // Tipo de Calzado dinámico desde la BD
+            const Text(
+              'Tipo de Calzado',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: ColoresApp.primary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            _isLoadingCategorias
+                ? const Center(child: CircularProgressIndicator())
+                : _tiposCalzado.isEmpty
+                    ? const Text('No hay tipos de calzado registrados en el panel administrativo.')
+                    : Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: ColoresApp.surface,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: ColoresApp.border),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _tipoCalzadoSeleccionado,
+                            isExpanded: true,
+                            dropdownColor: ColoresApp.surface,
+                            items: _tiposCalzado.map((tipo) {
+                              return DropdownMenuItem(value: tipo, child: Text(tipo, style: const TextStyle(color: ColoresApp.textPrimary)));
+                            }).toList(),
+                            onChanged: (val) =>
+                                setState(() => _tipoCalzadoSeleccionado = val),
+                          ),
+                        ),
+                      ),
             const SizedBox(height: 20),
 
             // Precio

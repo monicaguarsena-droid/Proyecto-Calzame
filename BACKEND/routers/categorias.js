@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getCategorias, getCategoriaPorId, postCategoria, putCategoria, deleteCategoria } from '../controllers/categorias.js';
+import { getCategorias, getCategoriaPorId,obtenerTiposCalzadoConConteo, postCategoria, putCategoria, deleteCategoria } from '../controllers/categorias.js';
 import { verificarToken, verificarAdmin } from '../middlewares/authmiddleware.js';
 import { upload } from '../config/cloudinary.js';
 
@@ -10,6 +10,9 @@ router.get("/", getCategorias);
 
 // Obtener una categoría por ID
 router.get("/:id", getCategoriaPorId);
+
+// Obtener tipos de calzado con conteo de productos
+router.get("/tipos", obtenerTiposCalzadoConConteo);
 
 // Crear una categoría admin (con autenticación, rol de admin y subida a Cloudinary usando 'imagen')
 router.post("/", verificarToken, verificarAdmin, upload.single('imagen'), postCategoria);
