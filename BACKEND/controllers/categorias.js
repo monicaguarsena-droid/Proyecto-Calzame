@@ -1,4 +1,4 @@
-import { obtenerCategorias, obtenerCategoriaPorId, crearCategoria, actualizarCategoria, eliminarCategoria } from '../modelos/categorias.js';
+import { obtenerCategorias, obtenerCategoriaPorId, obtenerTiposCalzadoModelo,contarProductosPorTipo,crearCategoria, actualizarCategoria, eliminarCategoria } from '../modelos/categorias.js';
 
 // Trae todas las categorías
 export const getCategorias = async (req, res) => {
@@ -16,7 +16,37 @@ export const getCategorias = async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
 };
+export const obtenerTiposCalzadoConConteo = async (req, res) => {
+    try {
+        // 1. Llamamos al modelo para traer los tipos de calzado
+        const { data: tiposCalzado, error: errTipos } = await obtenerTiposCalzadoModelo();
 
+        if (errTipos) {
+            return res.status(400).json({ error: errTipos.message });
+        }
+
+        // 2. Recorremos cada tipo y usamos el modelo de conteo para cada uno
+        const tiposConConteo = await Promise.all(
+            tiposCalzado.map(async (tipo) => {
+                const { count } = await contarProductosPorTipo(tipo.nombre);
+
+                return {
+                    ...tipo,
+                    cantidadProductos: count // Asigna el número real de productos
+                };
+            })
+        );
+
+        // 3. Devolvemos la respuesta formateada que espera tu app de Flutter
+        return res.status(200).json({
+            categorias: tiposConConteo
+        });
+
+    } catch (error) {
+        console.error('Error en el controlador:', error);
+        return res.status(500).json({ error: error.message });
+    }
+};
 // Trae una categoría por su ID
 export const getCategoriaPorId = async (req, res) => {
     try {

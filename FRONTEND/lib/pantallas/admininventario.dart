@@ -303,9 +303,20 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
+                                        // Categoría principal (Ej. Dama / Caballero / Infantil)
                                         Text(
                                           prod['Categoria'] ?? prod['categoria'] ?? '',
                                           style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                        ),
+                                        const SizedBox(height: 1),
+                                        // Tipo de Calzado (Ej. moni) debajo de la categoría
+                                        Text(
+                                          prod['TipoCalzado'] ?? prod['tipo_calzado'] ?? '',
+                                          style: TextStyle(
+                                            color: primaryColor,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                         ),
                                         const SizedBox(height: 2),
                                         Text(

@@ -2,14 +2,31 @@ import { supabase } from "../config/supabase.js";
 
 export const obtenerCategorias = async () => {
     const { data, error } = await supabase
-        .from("categorias")
+        .from("TipoCalzado")
         .select("*");
     return { data, error };
 };
 
+// Modelo para obtener los tipos de calzado
+export const obtenerTiposCalzadoModelo = async () => {
+    const { data, error } = await supabase
+        .from('Tipocalzado')
+        .select('*');
+    return { data, error };
+};
+
+// Modelo para contar cuántos productos usan un tipo de calzado específico
+export const contarProductosPorTipo = async (nombreTipo) => {
+    const { count, error } = await supabase
+        .from('Productos')
+        .select('*', { count: 'exact', head: true })
+        .eq('TipoCalzado', nombreTipo);
+    
+    return { count: count || 0, error };
+};
 export const obtenerCategoriaPorId = async (id) => {
     const { data, error } = await supabase
-        .from("categorias")
+        .from("TipoCalzado")
         .select("*")
         .eq("id", id)
         .single();
@@ -18,7 +35,7 @@ export const obtenerCategoriaPorId = async (id) => {
 
 export const crearCategoria = async (nombre, descripcion, imagenUrl) => {
     const { data, error } = await supabase
-        .from("categorias")
+        .from("TipoCalzado")
         .insert([
             {
                 nombre: nombre,
@@ -39,7 +56,7 @@ export const actualizarCategoria = async (id, campos) => {
     }
 
     const { data, error } = await supabase
-        .from("categorias")
+        .from("TipoCalzado")
         .update(camposMapeados)
         .eq("id", id)
         .select();
@@ -48,7 +65,7 @@ export const actualizarCategoria = async (id, campos) => {
 
 export const eliminarCategoria = async (id) => {
     const { data, error } = await supabase
-        .from("categorias")
+        .from("TipoCalzado")
         .delete()
         .eq("id", id)
         .select();
