@@ -1,5 +1,22 @@
 import { obtenerProductos, crearProducto, actualizarProducto, eliminarProducto } from '../modelos/productos.js';
 
+const obtenerArchivosImagen = (req) => {
+    if (req.file) return [req.file];
+    if (Array.isArray(req.files)) return req.files;
+    if (req.files && typeof req.files === 'object') {
+        return Object.values(req.files).flat();
+    }
+    return [];
+};
+
+const parsearLista = (valor) => {
+    if (Array.isArray(valor)) return valor;
+    if (typeof valor !== 'string' || !valor.trim()) return [];
+    const parsed = JSON.parse(valor);
+    if (!Array.isArray(parsed)) throw new Error('El campo debe contener una lista');
+    return parsed;
+};
+
 // trae el catalogo nuevo 
 export const getProductos = async (req, res) => {
     try {
@@ -41,12 +58,12 @@ export const postProducto = async (req, res) => {
   try {
     const { Nombre, Categoria, TipoCalzado, Precio, Stock, Descripcion, Tallas, coloresData } = req.body;
 
-    // Si utilizas Multer para múltiples archivos (upload.array('imagenes'))
-    const urlsImagenes = req.files ? req.files.map(file => file.path || file.secure_url) : [];
+    const archivos = obtenerArchivosImagen(req);
+    const urlsImagenes = archivos.map(file => file.path || file.secure_url).filter(Boolean);
 
     let coloresParsed = [];
     if (coloresData) {
-      const mapping = JSON.parse(coloresData);
+      const mapping = parsearLista(coloresData);
       coloresParsed = mapping.map(item => ({
         color: item.color,
         imagenUrl: urlsImagenes[item.indexImagen] || urlsImagenes[0]
@@ -60,7 +77,7 @@ export const postProducto = async (req, res) => {
       Precio: parseFloat(Precio) || 0,
       Stock: parseInt(Stock) || 0,
       Descripcion: Descripcion?.trim() || '',
-      Tallas: Tallas ? (typeof Tallas === 'string' ? JSON.parse(Tallas) : Tallas) : [],
+      Tallas: parsearLista(Tallas),
       Imagenes: urlsImagenes,
       Colores: coloresParsed,
       Imagen: urlsImagenes[0] || null // Imagen principal por defecto
@@ -79,7 +96,45 @@ export const postProducto = async (req, res) => {
 export const putProducto = async (req, res) => {
     try {
         const { id } = req.params;
-        const productoData = req.body;
+        const body = req.body;
+        const productoData = {};
+        const copiarCampo = (nombre, ...aliases) => {
+            const alias = aliases.find((key) => body[key] !== undefined);
+            if (alias !== undefined) productoData[nombre] = body[alias];
+        };
+
+        copiarCampo('nombre', 'nombre', 'Nombre');
+        copiarCampo('categoria', 'categoria', 'Categoria');
+        copiarCampo('tipoCalzado', 'tipoCalzado', 'TipoCalzado', 'tipo_calzado');
+        copiarCampo('descripcion', 'descripcion', 'Descripcion');
+
+        const precio = body.precio ?? body.Precio;
+        if (precio !== undefined) {
+            const precioNumerico = Number(precio);
+            if (!Number.isFinite(precioNumerico)) {
+                return res.status(400).json({ error: 'El precio debe ser un número válido' });
+            }
+            productoData.precio = precioNumerico;
+        }
+
+        const stock = body.stock ?? body.Stock;
+        if (stock !== undefined) {
+            const stockNumerico = Number(stock);
+            if (!Number.isInteger(stockNumerico)) {
+                return res.status(400).json({ error: 'El stock debe ser un número entero válido' });
+            }
+            productoData.stock = stockNumerico;
+        }
+
+        const tallas = body.tallas ?? body.Tallas;
+        if (tallas !== undefined) productoData.tallas = parsearLista(tallas);
+
+        const archivo = obtenerArchivosImagen(req)[0];
+        if (archivo) {
+            productoData.imagen = archivo.path || archivo.secure_url;
+            productoData.imagenes = [productoData.imagen];
+        }
+
         const { data, error } = await actualizarProducto(id, productoData);
         if (error) {
             return res.status(500).json({ error: error.message });

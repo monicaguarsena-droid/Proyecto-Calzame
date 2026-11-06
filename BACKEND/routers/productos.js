@@ -9,10 +9,25 @@ const router = Router();
 router.get('/', getProductos);
 
 // crea un producto admin
-router.post('/crear', verificarToken, verificarAdmin,upload.single('Imagen'), postProducto);
+router.post(
+    '/crear',
+    verificarToken,
+    verificarAdmin,
+    upload.fields([
+        { name: 'Imagen', maxCount: 1 },
+        { name: 'imagenes', maxCount: 10 },
+    ]),
+    postProducto,
+);
 
 // actualiza producto admin
-router.put('/actualizar/:id', verificarToken, verificarAdmin, putProducto);
+router.put(
+    '/actualizar/:id',
+    verificarToken,
+    verificarAdmin,
+    upload.fields([{ name: 'Imagen', maxCount: 1 }]),
+    putProducto,
+);
 
 // eliminar un producto admin
 router.delete('/eliminar/:id', verificarToken, verificarAdmin, deleteProducto);
