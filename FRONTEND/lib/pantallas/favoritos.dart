@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
+import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/perfil.dart';
@@ -53,11 +54,17 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => DetalleProductoScreen(
-          productoId: producto.productoId,
-          imagen: producto.imagen,
-          titulo: producto.titulo,
-          subtitulo: producto.subtitulo,
-          precio: producto.precio,
+          producto: ProductoModel(
+            id: producto.productoId.toString(),
+            nombre: producto.titulo,
+            descripcion: producto.subtitulo,
+            precio: double.tryParse(producto.precio.toString()) ?? 0.0,
+            imagenes: [producto.imagen.toString()],
+            categoria: '',
+            stock: 10,
+            tallas: ['Única'],
+            colores: [],
+          ),
         ),
       ),
     );

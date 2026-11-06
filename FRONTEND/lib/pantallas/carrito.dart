@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
+import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/pantallas/compra.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
@@ -278,15 +279,24 @@ class _CarritoScreenState extends State<CarritoScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
+            final String parsedId = item.productoId.toString();
+            final List<String> tallasParsed = [item.talla.toString()];
+
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => DetalleProductoScreen(
-                  productoId: item.productoId,
-                  imagen: item.imagen,
-                  titulo: item.titulo,
-                  subtitulo: item.subtitulo,
-                  precio: '\$${item.precio.toStringAsFixed(0)}',
+                  producto: ProductoModel(
+                    id: parsedId,
+                    nombre: item.titulo,
+                    descripcion: item.subtitulo,
+                    precio: double.tryParse(item.precio.toString()) ?? 0.0,
+                    imagenes: [item.imagen.toString()],
+                    categoria: '',
+                    stock: 10,
+                    tallas: tallasParsed,
+                    colores: [], // 👈 Lista vacía del tipo que exige el modelo
+                  ),
                 ),
               ),
             );
