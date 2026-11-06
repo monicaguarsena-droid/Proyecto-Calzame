@@ -20,8 +20,11 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   final _precioController = TextEditingController();
   final _stockController = TextEditingController();
   final _descripcionController = TextEditingController();
+  final _nuevoColorController = TextEditingController();
 
-  File? _imagenSeleccionada;
+  // 📸 NUEVO: Lista de múltiples imágenes y gestión de colores con sus fotos
+  List<File> _imagenesSeleccionadas = [];
+  final List _coloresConImagen = []; 
   final ImagePicker _picker = ImagePicker();
 
   InputDecoration _inputDecoration(String hint) {
@@ -41,67 +44,26 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
     );
   }
 
-  Future<void> _seleccionarImagen(ImageSource source) async {
+  // 📸 NUEVO: Método para seleccionar múltiples imágenes a la vez
+  Future<void> _seleccionarMultiplesImagenes() async {
     try {
-      final XFile? imagen = await _picker.pickImage(
-        source: source,
-        imageQuality: 80,
-      );
-
-      if (imagen != null) {
+      final List<XFile> imps = await _picker.pickMultiImage(imageQuality: 80);
+      if (imps.isNotEmpty) {
         setState(() {
-          _imagenSeleccionada = File(imagen.path);
+          for (var img in imps) {
+            File archivo = File(img.path);
+            _imagenesSeleccionadas.add(archivo);
+            // Por defecto asignamos un nombre de color temporal editable
+            _coloresConImagen.add({
+              'color': 'Color ${_coloresConImagen.length + 1}',
+              'file': archivo,
+            });
+          }
         });
       }
     } catch (e) {
-      print("Error al seleccionar la imagen: $e");
+      print("Error al seleccionar las imágenes: $e");
     }
-  }
-
-  void _mostrarOpcionesImagen(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: ColoresApp.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return SafeArea(
-          child: Wrap(
-            children: [
-              ListTile(
-                leading: const Icon(
-                  Icons.photo_library,
-                  color: ColoresApp.primary,
-                ),
-                title: const Text(
-                  'Galería',
-                  style: TextStyle(color: ColoresApp.textPrimary),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _seleccionarImagen(ImageSource.gallery);
-                },
-              ),
-              ListTile(
-                leading: const Icon(
-                  Icons.photo_camera,
-                  color: ColoresApp.primary,
-                ),
-                title: const Text(
-                  'Cámara',
-                  style: TextStyle(color: ColoresApp.textPrimary),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _seleccionarImagen(ImageSource.camera);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
   }
 
   String _categoriaSeleccionada = 'Dama';
@@ -122,8 +84,6 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
       final categoriasList = await CategoriaService.listar();
       setState(() {
         _tiposCalzado = categoriasList.map((cat) => cat['nombre'].toString()).toList();
-        
-        // Validamos que la lista tenga elementos y que el seleccionado sea válido
         if (_tiposCalzado.isNotEmpty) {
           if (_tipoCalzadoSeleccionado == null || !_tiposCalzado.contains(_tipoCalzadoSeleccionado)) {
             _tipoCalzadoSeleccionado = _tiposCalzado.first;
@@ -152,10 +112,10 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   final String baseUrl = ApiConfig.baseUrl + '/productos';
 
   Future<void> _guardarProductoConImagen() async {
-    if (_imagenSeleccionada == null) {
+    if (_imagenesSeleccionadas.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Selecciona una foto para el producto.'),
+          content: Text('Selecciona al menos una foto para el producto.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -185,7 +145,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/crear'));
       request.headers.addAll({'Authorization': 'Bearer $token'});
 
-      // Adjuntar los campos de texto respetando las mayúsculas/minúsculas que espera tu backend
+      // Campos de texto básicos
       request.fields['Nombre'] = _nombreController.text.trim();
       request.fields['Categoria'] = _categoriaSeleccionada;
       request.fields['TipoCalzado'] = _tipoCalzadoSeleccionado ?? '';
@@ -194,14 +154,23 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
       request.fields['Descripcion'] = _descripcionController.text.trim();
       request.fields['Tallas'] = json.encode(_tallasSeleccionadas);
 
-      if (_imagenSeleccionada != null) {
+      // 📸 Adjuntar múltiples archivos de imagen
+      for (var imgFile in _imagenesSeleccionadas) {
         request.files.add(
           await http.MultipartFile.fromPath(
-            'Imagen', 
-            _imagenSeleccionada!.path,
+            'imagenes', // Nombre del campo que espera el backend
+            imgFile.path,
           ),
         );
       }
+
+      // Enviar mapeo de colores con su respectiva foto
+      final coloresMapeados = _coloresConImagen.map((item) => {
+        'color': item['color'],
+        'indexImagen': _imagenesSeleccionadas.indexOf(item['file']),
+      }).toList();
+
+      request.fields['coloresData'] = json.encode(coloresMapeados);
 
       var streamedResponse = await request.send();
       var response = await http.Response.fromStream(streamedResponse);
@@ -209,7 +178,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
       if (!mounted) return;
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Navigator.pop(context, true); // Regresa al inventario y recarga
+        Navigator.pop(context, true); 
       } else {
         final errorData = json.decode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -244,15 +213,8 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
         elevation: 0,
         leading: TextButton.icon(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            Icons.arrow_back,
-            color: ColoresApp.primary,
-            size: 18,
-          ),
-          label: const Text(
-            'Atrás',
-            style: TextStyle(color: ColoresApp.primary),
-          ),
+          icon: const Icon(Icons.arrow_back, color: ColoresApp.primary, size: 18),
+          label: const Text('Atrás', style: TextStyle(color: ColoresApp.primary)),
         ),
         leadingWidth: 90,
         title: const Text(
@@ -270,70 +232,104 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Caja para subir imagen
+            // 📸 Sección para seleccionar múltiples imágenes y asociarlas a colores
+            const Text(
+              'Imágenes y Colores Disponibles',
+              style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
             GestureDetector(
-              onTap: () => _mostrarOpcionesImagen(context),
+              onTap: _seleccionarMultiplesImagenes,
               child: Container(
                 width: double.infinity,
-                height: 130,
+                height: 110,
                 decoration: BoxDecoration(
                   color: ColoresApp.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: ColoresApp.border),
                 ),
-                child: _imagenSeleccionada != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.file(
-                          _imagenSeleccionada!,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.camera_alt_outlined,
-                            size: 40,
-                            color: ColoresApp.primary,
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Subir imagen del calzado',
-                            style: TextStyle(
-                              color: ColoresApp.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.add_photo_alternate_outlined, size: 36, color: ColoresApp.primary),
+                    SizedBox(height: 6),
+                    Text(
+                      'Seleccionar varias fotos de la galería',
+                      style: TextStyle(color: ColoresApp.primary, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
               ),
             ),
+            const SizedBox(height: 12),
+
+            // Vista previa de fotos seleccionadas y asignación de nombre de color
+            if (_imagenesSeleccionadas.isNotEmpty)
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _coloresConImagen.length,
+                itemBuilder: (context, index) {
+                  final item = _coloresConImagen[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: ColoresApp.border),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(
+                            item['file'],
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: TextEditingController(text: item['color'])
+                              ..selection = TextSelection.fromPosition(
+                                TextPosition(offset: item['color'].toString().length),
+                              ),
+                            onChanged: (val) {
+                              _coloresConImagen[index]['color'] = val;
+                            },
+                            decoration: const InputDecoration(
+                              labelText: 'Nombre del color (Ej: Beige, Negro)',
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            setState(() {
+                              _imagenesSeleccionadas.remove(item['file']);
+                              _coloresConImagen.removeAt(index);
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
             const SizedBox(height: 16),
 
             // Nombre del producto
-            const Text(
-              'Nombre del producto',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: ColoresApp.primary,
-              ),
-            ),
+            const Text('Nombre del producto', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
             const SizedBox(height: 6),
-            TextField(
-              controller: _nombreController,
-              decoration: _inputDecoration('Sandalia de tiras'),
-            ),
+            TextField(controller: _nombreController, decoration: _inputDecoration('Sandalia de tiras')),
             const SizedBox(height: 16),
 
             // Categoría
-            const Text(
-              'Categoría',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: ColoresApp.primary,
-              ),
-            ),
+            const Text('Categoría', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
             const SizedBox(height: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -346,48 +342,34 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                 child: DropdownButton<String>(
                   value: _categoriaSeleccionada,
                   isExpanded: true,
-                  items: _categorias.map((cat) {
-                    return DropdownMenuItem(value: cat, child: Text(cat));
-                  }).toList(),
-                  onChanged: (val) =>
-                      setState(() => _categoriaSeleccionada = val!),
+                  items: _categorias.map((cat) => DropdownMenuItem(value: cat, child: Text(cat))).toList(),
+                  onChanged: (val) => setState(() => _categoriaSeleccionada = val!),
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            // Tipo de Calzado dinámico desde la BD
-            const Text(
-              'Tipo de Calzado',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: ColoresApp.primary,
-              ),
-            ),
+            // Tipo de Calzado dinámico
+            const Text('Tipo de Calzado', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
             const SizedBox(height: 6),
             _isLoadingCategorias
                 ? const Center(child: CircularProgressIndicator())
-                : _tiposCalzado.isEmpty
-                    ? const Text('No hay categorías registradas en el panel administrativo.')
-                    : Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: ColoresApp.border),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _tipoCalzadoSeleccionado,
-                            isExpanded: true,
-                            items: _tiposCalzado.map((tipo) {
-                              return DropdownMenuItem(value: tipo, child: Text(tipo));
-                            }).toList(),
-                            onChanged: (val) =>
-                                setState(() => _tipoCalzadoSeleccionado = val),
-                          ),
-                        ),
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: ColoresApp.border),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _tipoCalzadoSeleccionado,
+                        isExpanded: true,
+                        items: _tiposCalzado.map((tipo) => DropdownMenuItem(value: tipo, child: Text(tipo))).toList(),
+                        onChanged: (val) => setState(() => _tipoCalzadoSeleccionado = val),
                       ),
+                    ),
+                  ),
             const SizedBox(height: 16),
 
             // Precio y Stock
@@ -397,19 +379,9 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Precio (\$)',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: ColoresApp.primary,
-                        ),
-                      ),
+                      const Text('Precio (\$)', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
                       const SizedBox(height: 6),
-                      TextField(
-                        controller: _precioController,
-                        keyboardType: TextInputType.number,
-                        decoration: _inputDecoration('0.00'),
-                      ),
+                      TextField(controller: _precioController, keyboardType: TextInputType.number, decoration: _inputDecoration('0.00')),
                     ],
                   ),
                 ),
@@ -418,19 +390,9 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Stock (Unidades)',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: ColoresApp.primary,
-                        ),
-                      ),
+                      const Text('Stock (Unidades)', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
                       const SizedBox(height: 6),
-                      TextField(
-                        controller: _stockController,
-                        keyboardType: TextInputType.number,
-                        decoration: _inputDecoration('0'),
-                      ),
+                      TextField(controller: _stockController, keyboardType: TextInputType.number, decoration: _inputDecoration('0')),
                     ],
                   ),
                 ),
@@ -439,29 +401,13 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             const SizedBox(height: 16),
 
             // Descripción
-            const Text(
-              'Descripción del calzado',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: ColoresApp.primary,
-              ),
-            ),
+            const Text('Descripción del calzado', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
             const SizedBox(height: 6),
-            TextField(
-              controller: _descripcionController,
-              maxLines: 2,
-              decoration: _inputDecoration('Descripción del calzado'),
-            ),
+            TextField(controller: _descripcionController, maxLines: 2, decoration: _inputDecoration('Descripción del calzado')),
             const SizedBox(height: 16),
 
             // Tallas
-            const Text(
-              'Tallas disponibles',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: ColoresApp.primary,
-              ),
-            ),
+            const Text('Tallas disponibles', style: TextStyle(fontWeight: FontWeight.bold, color: ColoresApp.primary)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
@@ -471,9 +417,7 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
                   label: Text(talla),
                   selected: seleccionada,
                   selectedColor: ColoresApp.primary,
-                  labelStyle: TextStyle(
-                    color: seleccionada ? Colors.white : ColoresApp.primary,
-                  ),
+                  labelStyle: TextStyle(color: seleccionada ? Colors.white : ColoresApp.primary),
                   onSelected: (bool selected) {
                     setState(() {
                       if (selected) {
@@ -492,23 +436,17 @@ class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
             SizedBox(
               width: double.infinity,
               height: 52,
-              child: ElevatedButton(
+            child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: ColoresApp.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 ),
                 onPressed: _isLoading ? null : _guardarProductoConImagen,
                 child: _isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
                     : const Text(
                         'Guardar Producto',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                       ),
               ),
             ),

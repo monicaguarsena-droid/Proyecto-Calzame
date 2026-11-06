@@ -61,7 +61,7 @@ class CarritoService {
       return ItemCarrito(
         id: registro['id']?.toString() ?? '',
         productoId: productoId,
-        imagen: producto?.imagenUrl ?? '',
+        imagen: producto?.imagenes.isNotEmpty == true ? producto!.imagenes.first : '',
         titulo: producto?.nombre ?? 'Producto',
         subtitulo: producto?.descripcion ?? '',
         precio: precio is num

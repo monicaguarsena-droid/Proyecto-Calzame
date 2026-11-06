@@ -7,8 +7,8 @@ import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/categoriacaballero.dart';
 import 'package:frontend/pantallas/categoriadama.dart';
 import 'package:frontend/pantallas/categoriainfantil.dart';
-import 'package:frontend/pantallas/todos_productos.dart';
 import 'package:frontend/pantallas/producto.dart';
+import 'package:frontend/pantallas/todos_productos.dart';
 import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/servicios/categorias_service.dart';
 import 'package:frontend/servicios/producto_service.dart';
@@ -23,8 +23,8 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   int _tab = 0;
   final ProductoService _productoService = ProductoService();
-  late Future<List<Map<String, dynamic>>> _ofertasFuture;
-  late Future<List<Map<String, dynamic>>> _tiposCalzadoFuture;
+  late Future<List> _ofertasFuture;
+  late Future<List> _tiposCalzadoFuture;
   late Future<List<ProductoModel>> _productosFuture;
 
   @override
@@ -34,6 +34,7 @@ class _HomeState extends State<Home> {
     _tiposCalzadoFuture = CategoriaService.listar().then((value) => value.cast());
     _productosFuture = _productoService.obtenerProductos();
   }
+
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
@@ -167,9 +168,7 @@ class _HomeState extends State<Home> {
           );
         }
         final tipos = snapshot.data ?? [];
-        final mostrados = tipos.isEmpty
-            ? []
-            : tipos;
+        final mostrados = tipos.isEmpty ? [] : tipos;
         return SizedBox(
           height: 104,
           width: double.infinity,
@@ -195,13 +194,13 @@ class _HomeState extends State<Home> {
     final nombre = tipo['nombre']?.toString() ?? '';
     final descripcion = tipo['descripcion']?.toString() ?? '';
     final imagen = tipo['imagen_url']?.toString() ?? '';
-    
+   
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => TodosProductosScreen(
-            categoriaSeleccionada: nombre, 
+            categoriaSeleccionada: nombre,
           ),
         ),
       ),
@@ -250,29 +249,22 @@ class _HomeState extends State<Home> {
             ],
           );
         }
-        return Row(
+       return Row(
           children: [
             for (var i = 0; i < productos.length; i++) ...[
               if (i > 0) const SizedBox(width: 10),
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    final producto = productos[i];
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DetalleProductoScreen(
-                          productoId: producto.id,
-                          imagen: producto.imagenUrl ?? '',
-                          titulo: producto.nombre,
-                          subtitulo: producto.descripcion,
-                          precio: '\$${producto.precio.toStringAsFixed(0)}',
-                        ),
+                        builder: (context) => DetalleProductoScreen(producto: productos[i]),
                       ),
                     );
                   },
                   child: _Destacada(
-                    productos[i].imagenUrl ?? '',
+                    productos[i].imagenes.isNotEmpty ? productos[i].imagenes.first : '', // 📸 Primera imagen de la lista
                     productos[i].nombre,
                     productos[i].descripcion,
                     '\$${productos[i].precio.toStringAsFixed(0)}',
@@ -351,7 +343,6 @@ class _HomeState extends State<Home> {
                 ),
               ),
             ),
-
           ],
         ),
         const SizedBox(height: 10),
@@ -450,7 +441,7 @@ class _HomeState extends State<Home> {
 }
 
 class _BannerAnimadoElegante extends StatefulWidget {
-  final Future<List<Map<String, dynamic>>> ofertasFuture;
+  final Future<List> ofertasFuture;
 
   const _BannerAnimadoElegante({required this.ofertasFuture});
 
@@ -462,7 +453,7 @@ class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
   final PageController _pageController = PageController();
   int _paginaActual = 0;
   Timer? _timer;
-  List<Map<String, dynamic>> _promociones = [];
+  List _promociones = [];
 
   @override
   void initState() {
@@ -487,7 +478,7 @@ class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
+    return FutureBuilder<List>(
       future: widget.ofertasFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {

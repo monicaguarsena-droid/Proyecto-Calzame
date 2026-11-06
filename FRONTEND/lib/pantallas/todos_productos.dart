@@ -165,9 +165,9 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
                         return _tarjetaProducto(
                           context,
                           item.id,
-                          item.imagenUrl ?? '',
+                          item.imagenes.isNotEmpty ? item.imagenes.first : '', // 📸 Primera imagen de la lista
                           item.nombre,
-                          '${item.categoria} · ${item.descripcion}',
+                          '${item.categoria} • ${item.descripcion}',
                           '\$${item.precio.toStringAsFixed(0)}',
                         );
                       },

@@ -109,7 +109,6 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
                       ),
                     ],
                   ),
-                  // Botón Guía de Tallas idéntico al solicitado
                   InkWell(
                     onTap: () => mostrarGuiaTallasModal(context, 'Caballero'),
                     borderRadius: BorderRadius.circular(20),
@@ -177,11 +176,11 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
                       physics: const BouncingScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.56,
-                          ),
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.56,
+                      ),
                       itemCount: productos.length,
                       itemBuilder: (context, index) =>
                           _tarjetaProducto(context, productos[index], index),
@@ -198,7 +197,7 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
   }
 
   Widget _tarjetaProducto(BuildContext context, ProductoModel item, int index) {
-    final imagen = item.imagenUrl ?? '';
+    final String imagen = item.imagenes.isNotEmpty ? item.imagenes.first : '';
     final titulo = item.nombre;
     final subtitulo = item.descripcion;
     final precio = '\$${item.precio.toStringAsFixed(0)}';
@@ -262,7 +261,7 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
             ),
           ),
           const Spacer(),
-          // Botón Ver producto
+          // Botón Ver producto corregido
           SizedBox(
             width: double.infinity,
             height: 32,
@@ -272,11 +271,7 @@ class _CategoriaCaballeroState extends State<CategoriaCaballero> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => DetalleProductoScreen(
-                      productoId: item.id,
-                      imagen: imagen,
-                      titulo: titulo,
-                      subtitulo: subtitulo,
-                      precio: precio,
+                      producto: item,
                     ),
                   ),
                 );

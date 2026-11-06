@@ -39,39 +39,38 @@ export const getProductosPorCategoria = async (req, res) => {
 // crear un producto nuevo 
 export const postProducto = async (req, res) => {
   try {
-    // Extraemos los campos enviando soporte para 'tipoCalzado' en minúscula que envía Flutter
-    const { Nombre, Categoria, TipoCalzado, tipoCalzado, Precio, Stock, Descripcion, Tallas } = req.body;
+    const { Nombre, Categoria, TipoCalzado, Precio, Stock, Descripcion, Tallas, coloresData } = req.body;
 
-    // Obtenemos la URL de la imagen de Cloudinary / Multer
-    const imagenUrl = req.file ? (req.file.path || req.file.secure_url) : null;
+    // Si utilizas Multer para múltiples archivos (upload.array('imagenes'))
+    const urlsImagenes = req.files ? req.files.map(file => file.path || file.secure_url) : [];
 
-    // Preparamos los datos con los tipos correctos
-    const productoData = {
-      Nombre: Nombre ? Nombre.trim() : '',
-      Categoria: Categoria ? Categoria.trim() : '',
-      TipoCalzado: (TipoCalzado || tipoCalzado || '').trim(), // Acepta ambas variantes
-      Precio: Precio ? parseFloat(Precio) : 0,
-      Stock: Stock ? parseInt(Stock) : 0,
-      Descripcion: Descripcion ? Descripcion.trim() : '',
-      Tallas: Tallas ? (typeof Tallas === 'string' ? JSON.parse(Tallas) : Tallas) : [],
-      Imagen: imagenUrl
-    };
-
-    // Llamamos a la función del modelo
-    const { data, error } = await crearProducto(productoData);
-
-    if (error) {
-      console.error('Error de Supabase:', error);
-      return res.status(400).json({ error: error.message });
+    let coloresParsed = [];
+    if (coloresData) {
+      const mapping = JSON.parse(coloresData);
+      coloresParsed = mapping.map(item => ({
+        color: item.color,
+        imagenUrl: urlsImagenes[item.indexImagen] || urlsImagenes[0]
+      }));
     }
 
-    return res.status(201).json({
-      mensaje: "Producto creado con éxito",
-      producto: data ? data[0] : null
-    });
+    const productoData = {
+      Nombre: Nombre?.trim() || '',
+      Categoria: Categoria?.trim() || '',
+      TipoCalzado: TipoCalzado?.trim() || '',
+      Precio: parseFloat(Precio) || 0,
+      Stock: parseInt(Stock) || 0,
+      Descripcion: Descripcion?.trim() || '',
+      Tallas: Tallas ? (typeof Tallas === 'string' ? JSON.parse(Tallas) : Tallas) : [],
+      Imagenes: urlsImagenes,
+      Colores: coloresParsed,
+      Imagen: urlsImagenes[0] || null // Imagen principal por defecto
+    };
 
+    const { data, error } = await crearProducto(productoData);
+    if (error) return res.status(400).json({ error: error.message });
+
+    return res.status(201).json({ mensaje: "Producto creado con éxito", producto: data ? data[0] : null });
   } catch (error) {
-    console.error('Error en servidor:', error);
     return res.status(500).json({ error: error.message });
   }
 };

@@ -198,7 +198,7 @@ class _CategoriaInfantilState extends State<CategoriaInfantil> {
   }
 
   Widget _tarjetaProducto(BuildContext context, ProductoModel item, int index) {
-    final imagen = item.imagenUrl ?? '';
+    final String imagen = item.imagenes.isNotEmpty ? item.imagenes.first : '';
     final titulo = item.nombre;
     final subtitulo = item.descripcion;
     final precio = '\$${item.precio.toStringAsFixed(0)}';
@@ -272,11 +272,7 @@ class _CategoriaInfantilState extends State<CategoriaInfantil> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => DetalleProductoScreen(
-                      productoId: item.id,
-                      imagen: imagen,
-                      titulo: titulo,
-                      subtitulo: subtitulo,
-                      precio: precio,
+                      producto: item,
                     ),
                   ),
                 );

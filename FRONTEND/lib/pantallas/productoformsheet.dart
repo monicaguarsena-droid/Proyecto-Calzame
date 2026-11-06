@@ -52,7 +52,7 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
 
   // Si el admin movió la foto, se sube el recorte tal como lo dejó en el recuadro
   Future<File?> _imagenParaSubir() async {
-    final bool hayFoto = _imagen != null || (widget.producto?.imagenUrl?.isNotEmpty ?? false);
+    final bool hayFoto = _imagen != null || (widget.producto?.imagenes.isNotEmpty == true);
     if (hayFoto && AdminImageSelector.encuadreModificado(_encuadreCtrl)) {
       return AdminImageSelector.capturarEncuadre(_capturaKey);
     }
@@ -156,7 +156,9 @@ class _ProductFormSheetState extends State<ProductFormSheet> {
                 const SizedBox(height: 16),
                 AdminImageSelector(
                   imagen: _imagen,
-                  imagenUrl: widget.producto?.imagenUrl,
+                  imagenUrl: widget.producto?.imagenes.isNotEmpty == true 
+                      ? widget.producto!.imagenes.first 
+                      : '', // 📸 Tomamos la primera imagen de la lista si existe
                   habilitado: !_guardando,
                   capturaKey: _capturaKey,
                   encuadreController: _encuadreCtrl,
