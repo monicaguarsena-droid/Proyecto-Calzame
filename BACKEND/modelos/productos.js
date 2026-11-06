@@ -19,6 +19,7 @@ export const crearProducto = async (productoData) => {
         Stock: productoData.Stock,
         Descripcion: productoData.Descripcion,
         Tallas: productoData.Tallas,
+        colores: productoData.colores,
         Imagen: productoData.Imagen,
       }
     ])
@@ -33,6 +34,7 @@ export const actualizarProducto = async (id, campos) => {
     if (campos.stock !== undefined) camposMapeados.Stock = campos.stock;
     if (campos.descripcion !== undefined) camposMapeados.Descripcion = campos.descripcion;
     if (campos.tallas !== undefined) camposMapeados.Tallas = campos.tallas;
+    if (campos.colores !== undefined) camposMapeados.colores = campos.colores;
     if (campos.imagen !== undefined || campos.imagen_url !== undefined) {
         camposMapeados.Imagen_url = campos.imagen !== undefined ? campos.imagen : campos.imagen_url;
     }

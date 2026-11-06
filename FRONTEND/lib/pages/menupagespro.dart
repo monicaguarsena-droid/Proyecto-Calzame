@@ -7,7 +7,7 @@ import 'package:frontend/servicios/producto_service.dart';
 import 'package:frontend/pantallas/productocard.dart';
 import 'package:frontend/componentes/chat/chat_calzame_modal.dart';
 import 'package:frontend/pantallas/productoformsheet.dart';
-import 'package:frontend/pantallas/producto.dart';
+
 
 import 'package:frontend/pages/adminproductolistpage.dart';
 
