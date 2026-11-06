@@ -54,8 +54,16 @@ class ProductoColorImagen {
       }
 
       // Parseo de múltiples imágenes y colores
-      var imagenesRaw = json['Imagenes'] ?? json['imagenes'] ?? [];
-      List<String> parsedImagenes = imagenesRaw is List ? imagenesRaw.map((e) => e.toString()).toList() : [];
+      var imagenesRaw = json['Imagenes'] ?? json['imagenes'];
+      List<String> parsedImagenes = imagenesRaw is List
+          ? imagenesRaw.map((e) => e.toString()).toList()
+          : [];
+      if (parsedImagenes.isEmpty) {
+        final imagen = json['Imagen'] ?? json['imagen'] ?? json['Imagen_url'];
+        if (imagen != null && imagen.toString().isNotEmpty) {
+          parsedImagenes = [imagen.toString()];
+        }
+      }
 
       var coloresRaw = json['Colores'] ?? json['colores'] ?? [];
       List<ProductoColorImagen> parsedColores = [];

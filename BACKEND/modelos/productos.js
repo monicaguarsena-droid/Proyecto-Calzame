@@ -19,7 +19,8 @@ export const crearProducto = async (productoData) => {
         Stock: productoData.Stock,
         Descripcion: productoData.Descripcion,
         Tallas: productoData.Tallas,
-        colores: productoData.colores,
+        Imagenes: productoData.Imagenes,
+        colores: productoData.Colores,
         Imagen: productoData.Imagen,
       }
     ])
@@ -34,11 +35,11 @@ export const actualizarProducto = async (id, campos) => {
     if (campos.stock !== undefined) camposMapeados.Stock = campos.stock;
     if (campos.descripcion !== undefined) camposMapeados.Descripcion = campos.descripcion;
     if (campos.tallas !== undefined) camposMapeados.Tallas = campos.tallas;
+    if (campos.imagenes !== undefined) camposMapeados.Imagenes = campos.imagenes;
     if (campos.colores !== undefined) camposMapeados.colores = campos.colores;
-    if (campos.imagen !== undefined || campos.imagen_url !== undefined) {
-        camposMapeados.Imagen_url = campos.imagen !== undefined ? campos.imagen : campos.imagen_url;
-    }
+    if (campos.imagen !== undefined) camposMapeados.Imagen = campos.imagen;
     if (campos.categoria !== undefined) camposMapeados.Categoria = campos.categoria;
+    if (campos.tipoCalzado !== undefined) camposMapeados.TipoCalzado = campos.tipoCalzado;
 
     const { data, error } = await supabase
         .from('Productos')
