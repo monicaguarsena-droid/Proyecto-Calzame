@@ -7,12 +7,10 @@ import {
 } from '../modelos/carrito.js';
 import { supabase } from '../config/supabase.js';
 
-// usuario_cc es la cédula: probamos los nombres más comunes dentro del token
+// El carrito se asocia al id del usuario (usuarios.id), que nunca es nulo.
+// La cédula puede ser NULL (por ejemplo, usuarios registrados con Google).
 const usuarioCarritoId = (req) =>
-    req.usuario?.cedula ??
-    req.usuario?.cc ??
-    req.usuario?.usuario_cc ??
-    req.usuario?.id;
+    req.usuario?.id ?? req.usuario?.userId ?? req.usuario?.usuario_id;
 
 export const postItemCarrito = async (req, res) => {
     try {
@@ -26,7 +24,7 @@ export const postItemCarrito = async (req, res) => {
 
         const usuarioId = usuarioCarritoId(req);
         if (usuarioId === undefined || usuarioId === null || usuarioId === '') {
-            console.error('❌ Carrito: el token no trae la cédula. req.usuario =', req.usuario);
+            console.error('❌ Carrito: el token no trae el id del usuario. req.usuario =', req.usuario);
             return res.status(401).json({ error: 'No se pudo identificar al usuario desde el token' });
         }
 
@@ -49,7 +47,7 @@ export const postItemCarrito = async (req, res) => {
             color
         });
         if (error) {
-            console.error('❌ Carrito: falló el guardado. usuario_cc =', usuarioId, '| error =', error);
+            console.error('❌ Carrito: falló el guardado. usuario_id =', usuarioId, '| error =', error);
             return res.status(500).json({ error: 'Error al agregar producto al carrito', detalle: error.message });
         }
 
