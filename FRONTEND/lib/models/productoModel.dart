@@ -1,104 +1,100 @@
-  import 'dart:convert';
+import 'dart:convert';
 
 class ProductoColorImagen {
-    final String color;
-    final String imagenUrl;
+  final String color;
+  final String imagenUrl;
 
-    ProductoColorImagen({required this.color, required this.imagenUrl});
+  const ProductoColorImagen({required this.color, required this.imagenUrl});
 
-    factory ProductoColorImagen.fromJson(Map<String, dynamic> json) {
-      return ProductoColorImagen(
-        color: json['color'] ?? '',
-        imagenUrl: json['imagenUrl'] ?? '',
+  factory ProductoColorImagen.fromJson(Map<String, dynamic> json) =>
+      ProductoColorImagen(
+        color: (json['color'] ?? '').toString(),
+        imagenUrl: (json['imagenUrl'] ?? json['imagen'] ?? '').toString(),
       );
-    }
+}
 
-    Map<String, dynamic> toJson() => {'color': color, 'imagenUrl': imagenUrl};
+class ProductoModel {
+  final String id;
+  final String nombre;
+  final String categoria;
+  final String? tipoCalzado;
+  final double precio;
+  final int stock;
+  final String descripcion;
+  final List<String> tallas;
+  final List<String> imagenes;
+  final List<ProductoColorImagen> colores;
+
+  const ProductoModel({
+    required this.id,
+    required this.nombre,
+    required this.categoria,
+    this.tipoCalzado,
+    required this.precio,
+    required this.stock,
+    required this.descripcion,
+    required this.tallas,
+    required this.imagenes,
+    required this.colores,
+  });
+
+  /// Imagen para tarjetas y listas: la del primer color o la principal.
+  String get imagenPrincipal {
+    if (colores.isNotEmpty && colores.first.imagenUrl.isNotEmpty) {
+      return colores.first.imagenUrl;
+    }
+    return imagenes.isNotEmpty ? imagenes.first : '';
   }
 
-  class ProductoModel {
-    final String id;
-    final String nombre;
-    final String categoria;
-    final String? tipoCalzado;
-    final double precio;
-    final int stock;
-    final String descripcion;
-    final List<String> tallas;
-    final List<String> imagenes; // Soporte para múltiples fotos
-    final List<ProductoColorImagen> colores; // Relación Color <-> Foto
-
-    ProductoModel({
-      required this.id,
-      required this.nombre,
-      required this.categoria,
-      this.tipoCalzado,
-      required this.precio,
-      required this.stock,
-      required this.descripcion,
-      required this.tallas,
-      required this.imagenes,
-      required this.colores,
-    });
-
-    factory ProductoModel.fromJson(Map<String, dynamic> json) {
-      // Parseo seguro de tallas
-      var tallasRaw = json['Tallas'] ?? json['tallas'] ?? [];
-      List<String> parsedTallas = [];
-      if (tallasRaw is String) {
-        try {
-          parsedTallas = List<String>.from(jsonDecode(tallasRaw));
-        } catch (_) {}
-      } else if (tallasRaw is List) {
-        parsedTallas = tallasRaw.map((e) => e.toString()).toList();
+  /// Las columnas Tallas / Colores / Imagenes pueden llegar como lista real
+  /// (jsonb) o como texto JSON (columna text). Esto cubre los dos casos.
+  static dynamic _decode(dynamic v) {
+    if (v is String && v.trim().isNotEmpty) {
+      try {
+        return jsonDecode(v);
+      } catch (_) {
+        return null;
       }
-
-      // Parseo de múltiples imágenes y colores
-      var imagenesRaw = json['Imagenes'] ?? json['imagenes'];
-      List<String> parsedImagenes = imagenesRaw is List
-          ? imagenesRaw.map((e) => e.toString()).toList()
-          : [];
-      if (parsedImagenes.isEmpty) {
-        final imagen = json['Imagen'] ?? json['imagen'] ?? json['Imagen_url'];
-        if (imagen != null && imagen.toString().isNotEmpty) {
-          parsedImagenes = [imagen.toString()];
-        }
-      }
-
-      var coloresRaw = json['Colores'] ?? json['colores'] ?? [];
-      List<ProductoColorImagen> parsedColores = [];
-      if (coloresRaw is List) {
-        parsedColores = coloresRaw.map((e) => ProductoColorImagen.fromJson(e)).toList();
-      }
-
-      return ProductoModel(
-        id: (json['id'] ?? json['_id'] ?? '').toString(),
-        nombre: (json['Nombre'] ?? json['nombre'] ?? '').toString(),
-        categoria: (json['Categoria'] ?? json['categoria'] ?? '').toString(),
-        tipoCalzado: (json['TipoCalzado'] ?? json['tipoCalzado'])?.toString(),
-        precio: double.tryParse((json['Precio'] ?? json['precio'] ?? 0).toString()) ?? 0.0,
-        stock: int.tryParse((json['Stock'] ?? json['stock'] ?? 0).toString()) ?? 0,
-        descripcion: (json['Descripcion'] ?? json['descripcion'] ?? '').toString(),
-        tallas: parsedTallas,
-        imagenes: parsedImagenes,
-        colores: parsedColores,
-      );
     }
-  
+    return v;
+  }
 
-  // Convertir a Map para enviar datos al backend
- // Convertir a Map para enviar datos al backend
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'nombre': nombre,
-      'categoria': categoria,
-      'tipoCalzado': tipoCalzado,
-      'precio': precio,
-      'descripcion': descripcion,
-      'tallas': tallas,
-      'imagenes': imagenes,
-      'colores': colores.map((e) => e.toJson()).toList(),
-    };
+  static List<dynamic> _lista(dynamic v) {
+    final d = _decode(v);
+    return d is List ? d : const [];
+  }
+
+  factory ProductoModel.fromJson(Map<String, dynamic> json) {
+    final imagen = (json['Imagen'] ?? json['imagen'] ?? '').toString();
+    final extra = _lista(json['Imagenes'] ?? json['imagenes'])
+        .map((e) => e.toString())
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    return ProductoModel(
+      id: (json['id'] ?? '').toString(),
+      nombre: (json['Nombre'] ?? json['nombre'] ?? '').toString(),
+      categoria: (json['Categoria'] ?? json['categoria'] ?? '').toString(),
+      tipoCalzado: (json['TipoCalzado'] ?? json['tipoCalzado'])?.toString(),
+      precio:
+          double.tryParse((json['Precio'] ?? json['precio'] ?? 0).toString()) ??
+              0,
+      stock: int.tryParse(
+              (json['Stock'] ?? json['Existencias'] ?? json['stock'] ?? 0)
+                  .toString()) ??
+          0,
+      descripcion:
+          (json['Descripcion'] ?? json['descripcion'] ?? '').toString(),
+      tallas: _lista(json['Tallas'] ?? json['tallas'])
+          .map((e) => e.toString())
+          .toList(),
+      // Set para no repetir la foto principal si también está en Imagenes
+      imagenes: <String>{if (imagen.isNotEmpty) imagen, ...extra}.toList(),
+      colores: _lista(json['Colores'] ?? json['colores'])
+          .whereType<Map>()
+          .map((e) =>
+              ProductoColorImagen.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+    );
   }
 }

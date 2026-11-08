@@ -107,6 +107,29 @@ class _CarritoScreenState extends State<CarritoScreen> {
     );
   }
 
+  /// Abre el detalle con el producto real; si no se encontró, arma uno básico.
+  void _abrirDetalle(ItemCarrito item) {
+    final producto =
+        ProductoModel(
+          id: item.productoId,
+          nombre: item.titulo,
+          descripcion: item.subtitulo,
+          precio: item.precio,
+          imagenes: [item.imagen],
+          categoria: '',
+          stock: 0,
+          tallas: [item.talla],
+          colores: const [],
+        );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetalleProductoScreen(producto: producto),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -278,29 +301,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            final String parsedId = item.productoId.toString();
-            final List<String> tallasParsed = [item.talla.toString()];
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DetalleProductoScreen(
-                  producto: ProductoModel(
-                    id: parsedId,
-                    nombre: item.titulo,
-                    descripcion: item.subtitulo,
-                    precio: double.tryParse(item.precio.toString()) ?? 0.0,
-                    imagenes: [item.imagen.toString()],
-                    categoria: '',
-                    stock: 10,
-                    tallas: tallasParsed,
-                    colores: [], // 👈 Lista vacía del tipo que exige el modelo
-                  ),
-                ),
-              ),
-            );
-          },
+          onTap: () => _abrirDetalle(item),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(
