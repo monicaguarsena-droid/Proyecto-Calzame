@@ -1,4 +1,10 @@
-import { obtenerProductos, crearProducto, actualizarProducto, eliminarProducto } from '../modelos/productos.js';
+import {
+    obtenerProductos,
+    obtenerPorCategoria,
+    crearProducto,
+    actualizarProducto,
+    eliminarProducto,
+} from '../modelos/productos.js';
 
 const obtenerArchivosImagen = (req) => {
     if (req.file) return [req.file];
@@ -9,6 +15,8 @@ const obtenerArchivosImagen = (req) => {
     return [];
 };
 
+const urlDeArchivo = (file) => file.path || file.secure_url || file.url;
+
 const parsearLista = (valor) => {
     if (Array.isArray(valor)) return valor;
     if (typeof valor !== 'string' || !valor.trim()) return [];
@@ -17,7 +25,29 @@ const parsearLista = (valor) => {
     return parsed;
 };
 
-// trae el catalogo nuevo 
+// Convierte [{color, indexImagen}] en [{color, imagenUrl}] usando las URLs de Cloudinary.
+// Si un color apunta a una foto que no llegó, devuelve error (antes caía en silencio a la primera).
+const construirColores = (mapping, urls) => {
+    const colores = [];
+    for (const item of mapping) {
+        const nombre = String(item.color ?? '').trim();
+        if (!nombre) throw new Error('Cada color necesita un nombre');
+
+        const indice = Number(item.indexImagen);
+        const imagenUrl =
+            item.imagenUrl || (Number.isInteger(indice) ? urls[indice] : undefined);
+
+        if (!imagenUrl) {
+            throw new Error(
+                `El color "${nombre}" no tiene imagen. Llegaron ${urls.length} archivo(s).`,
+            );
+        }
+        colores.push({ color: nombre, imagenUrl });
+    }
+    return colores;
+};
+
+// trae el catalogo
 export const getProductos = async (req, res) => {
     try {
         const { data, error } = await obtenerProductos();
@@ -33,7 +63,6 @@ export const getProductos = async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
 };
-
 
 // trae los zapatos por categoria
 export const getProductosPorCategoria = async (req, res) => {
@@ -52,47 +81,55 @@ export const getProductosPorCategoria = async (req, res) => {
     }
 };
 
-
-// crear un producto nuevo 
+// crear un producto nuevo
 export const postProducto = async (req, res) => {
-  try {
-    const { Nombre, Categoria, TipoCalzado, Precio, Stock, Descripcion, Tallas, coloresData } = req.body;
+    try {
+        const { Nombre, Categoria, TipoCalzado, Precio, Stock, Descripcion, Tallas, coloresData } = req.body;
 
-    const archivos = obtenerArchivosImagen(req);
-    const urlsImagenes = archivos.map(file => file.path || file.secure_url).filter(Boolean);
+        const archivos = obtenerArchivosImagen(req);
+        const urlsImagenes = archivos.map(urlDeArchivo).filter(Boolean);
 
-    let coloresParsed = [];
-    if (coloresData) {
-      const mapping = parsearLista(coloresData);
-      coloresParsed = mapping.map(item => ({
-        color: item.color,
-        imagenUrl: urlsImagenes[item.indexImagen] || urlsImagenes[0]
-      }));
+        // Diagnóstico: debe decir cuántas fotos mandaste desde Flutter
+        console.log(
+            `📸 Archivos recibidos: ${archivos.length} | campos: ${Object.keys(req.files || {}).join(', ')}`,
+        );
+        console.log('🎨 coloresData:', coloresData);
+
+        if (urlsImagenes.length === 0) {
+            return res.status(400).json({ error: 'Debes subir al menos una imagen' });
+        }
+
+        const coloresParsed = coloresData
+            ? construirColores(parsearLista(coloresData), urlsImagenes)
+            : [];
+
+        const productoData = {
+            Nombre: Nombre?.trim() || '',
+            Categoria: Categoria?.trim() || '',
+            TipoCalzado: TipoCalzado?.trim() || '',
+            Precio: parseFloat(Precio) || 0,
+            Stock: parseInt(Stock) || 0,
+            Descripcion: Descripcion?.trim() || '',
+            Tallas: parsearLista(Tallas),
+            Imagenes: urlsImagenes, // TODAS las fotos subidas
+            Colores: coloresParsed, // cada color con su foto
+            Imagen: coloresParsed[0]?.imagenUrl || urlsImagenes[0], // foto principal
+        };
+
+        const { data, error } = await crearProducto(productoData);
+        if (error) return res.status(400).json({ error: error.message });
+
+        return res.status(201).json({
+            mensaje: 'Producto creado con éxito',
+            producto: data ? data[0] : null,
+        });
+    } catch (error) {
+        console.error('Error en postProducto:', error);
+        return res.status(500).json({ error: error.message });
     }
-
-    const productoData = {
-      Nombre: Nombre?.trim() || '',
-      Categoria: Categoria?.trim() || '',
-      TipoCalzado: TipoCalzado?.trim() || '',
-      Precio: parseFloat(Precio) || 0,
-      Stock: parseInt(Stock) || 0,
-      Descripcion: Descripcion?.trim() || '',
-      Tallas: parsearLista(Tallas),
-      Imagenes: urlsImagenes,
-      Colores: coloresParsed,
-      Imagen: urlsImagenes[0] || null // Imagen principal por defecto
-    };
-
-    const { data, error } = await crearProducto(productoData);
-    if (error) return res.status(400).json({ error: error.message });
-
-    return res.status(201).json({ mensaje: "Producto creado con éxito", producto: data ? data[0] : null });
-  } catch (error) {
-    return res.status(500).json({ error: error.message });
-  }
 };
 
-//actualizar un zapato
+// actualizar un zapato
 export const putProducto = async (req, res) => {
     try {
         const { id } = req.params;
@@ -129,10 +166,18 @@ export const putProducto = async (req, res) => {
         const tallas = body.tallas ?? body.Tallas;
         if (tallas !== undefined) productoData.tallas = parsearLista(tallas);
 
-        const archivo = obtenerArchivosImagen(req)[0];
-        if (archivo) {
-            productoData.imagen = archivo.path || archivo.secure_url;
-            productoData.imagenes = [productoData.imagen];
+        const urls = obtenerArchivosImagen(req).map(urlDeArchivo).filter(Boolean);
+        if (urls.length > 0) {
+            productoData.imagenes = urls;
+            productoData.imagen = urls[0];
+        }
+
+        const coloresData = body.coloresData ?? body.Colores;
+        if (coloresData !== undefined) {
+            productoData.colores = construirColores(parsearLista(coloresData), urls);
+            if (urls.length === 0 && productoData.colores[0]) {
+                productoData.imagen = productoData.colores[0].imagenUrl;
+            }
         }
 
         const { data, error } = await actualizarProducto(id, productoData);
@@ -146,11 +191,11 @@ export const putProducto = async (req, res) => {
     }
 };
 
-//eliminar un zapato
+// eliminar un zapato
 export const deleteProducto = async (req, res) => {
     try {
         const { id } = req.params;
-        const { data, error } = await eliminarProducto(id);
+        const { error } = await eliminarProducto(id);
         if (error) {
             return res.status(500).json({ error: error.message });
         }
