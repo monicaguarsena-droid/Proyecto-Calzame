@@ -9,7 +9,7 @@ export const agregarAlCarrito = async (carritoData) => {
     const { data: existentes, error: errorBusqueda } = await supabase
         .from('carrito')
         .select('id, cantidad')
-        .eq('usuario_cc', carritoData.usuario_id)
+        .eq('usuario_id', carritoData.usuario_id)
         .eq('producto_id', carritoData.producto_id)
         .eq('talla', carritoData.talla)
         .eq('color', carritoData.color)
@@ -34,7 +34,7 @@ export const agregarAlCarrito = async (carritoData) => {
     const { data, error } = await supabase
         .from('carrito')
         .insert([{
-            usuario_cc: carritoData.usuario_id,
+            usuario_id: carritoData.usuario_id,
             producto_id: carritoData.producto_id,
             cantidad: carritoData.cantidad,
             precio: carritoData.precio,
@@ -51,7 +51,7 @@ export const obtenerCarritoPorUsuario = async (usuario_id) => {
     const { data, error } = await supabase
         .from('carrito')
         .select('*')
-        .eq('usuario_cc', usuario_id)
+        .eq('usuario_id', usuario_id)
         .order('id', { ascending: true });
 
     return { data, error };
@@ -62,7 +62,7 @@ export const actualizarCantidadCarrito = async (id, usuario_id, cantidad) => {
         .from('carrito')
         .update({ cantidad })
         .eq('id', id)
-        .eq('usuario_cc', usuario_id)
+        .eq('usuario_id', usuario_id)
         .select()
         .maybeSingle();
 
@@ -74,7 +74,7 @@ export const eliminarItemCarrito = async (id, usuario_id) => {
         .from('carrito')
         .delete()
         .eq('id', id)
-        .eq('usuario_cc', usuario_id)
+        .eq('usuario_id', usuario_id)
         .select()
         .maybeSingle();
 
@@ -85,7 +85,7 @@ export const vaciarCarritoUsuario = async (usuario_id) => {
     const { data, error } = await supabase
         .from('carrito')
         .delete()
-        .eq('usuario_cc', usuario_id);
+        .eq('usuario_id', usuario_id);
 
     return { data, error };
 };
