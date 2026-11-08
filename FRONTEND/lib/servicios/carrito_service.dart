@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:frontend/api_config.dart';
+import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/servicios/producto_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,6 +17,9 @@ class ItemCarrito {
   final String color;
   int cantidad;
 
+  /// Producto completo (si se pudo encontrar) para abrir su detalle real.
+  final ProductoModel? producto;
+
   ItemCarrito({
     required this.id,
     required this.productoId,
@@ -26,11 +30,34 @@ class ItemCarrito {
     required this.talla,
     required this.color,
     required this.cantidad,
+    this.producto,
   });
 }
 
 class CarritoService {
   static final List<ItemCarrito> itemsCarrito = [];
+
+  /// Foto del color que el cliente eligió; si no existe, la principal.
+  static String _imagenParaColor(ProductoModel? producto, String color) {
+    if (producto == null) return '';
+    final buscado = color.trim().toLowerCase();
+    for (final c in producto.colores) {
+      if (c.color.trim().toLowerCase() == buscado && c.imagenUrl.isNotEmpty) {
+        return c.imagenUrl;
+      }
+    }
+    return producto.imagenPrincipal;
+  }
+
+  /// "Dama · Sandalias" (o la descripción si no hay categoría ni tipo).
+  static String _subtituloDe(ProductoModel producto) {
+    final partes = [
+      if (producto.categoria.trim().isNotEmpty) producto.categoria.trim(),
+      if ((producto.tipoCalzado ?? '').trim().isNotEmpty)
+        producto.tipoCalzado!.trim(),
+    ];
+    return partes.isNotEmpty ? partes.join(' · ') : producto.descripcion;
+  }
 
   static Future<List<ItemCarrito>> cargarCarrito() async {
     final response = await http.get(
@@ -55,21 +82,24 @@ class CarritoService {
           'El servidor devolvió un producto inválido en el carrito.',
         );
       }
-      final productoId = registro['producto_id']?.toString() ?? '';
+      final productoId =
+          (registro['producto_id'] ?? registro['productoId'])?.toString() ?? '';
       final producto = productosPorId[productoId];
+      final color = registro['color']?.toString() ?? 'Único';
       final precio = registro['precio'] ?? producto?.precio ?? 0;
       return ItemCarrito(
         id: registro['id']?.toString() ?? '',
         productoId: productoId,
-        imagen: producto?.imagenes.isNotEmpty == true ? producto!.imagenes.first : '',
+        imagen: _imagenParaColor(producto, color),
         titulo: producto?.nombre ?? 'Producto',
-        subtitulo: producto?.descripcion ?? '',
+        subtitulo: producto != null ? _subtituloDe(producto) : '',
         precio: precio is num
             ? precio.toDouble()
             : double.tryParse(precio.toString()) ?? 0,
         talla: registro['talla']?.toString() ?? 'Única',
-        color: registro['color']?.toString() ?? 'Único',
+        color: color,
         cantidad: int.tryParse(registro['cantidad']?.toString() ?? '') ?? 1,
+        producto: producto,
       );
     }).toList();
 
@@ -87,6 +117,7 @@ class CarritoService {
     required String precioStr,
     String talla = 'Única',
     String color = 'Único',
+    ProductoModel? producto,
   }) async {
     final precio = double.tryParse(
       precioStr.replaceAll(RegExp(r'[^0-9.]'), ''),
@@ -106,7 +137,8 @@ class CarritoService {
       }),
     );
     final body = _decode(response);
-    if (response.statusCode != 201) {
+    // 201 = creado; 200 = el backend sumó la cantidad a un registro existente
+    if (response.statusCode != 201 && response.statusCode != 200) {
       throw Exception(_mensajeError(body, response.statusCode));
     }
     if (body is! Map<String, dynamic> ||
@@ -115,17 +147,33 @@ class CarritoService {
     }
 
     final registro = body['item'] as Map<String, dynamic>;
+    final idRegistro = registro['id']?.toString() ?? '';
+    final cantidadServidor = int.tryParse(
+      registro['cantidad']?.toString() ?? '',
+    );
+
+    // Si el backend sumó a un registro que ya teníamos, actualizamos la cantidad
+    final indice = idRegistro.isEmpty
+        ? -1
+        : itemsCarrito.indexWhere((item) => item.id == idRegistro);
+    if (indice >= 0) {
+      itemsCarrito[indice].cantidad =
+          cantidadServidor ?? itemsCarrito[indice].cantidad + 1;
+      return;
+    }
+
     itemsCarrito.add(
       ItemCarrito(
-        id: registro['id']?.toString() ?? '',
+        id: idRegistro,
         productoId: productoId,
         imagen: imagen,
         titulo: titulo,
-        subtitulo: subtitulo,
+        subtitulo: producto != null ? _subtituloDe(producto) : subtitulo,
         precio: (registro['precio'] as num?)?.toDouble() ?? precio,
         talla: talla,
         color: color,
-        cantidad: 1,
+        cantidad: cantidadServidor ?? 1,
+        producto: producto,
       ),
     );
   }
@@ -190,8 +238,11 @@ class CarritoService {
 
   static String _mensajeError(dynamic body, int statusCode) {
     if (body is Map<String, dynamic>) {
-      return (body['error'] ?? body['message'] ?? 'Error del servidor')
-          .toString();
+      final mensaje =
+          (body['error'] ?? body['message'] ?? 'Error del servidor')
+              .toString();
+      final detalle = body['detalle']?.toString() ?? '';
+      return detalle.isNotEmpty ? '$mensaje: $detalle' : mensaje;
     }
     return 'Error del servidor (código $statusCode).';
   }

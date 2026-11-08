@@ -6,6 +6,7 @@ import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/servicios/favoritos_service.dart';
 
 class DetalleProductoScreen extends StatefulWidget {
   final ProductoModel producto;
@@ -21,6 +22,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
   late String imagenActual;
   int colorSeleccionadoIndex = 0;
   bool _agregandoAlCarrito = false;
+  bool _esFavorito = false;
 
   List<ProductoColorImagen> get _colores => widget.producto.colores;
 
@@ -35,6 +37,7 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
   void initState() {
     super.initState();
     tallaSeleccionada = _tallas.first;
+    _cargarFavorito();
 
     // Si el primer color tiene foto propia la usamos; si no, la imagen principal
     if (_colores.isNotEmpty && _colores.first.imagenUrl.isNotEmpty) {
@@ -44,6 +47,29 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
           ? widget.producto.imagenes.first
           : '';
     }
+  }
+
+  Future<void> _cargarFavorito() async {
+    final favorito = await FavoritosService.esFavorito(widget.producto.id);
+    if (mounted) setState(() => _esFavorito = favorito);
+  }
+
+  Future<void> _alternarFavorito() async {
+    final ahoraEsFavorito = await FavoritosService.alternar(widget.producto.id);
+    if (!mounted) return;
+    setState(() => _esFavorito = ahoraEsFavorito);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            ahoraEsFavorito ? 'Agregado a favoritos' : 'Quitado de favoritos',
+          ),
+          backgroundColor: ColoresApp.primary,
+          duration: const Duration(seconds: 5),
+          persist: false, // se cierra solo, sin esperar a que el usuario lo toque
+        ),
+      );
   }
 
   Future<void> _agregarAlCarrito() async {
@@ -226,22 +252,76 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: ColoresApp.border),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
-                        child: AspectRatio(
-                          aspectRatio: 1.45,
-                          child: imagenActual.isNotEmpty
-                              ? Image.network(
-                                  imagenActual,
-                                  key: ValueKey(imagenActual),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) =>
-                                      imagenCatalogoPlaceholder(iconSize: 50),
-                                )
-                              : imagenCatalogoPlaceholder(iconSize: 50),
-                        ),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: AspectRatio(
+                              aspectRatio: 1.45,
+                              child: imagenActual.isNotEmpty
+                                  ? Image.network(
+                                      imagenActual,
+                                      key: ValueKey(imagenActual),
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                      errorBuilder: (_, _, _) =>
+                                          imagenCatalogoPlaceholder(
+                                              iconSize: 50),
+                                    )
+                                  : imagenCatalogoPlaceholder(iconSize: 50),
+                            ),
+                          ),
+                          // Corazón de favoritos
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: _botonFavorito(),
+                          ),
+                        ],
                       ),
                     ),
+                    // Miniaturas: fotos extra del producto cuando no hay colores
+                    if (_colores.isEmpty && producto.imagenes.length > 1) ...[
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 64,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: producto.imagenes.length,
+                          separatorBuilder: (_, _) => const SizedBox(width: 8),
+                          itemBuilder: (_, i) {
+                            final url = producto.imagenes[i];
+                            final activa = url == imagenActual;
+                            return GestureDetector(
+                              onTap: () => setState(() => imagenActual = url),
+                              child: Container(
+                                width: 64,
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: activa
+                                        ? ColoresApp.primary
+                                        : ColoresApp.border,
+                                    width: activa ? 1.5 : 1,
+                                  ),
+                                ),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.network(
+                                    url,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, _, _) =>
+                                        imagenCatalogoPlaceholder(iconSize: 20),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 18),
 
                     // Nombre y precio
@@ -420,6 +500,27 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
             ),
             _barraNavegacion(),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _botonFavorito() {
+    return Material(
+      color: Colors.white,
+      shape: const CircleBorder(),
+      elevation: 2,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: _alternarFavorito,
+        child: SizedBox(
+          width: 38,
+          height: 38,
+          child: Icon(
+            _esFavorito ? Icons.favorite : Icons.favorite_border,
+            size: 20,
+            color: ColoresApp.primary,
+          ),
         ),
       ),
     );

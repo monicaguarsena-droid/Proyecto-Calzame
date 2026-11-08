@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/cors/colores.dart';
 import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
+import 'package:frontend/cors/colores.dart';
 import 'package:frontend/models/productoModel.dart';
-import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/producto.dart';
 import 'package:frontend/servicios/favoritos_service.dart';
+import 'package:frontend/servicios/producto_service.dart';
 
 class FavoritosScreen extends StatefulWidget {
   const FavoritosScreen({super.key});
@@ -16,367 +17,261 @@ class FavoritosScreen extends StatefulWidget {
 }
 
 class _FavoritosScreenState extends State<FavoritosScreen> {
-  final int _tab = 2; // Pestaña de Favoritos activa
+  final int _tab = 2;
+  final ProductoService _productoService = ProductoService();
 
-  // Lista modificable para poder eliminar elementos
-  List<ProductoFavorito> get listaFavoritos => FavoritosService.favoritos;
+  List<ProductoModel> _productos = [];
+  bool _cargando = true;
+  bool _error = false;
 
   @override
   void initState() {
     super.initState();
-    // Forzamos a actualizar el estado por si se agregaron nuevos favoritos
-    setState(() {});
+    _cargar();
   }
 
-  void _onItemTapped(int index) {
-    if (index == _tab) return;
-
-    if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Home()),
-      );
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const CarritoScreen()),
-      );
-    } else if (index == 3) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PerfilScreen()),
-      );
+  Future<void> _cargar({bool mostrarSpinner = true}) async {
+    if (mostrarSpinner) {
+      setState(() {
+        _cargando = true;
+        _error = false;
+      });
+    }
+    try {
+      final ids = await FavoritosService.obtenerIds();
+      var lista = <ProductoModel>[];
+      if (ids.isNotEmpty) {
+        final todos = await _productoService.obtenerProductos();
+        lista = todos.where((p) => ids.contains(p.id)).toList();
+        // más recientes primero
+        final orden = ids.reversed.toList();
+        lista.sort((a, b) => orden.indexOf(a.id).compareTo(orden.indexOf(b.id)));
+      }
+      if (!mounted) return;
+      setState(() {
+        _productos = lista;
+        _cargando = false;
+        _error = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _cargando = false;
+        _error = true;
+      });
     }
   }
 
-  void _abrirDetalleProducto(ProductoFavorito producto) {
-    Navigator.push(
+  Future<void> _quitar(ProductoModel producto) async {
+    await FavoritosService.alternar(producto.id);
+    if (!mounted) return;
+    setState(() => _productos.removeWhere((p) => p.id == producto.id));
+  }
+
+  Future<void> _abrirDetalle(ProductoModel producto) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => DetalleProductoScreen(
-          producto: ProductoModel(
-            id: producto.productoId.toString(),
-            nombre: producto.titulo,
-            descripcion: producto.subtitulo,
-            precio: double.tryParse(producto.precio.toString()) ?? 0.0,
-            imagenes: [producto.imagen.toString()],
-            categoria: '',
-            stock: 10,
-            tallas: ['Única'],
-            colores: [],
-          ),
-        ),
+        builder: (_) => DetalleProductoScreen(producto: producto),
       ),
+    );
+    // por si lo quitó o agregó desde el detalle
+    if (mounted) _cargar(mostrarSpinner: false);
+  }
+
+  void _onItemTapped(int index) {
+    final Widget? pantalla = switch (index) {
+      0 => const Home(),
+      1 => const CarritoScreen(),
+      3 => const PerfilScreen(),
+      _ => null,
+    };
+    if (pantalla == null) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => pantalla),
     );
   }
 
-  void _quitarDeFavoritos(int index, String titulo) {
-    setState(() {
-      listaFavoritos.removeAt(index);
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('"$titulo" se eliminó de favoritos'),
-        backgroundColor: Colors.redAccent,
-      ),
-    );
+  String _formatearPrecio(double valor) {
+    return valor
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: ColoresApp.background,
-      appBar: AppBar(
-        backgroundColor: ColoresApp.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: ColoresApp.primary),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const Home()),
-            );
-          },
-        ),
-        title: const Text(
-          'FAVORITOS',
-          style: TextStyle(
-            color: ColoresApp.primary,
-            fontWeight: FontWeight.w800,
-            fontSize: 18,
-            letterSpacing: 1,
-          ),
-        ),
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Encabezado
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Tus elegidos',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: ColoresApp.primary,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: ColoresApp.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '${listaFavoritos.length} productos',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: ColoresApp.primary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 14),
               const Text(
-                'Los que te encantan, en un solo lugar.',
-                style: TextStyle(fontSize: 13, color: ColoresApp.textSecondary),
+                'FAVORITOS',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: ColoresApp.primary,
+                  letterSpacing: 0.5,
+                ),
               ),
-              const SizedBox(height: 16),
-
-              // Validación por si la lista queda vacía
-              listaFavoritos.isEmpty
-                  ? const Center(
-                      child: Padding(
-                        padding: EdgeInsets.only(top: 50),
-                        child: Text(
-                          'No tienes productos en favoritos',
-                          style: TextStyle(
-                            color: ColoresApp.textSecondary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    )
-                  : GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.60,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 14,
-                          ),
-                      itemCount: listaFavoritos.length,
-                      itemBuilder: (context, index) {
-                        final item = listaFavoritos[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: ColoresApp.surface,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: ColoresApp.border),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Imagen con botón de corazón interactivo para eliminar
-                              Stack(
-                                children: [
-                                  ClipRRect(
-                                    borderRadius: const BorderRadius.vertical(
-                                      top: Radius.circular(20),
-                                    ),
-                                    child: SizedBox(
-                                      height: 145,
-                                      width: double.infinity,
-                                      child: item.imagen.startsWith('http')
-                                          ? Image.network(
-                                              item.imagen,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (_, _, _) =>
-                                                  imagenCatalogoPlaceholder(),
-                                            )
-                                          : imagenCatalogoPlaceholder(),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    top: 8,
-                                    right: 8,
-                                    child: GestureDetector(
-                                      onTap: () => _quitarDeFavoritos(
-                                        index,
-                                        item.titulo,
-                                      ),
-                                      child: Container(
-                                        width: 30,
-                                        height: 30,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.favorite,
-                                          size: 16,
-                                          color: ColoresApp.primary,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(10),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.titulo,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w800,
-                                        color: ColoresApp.primary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 1),
-                                    Text(
-                                      item.subtitulo,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        color: ColoresApp.textSecondary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      item.precio,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w800,
-                                        color: ColoresApp.primary,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 8),
-
-                                    // Botón 1: Ver Detalle
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 30,
-                                      child: OutlinedButton(
-                                        onPressed: () =>
-                                            _abrirDetalleProducto(item),
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: ColoresApp.primary,
-                                          side: const BorderSide(
-                                            color: ColoresApp.primary,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                        ),
-                                        child: const Text(
-                                          'Ver',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 6),
-
-                                    // Botón 2: Agregar al carrito
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 32,
-                                      child: ElevatedButton(
-                                        onPressed: () async {
-                                          try {
-                                            await CarritoService.agregarProducto(
-                                              productoId: item.productoId,
-                                              imagen: item.imagen,
-                                              titulo: item.titulo,
-                                              subtitulo: item.subtitulo,
-                                              precioStr: item.precio,
-                                            );
-                                          } catch (error) {
-                                            if (!context.mounted) return;
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  error.toString().replaceFirst(
-                                                    'Exception: ',
-                                                    '',
-                                                  ),
-                                                ),
-                                                backgroundColor: Colors.red,
-                                              ),
-                                            );
-                                            return;
-                                          }
-                                          if (!context.mounted) return;
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                '¡Agregado al carrito con éxito!',
-                                              ),
-                                              backgroundColor: Colors.green,
-                                            ),
-                                          );
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: ColoresApp.primary,
-                                          foregroundColor: Colors.white,
-                                          elevation: 0,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          padding: EdgeInsets.zero,
-                                        ),
-                                        child: const Text(
-                                          'Agregar al carrito',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+              const SizedBox(height: 4),
+              Text(
+                _productos.isEmpty
+                    ? 'Tus productos guardados'
+                    : '${_productos.length} producto${_productos.length == 1 ? '' : 's'} guardado${_productos.length == 1 ? '' : 's'}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: ColoresApp.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Expanded(child: _contenido()),
             ],
           ),
         ),
       ),
       bottomNavigationBar: _nav(),
+    );
+  }
+
+  Widget _contenido() {
+    if (_cargando) return const Center(child: CircularProgressIndicator());
+
+    return RefreshIndicator(
+      onRefresh: () => _cargar(mostrarSpinner: false),
+      child: _error
+          ? _mensaje('No se pudieron cargar tus favoritos.\nDesliza hacia abajo para reintentar.')
+          : _productos.isEmpty
+              ? _mensaje('Aún no tienes favoritos.\nToca el corazón en un producto para guardarlo aquí.')
+              : GridView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.78,
+                  ),
+                  itemCount: _productos.length,
+                  itemBuilder: (_, i) => _tarjeta(_productos[i]),
+                ),
+    );
+  }
+
+  Widget _mensaje(String texto) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: 300,
+            child: Center(
+              child: Text(
+                texto,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: ColoresApp.textSecondary),
+              ),
+            ),
+          ),
+        ],
+      );
+
+  Widget _tarjeta(ProductoModel producto) {
+    final imagen = producto.imagenPrincipal;
+    return GestureDetector(
+      onTap: () => _abrirDetalle(producto),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: ColoresApp.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(14),
+                      child: imagen.isEmpty
+                          ? imagenCatalogoPlaceholder(iconSize: 36)
+                          : Image.network(
+                              imagen,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) =>
+                                  imagenCatalogoPlaceholder(iconSize: 36),
+                            ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 6,
+                    right: 6,
+                    child: Material(
+                      color: Colors.white,
+                      shape: const CircleBorder(),
+                      elevation: 1.5,
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: () => _quitar(producto),
+                        child: const SizedBox(
+                          width: 32,
+                          height: 32,
+                          child: Icon(
+                            Icons.favorite,
+                            size: 18,
+                            color: ColoresApp.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              producto.nombre,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: ColoresApp.primary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              [
+                if (producto.categoria.trim().isNotEmpty) producto.categoria.trim(),
+                if ((producto.tipoCalzado ?? '').trim().isNotEmpty)
+                  producto.tipoCalzado!.trim(),
+              ].join(' · '),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                color: ColoresApp.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '\$${_formatearPrecio(producto.precio)}',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: ColoresApp.primary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -418,9 +313,8 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: _tab == i
-                              ? FontWeight.w700
-                              : FontWeight.w400,
+                          fontWeight:
+                              _tab == i ? FontWeight.w700 : FontWeight.w400,
                           color: _tab == i
                               ? ColoresApp.primary
                               : ColoresApp.textSecondary,

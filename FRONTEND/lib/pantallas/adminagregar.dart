@@ -27,7 +27,11 @@ class AgregarProductoScreen extends StatefulWidget {
 
 class _AgregarProductoScreenState extends State<AgregarProductoScreen> {
   static const _categorias = ['Dama', 'Niña', 'Caballero'];
-  static const _todasTallas = ['36', '37', '38', '39', '40', '41'];
+  static const _todasTallas = [
+    '22', '23', '24', '25', '26', '27', '28', '29', '30',
+    '31', '32', '33', '34', '35', '36', '37', '38', '39',
+    '40', '41', '42', '43', '44', '45',
+  ];
 
   final _picker = ImagePicker();
   final _fotos = List.generate(4, (_) => _FotoColor());
