@@ -84,22 +84,15 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
         precioStr: widget.producto.precio.toString(),
         talla: tallaSeleccionada,
         color: _colorSeleccionado,
+        producto: widget.producto,
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Producto agregado al carrito'),
           backgroundColor: ColoresApp.primary,
-          action: SnackBarAction(
-            label: 'VER CARRITO',
-            textColor: Colors.white,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CarritoScreen()),
-              );
-            },
-          ),
+          duration: const Duration(seconds: 3),
+          persist: false, // se cierra solo, sin esperar a que lo toquen
         ),
       );
     } catch (error) {

@@ -8,8 +8,7 @@ import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/pedido.dart';
-//import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/servicios/perfil_service.dart';
 
 class CompraScreen extends StatefulWidget {
   final List<ItemCarrito> items;
@@ -25,10 +24,12 @@ class _CompraScreenState extends State<CompraScreen> {
   bool _isProcessing = false;
   final int _tab = 1; // Carrito / Proceso de compra activo
 
-  // Datos de contacto para la recogida
-  String _nombre = 'Sofia Pérez';
-  String _cedula = '1234567890';
-  String _telefono = '+57 300 123 4567';
+  // Datos de contacto para la recogida: se cargan desde la base de datos
+  // (tabla usuarios) del usuario que inició sesión.
+  String _nombre = '';
+  String _cedula = '';
+  String _telefono = '';
+  bool _cargandoDatos = true;
   final String _puntoRecogida =
       'Tienda CalzaMe - Calle Principal #12-34, Garzón, Huila';
 
@@ -45,15 +46,33 @@ class _CompraScreenState extends State<CompraScreen> {
   }
 
   Future<void> _cargarDatosUsuario() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      // Si el nombre, cédula o correo están guardados, los asignamos.
-      // Si no hay cédula guardada aún, dejamos un texto por defecto o vacío.
-      _nombre = prefs.getString('nombre') ?? _nombre;
-      _cedula = prefs.getString('cedula') ?? _cedula;
-      _telefono = prefs.getString('telefono') ?? _telefono;
-    });
+    try {
+      final perfil = await PerfilService.obtener();
+      if (!mounted) return;
+      setState(() {
+        _nombre = perfil.nombre;
+        _cedula = perfil.cedula;
+        _telefono = perfil.telefono;
+        _cargandoDatos = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _cargandoDatos = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No se pudieron cargar tus datos. Escríbelos con "Editar".',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
+
+  /// Texto a mostrar según el estado de carga y si el dato está vacío.
+  String _mostrar(String valor) => _cargandoDatos
+      ? 'Cargando…'
+      : (valor.trim().isEmpty ? 'Sin registrar' : valor);
 
   int get _cantidadTotalProductos {
     return widget.items.fold(0, (sum, item) => sum + item.cantidad);
@@ -151,11 +170,13 @@ class _CompraScreenState extends State<CompraScreen> {
               const SizedBox(height: 10),
               TextField(
                 controller: cedulaCtrl,
+                keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: 'Cédula'),
               ),
               const SizedBox(height: 10),
               TextField(
                 controller: telCtrl,
+                keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(labelText: 'Teléfono'),
               ),
               const SizedBox(height: 20),
@@ -171,9 +192,9 @@ class _CompraScreenState extends State<CompraScreen> {
                   ),
                   onPressed: () {
                     setState(() {
-                      _nombre = nameCtrl.text;
-                      _cedula = cedulaCtrl.text;
-                      _telefono = telCtrl.text;
+                      _nombre = nameCtrl.text.trim();
+                      _cedula = cedulaCtrl.text.trim();
+                      _telefono = telCtrl.text.trim();
                     });
                     Navigator.pop(context);
                   },
@@ -276,6 +297,21 @@ class _CompraScreenState extends State<CompraScreen> {
   }
 
   void _procesarCompra() async {
+    // No se puede pagar sin datos de contacto para la recogida
+    if (_nombre.trim().isEmpty ||
+        _cedula.trim().isEmpty ||
+        _telefono.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Completa tus datos de contacto con "Editar" antes de pagar.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isProcessing = true);
 
     await _enviarPedidoAlServidor();
@@ -551,11 +587,11 @@ class _CompraScreenState extends State<CompraScreen> {
                 padding: EdgeInsets.symmetric(vertical: 10.0),
                 child: Divider(height: 1),
               ),
-              _datoEnvioFila('Nombre:', _nombre),
+              _datoEnvioFila('Nombre:', _mostrar(_nombre)),
               const SizedBox(height: 6),
-              _datoEnvioFila('Cédula:', _cedula),
+              _datoEnvioFila('Cédula:', _mostrar(_cedula)),
               const SizedBox(height: 6),
-              _datoEnvioFila('Teléfono:', _telefono),
+              _datoEnvioFila('Teléfono:', _mostrar(_telefono)),
             ]),
             const SizedBox(height: 20),
 
