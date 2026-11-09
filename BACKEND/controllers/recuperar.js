@@ -1,6 +1,6 @@
 import { crearCodigoRecuperar, obtenerCodigoValido, marcarCodigoUsado } from "../modelos/recuperar.js";
 import { obtenerPorEmail, actualizarUsuario } from "../modelos/user.js";
-import { enviarCorreo } from "../config/brevo.js";
+import { enviarCorreo } from "../utils/emailservices.js";
 import bcrypt from "bcrypt";
 
 // Enviar el código de recuperación al correo
