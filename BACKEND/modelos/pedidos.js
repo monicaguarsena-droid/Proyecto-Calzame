@@ -49,7 +49,6 @@ export const crearPedido = async (pedidoData) => {
                 Celular: pedidoData.celular,
                 Total: pedidoData.total,
                 Estado: pedidoData.estado,
-                Fecha_pedido: new Date().toISOString(),
                 Metodo_Pago: pedidoData.metodo_pago,
                 Nombre_Contacto: pedidoData.nombre_contacto
             }

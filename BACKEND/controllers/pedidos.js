@@ -71,7 +71,8 @@ const armarPedidos = async (pedidos) => {
             id: p.id,
             estado: p.Estado ?? 'Pendiente',
             total: Number(p.Total) || 0,
-            fecha: p.Fecha_pedido ?? p.created_at ?? null,
+            // La fecha sale de created_at (Fecha_pedido es de tipo time y solo guarda la hora)
+            fecha: p.created_at ?? null,
             celular: p.Celular !== null && p.Celular !== undefined ? String(p.Celular) : '',
             metodoPago: p.Metodo_Pago ?? '',
             nombreContacto: p.Nombre_Contacto ?? '',
@@ -225,7 +226,7 @@ export const postPedido = async (req, res) => {
                 id: pedido.id,
                 estado: pedido.Estado ?? 'Pendiente',
                 total,
-                fecha: pedido.Fecha_pedido ?? pedido.created_at
+                fecha: pedido.created_at
             }
         });
     } catch (error) {
