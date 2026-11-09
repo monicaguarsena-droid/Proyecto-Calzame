@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:frontend/api_config.dart';
@@ -32,6 +33,7 @@ class ItemCarrito {
 class CarritoService {
   static final List<ItemCarrito> itemsCarrito = [];
 
+  // 1. Obtener los productos del carrito desde el backend
   static Future<List<ItemCarrito>> cargarCarrito() async {
     final response = await http.get(
       Uri.parse('${ApiConfig.baseUrl}/carrito'),
@@ -47,8 +49,9 @@ class CarritoService {
 
     final productos = await ProductoService().obtenerProductos();
     final productosPorId = {
-      for (final producto in productos) producto.id: producto,
+      for (final producto in productos) producto.id.toString(): producto,
     };
+
     final items = (body['carrito'] as List).map((registro) {
       if (registro is! Map<String, dynamic>) {
         throw Exception(
@@ -57,16 +60,17 @@ class CarritoService {
       }
       final productoId = registro['producto_id']?.toString() ?? '';
       final producto = productosPorId[productoId];
-      final precio = registro['precio'] ?? producto?.precio ?? 0;
+      final precioRaw = registro['precio'] ?? producto?.precio ?? 0;
+
       return ItemCarrito(
         id: registro['id']?.toString() ?? '',
         productoId: productoId,
         imagen: producto?.imagenUrl ?? '',
         titulo: producto?.nombre ?? 'Producto',
         subtitulo: producto?.descripcion ?? '',
-        precio: precio is num
-            ? precio.toDouble()
-            : double.tryParse(precio.toString()) ?? 0,
+        precio: precioRaw is num
+            ? precioRaw.toDouble()
+            : double.tryParse(precioRaw.toString()) ?? 0.0,
         talla: registro['talla']?.toString() ?? 'Única',
         color: registro['color']?.toString() ?? 'Único',
         cantidad: int.tryParse(registro['cantidad']?.toString() ?? '') ?? 1,
@@ -79,6 +83,7 @@ class CarritoService {
     return items;
   }
 
+  // 2. Agregar un producto al carrito
   static Future<void> agregarProducto({
     required String productoId,
     required String imagen,
@@ -95,41 +100,27 @@ class CarritoService {
       throw Exception('No se pudo identificar el producto o su precio.');
     }
 
+    // Convertimos el productoId a entero si la base de datos lo espera numérico
+    final int? parsedProductoId = int.tryParse(productoId);
+
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/carrito/agregar'),
       headers: await _headers(),
       body: jsonEncode({
-        'producto_id': productoId,
+        'producto_id': parsedProductoId ?? productoId,
         'cantidad': 1,
         'talla': talla,
         'color': color,
       }),
     );
+
     final body = _decode(response);
-    if (response.statusCode != 201) {
+    if (response.statusCode != 200 && response.statusCode != 201) {
       throw Exception(_mensajeError(body, response.statusCode));
     }
-    if (body is! Map<String, dynamic> ||
-        body['item'] is! Map<String, dynamic>) {
-      throw Exception('El servidor no confirmó el producto agregado.');
-    }
-
-    final registro = body['item'] as Map<String, dynamic>;
-    itemsCarrito.add(
-      ItemCarrito(
-        id: registro['id']?.toString() ?? '',
-        productoId: productoId,
-        imagen: imagen,
-        titulo: titulo,
-        subtitulo: subtitulo,
-        precio: (registro['precio'] as num?)?.toDouble() ?? precio,
-        talla: talla,
-        color: color,
-        cantidad: 1,
-      ),
-    );
   }
 
+  // 3. Actualizar la cantidad de un ítem
   static Future<void> actualizarCantidad(ItemCarrito item, int cantidad) async {
     final response = await http.put(
       Uri.parse('${ApiConfig.baseUrl}/carrito/${item.id}'),
@@ -143,6 +134,7 @@ class CarritoService {
     item.cantidad = cantidad;
   }
 
+  // 4. Eliminar un ítem individual
   static Future<void> eliminar(ItemCarrito item) async {
     final response = await http.delete(
       Uri.parse('${ApiConfig.baseUrl}/carrito/${item.id}'),
@@ -155,6 +147,7 @@ class CarritoService {
     itemsCarrito.removeWhere((registro) => registro.id == item.id);
   }
 
+  // 5. Vaciar todo el carrito
   static Future<void> vaciar() async {
     final response = await http.delete(
       Uri.parse('${ApiConfig.baseUrl}/carrito/vaciar'),
@@ -167,6 +160,7 @@ class CarritoService {
     itemsCarrito.clear();
   }
 
+  // Métodos auxiliares privados para cabeceras y errores
   static Future<Map<String, String>> _headers() async {
     final preferences = await SharedPreferences.getInstance();
     final token =

@@ -2,11 +2,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  static const bool useRemote = true; // Cambiado a false para usar tu servidor local por IP
+  
+  static const bool useRemote = false;
 
-static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/api';
-  static const int _port = 3000; // Puerto del servidor local
-  static const String? _lanIp = '192.168.1.160'; // Tu IP local de Wi-Fi
+  static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/api';
+  static const int _port = 3000; // Puerto de tu servidor local
+ 
+  static const String? _lanIp = null;
 
   static String get baseUrl {
     if (useRemote) {
@@ -15,11 +17,12 @@ static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/api';
     if (kIsWeb) {
       return 'http://localhost:$_port/api';
     }
-    if (_lanIp != null) {
-      return 'http://$_lanIp:$_port/api';
-    }
+    // Detecta primero si estás en el emulador de Android y usa la IP loopback
     if (Platform.isAndroid) {
       return 'http://10.0.2.2:$_port/api';
+    }
+    if (_lanIp != null) {
+      return 'http://$_lanIp:$_port/api';
     }
     return 'http://localhost:$_port/api';
   }
