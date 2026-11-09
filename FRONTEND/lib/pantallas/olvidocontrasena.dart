@@ -1,10 +1,8 @@
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:frontend/api_config.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/confimarcodigo.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart';
+import 'package:frontend/servicios/recuperar_service.dart';
 
 class RecuperarCuenta extends StatefulWidget {
   final Future<void> Function(String email)? onEnviarCodigo;
@@ -20,7 +18,6 @@ class RecuperarCuenta extends StatefulWidget {
     this.onPolitica,
   });
 
-
   @override
   State<RecuperarCuenta> createState() => _RecuperarCuentaState();
 }
@@ -28,6 +25,7 @@ class RecuperarCuenta extends StatefulWidget {
 class _RecuperarCuentaState extends State<RecuperarCuenta> {
   final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _enviando = false;
 
   @override
   void dispose() {
@@ -35,10 +33,44 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
     super.dispose();
   }
 
+  void _mostrar(String mensaje, {bool error = true}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: error ? ColoresApp.error : ColoresApp.primary,
+      ),
+    );
+  }
+
+  Future<void> _enviarCodigo() async {
+    if (_enviando || !_formKey.currentState!.validate()) return;
+
+    final email = _emailController.text.trim();
+    setState(() => _enviando = true);
+    try {
+      if (widget.onEnviarCodigo != null) {
+        await widget.onEnviarCodigo!(email);
+      }
+      await RecuperacionService.solicitarCodigo(email);
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ConfirmarCodigo(emailInicial: email),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      _mostrar(error.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _enviando = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ColoresApp.background, // Color de fondo crema
+      backgroundColor: ColoresApp.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -59,7 +91,6 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
                   const Text(
                     'Ingresa tu correo electrónico para recibir un código de verificación.',
                     textAlign: TextAlign.center,
@@ -69,7 +100,6 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
                     ),
                   ),
                   const SizedBox(height: 36),
-
                   const Text(
                     'Correo electrónico',
                     style: TextStyle(
@@ -79,7 +109,6 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -114,7 +143,7 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Por favor ingresa tu correo';
                       }
                       if (!value.contains('@') || !value.contains('.')) {
@@ -124,7 +153,6 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
                     },
                   ),
                   const SizedBox(height: 16),
-
                   const Text(
                     'Te enviaremos un código de 6 dígitos a ese correo para que puedas continuar con la recuperación de tu cuenta.',
                     style: TextStyle(
@@ -134,84 +162,36 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
-                  // Botón "Enviar código"
                   ElevatedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        final email = _emailController.text.trim();
-
-                        // 1. Opcional: Ejecutar callback externo si se pasa como parámetro
-                        if (widget.onEnviarCodigo != null) {
-                          await widget.onEnviarCodigo!(email);
-                        }
-
-                        try {
-                          // 2. Realizar la petición HTTP al backend
-                          // Ajusta la ruta '/auth/recuperar' según la que tengas configurada en tu backend de Express
-                          final response = await http.post(
-                            Uri.parse(
-                              '${ApiConfig.baseUrl}/auth/forgot-password',
-                            ),
-                            headers: ApiConfig.headers,
-                            body: jsonEncode({'email': email}),
-                          );
-
-                          if (response.statusCode == 200) {
-                            // Si el backend responde correctamente, navegamos a confirmar código
-                            if (!context.mounted) return;
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    ConfirmarCodigo(), // Puedes pasar el email si lo necesitas allá
-                              ),
-                            );
-                          } else {
-                            // Si hay un error (ej. correo no registrado), mostramos mensaje
-                            final data = jsonDecode(response.body);
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  data['message'] ??
-                                      'Error al enviar el código',
-                                ),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          // Error de conexión con el servidor
-                          if (!context.mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'No se pudo conectar con el servidor',
-                              ),
-                            ),
-                          );
-                        }
-                      }
-                    },
+                    onPressed: _enviando ? null : _enviarCodigo,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: ColoresApp.primary,
                       foregroundColor: ColoresApp.textOnPrimary,
+                      disabledBackgroundColor: ColoresApp.primary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Enviar código',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _enviando
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Enviar código',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                   const SizedBox(height: 24),
-
                   Center(
                     child: GestureDetector(
                       onTap: () {
@@ -243,7 +223,6 @@ class _RecuperarCuentaState extends State<RecuperarCuenta> {
                     ),
                   ),
                   const SizedBox(height: 48),
-
                   Center(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
