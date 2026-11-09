@@ -1,21 +1,7 @@
 import { crearCodigoRecuperar, obtenerCodigoValido, marcarCodigoUsado } from "../modelos/recuperar.js";
 import { obtenerPorEmail, actualizarUsuario } from "../modelos/user.js";
+import { enviarCorreo } from "../config/brevo.js";
 import bcrypt from "bcrypt";
-import nodemailer from "nodemailer";
-
-// Configuramos el transporte de nodemailer
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    },
-    tls: {
-        // Solo se desactiva la verificación del certificado en desarrollo.
-        // En producción (NODE_ENV=production) se verifica siempre.
-        rejectUnauthorized: process.env.NODE_ENV === 'production'
-    }
-});
 
 // Enviar el código de recuperación al correo
 export const forgotPassword = async (req, res) => {
@@ -40,23 +26,28 @@ export const forgotPassword = async (req, res) => {
         await crearCodigoRecuperar(usuario.id, codigo);
 
         // Enviamos el correo con el código
-        await transporter.sendMail({
-            from: process.env.EMAIL_USER,
-            to: email,
-            subject: `Tu código de recuperación es: ${codigo}`,
-            html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-                <h2>Recuperación de Contraseña</h2>
-                <p>Hola ${usuario.nombre || 'usuario'},</p>
-                <p>Tu código de recuperación es:</p>
-                <h1 style="color: #ff78fb; font-size: 36px;">${codigo}</h1>
-                <p>Este código es válido por 15 minutos. Si no solicitaste este código, por favor ignora este correo.</p>
-                <p>Gracias,</p>
-                <p>El equipo de soporte</p>
-                <p style="color: #888; font-size: 12px;">No compartas este código con nadie</p>
-            </div>
-            `
-        });
+        try {
+            await enviarCorreo({
+                to: email,
+                nombre: usuario.nombre,
+                subject: `Tu código de recuperación es: ${codigo}`,
+                html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+                    <h2>Recuperación de Contraseña</h2>
+                    <p>Hola ${usuario.nombre || 'usuario'},</p>
+                    <p>Tu código de recuperación es:</p>
+                    <h1 style="color: #ff78fb; font-size: 36px;">${codigo}</h1>
+                    <p>Este código es válido por 15 minutos. Si no solicitaste este código, por favor ignora este correo.</p>
+                    <p>Gracias,</p>
+                    <p>El equipo de soporte</p>
+                    <p style="color: #888; font-size: 12px;">No compartas este código con nadie</p>
+                </div>
+                `
+            });
+        } catch (errorCorreo) {
+            console.error("No se pudo enviar el correo de recuperación:", errorCorreo);
+            return res.status(500).json({ message: "No se pudo enviar el correo. Intenta de nuevo en unos minutos." });
+        }
 
         return res.status(200).json({ message: "Código de recuperación enviado al correo" });
 
@@ -105,9 +96,9 @@ export const verifyCode = async (req, res) => {
 
         // Correo de confirmación: si falla, la contraseña ya cambió, así que no es un error para el cliente
         try {
-            await transporter.sendMail({
-                from: process.env.EMAIL_USER,
+            await enviarCorreo({
                 to: email,
+                nombre: usuario.nombre,
                 subject: "Contraseña cambiada exitosamente",
                 html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
