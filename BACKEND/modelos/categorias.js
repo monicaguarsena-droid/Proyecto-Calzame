@@ -33,13 +33,12 @@ export const obtenerCategoriaPorId = async (id) => {
     return { data, error };
 };
 
-export const crearCategoria = async (nombre, descripcion, imagenUrl) => {
+export const crearCategoria = async (nombre, imagenUrl) => {
     const { data, error } = await supabase
         .from("TipoCalzado")
         .insert([
             {
                 nombre: nombre,
-                descripcion: descripcion,
                 imagen_url: imagenUrl,
             }
         ])
@@ -50,7 +49,6 @@ export const crearCategoria = async (nombre, descripcion, imagenUrl) => {
 export const actualizarCategoria = async (id, campos) => {
     const camposMapeados = {};
     if (campos.nombre !== undefined) camposMapeados.nombre = campos.nombre;
-    if (campos.descripcion !== undefined) camposMapeados.descripcion = campos.descripcion;
     if (campos.imagen !== undefined || campos.imagen_url !== undefined) {
         camposMapeados.imagen_url = campos.imagen !== undefined ? campos.imagen : campos.imagen_url;
     }
