@@ -8,9 +8,9 @@ export const enviarCodigoVerificacion = async (emailDestino, nombreDestino, codi
     });
 
     const result = await brevo.transactionalEmails.sendTransacEmail({
-      subject: 'Codigo de verificacion - calzame',
+      subject: 'Codigo de verificacion - Mar&Paz',
       sender: {
-        name: process.env.EMAIL_FROM_NAME || 'calzame',
+        name: process.env.EMAIL_FROM_NAME || 'Mar&Paz',
         email: process.env.EMAIL_USER
       },
       to: [
