@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
@@ -8,6 +6,7 @@ import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/pedido.dart';
+import 'package:frontend/servicios/pedido_service.dart';
 import 'package:frontend/servicios/perfil_service.dart';
 
 class CompraScreen extends StatefulWidget {
@@ -36,8 +35,6 @@ class _CompraScreenState extends State<CompraScreen> {
   // Método de pago seleccionado
   String _metodoPago = 'Nequi';
   String _detallePago = 'Cuenta vinculada: 300 123 4567';
-
-  final String baseUrl = 'http://10.0.2.2:3000/api';
 
   @override
   void initState() {
@@ -99,34 +96,6 @@ class _CompraScreenState extends State<CompraScreen> {
         context,
         MaterialPageRoute(builder: (context) => const PerfilScreen()),
       );
-    }
-  }
-
-  Future<void> _enviarPedidoAlServidor() async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/pedidos'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'usuario_id': 1, // ID del cliente
-          'total': widget.total,
-          'productos': widget.items.map((item) {
-            return {
-              'nombre': item.titulo,
-              'precio': item.precio,
-              'cantidad': item.cantidad,
-              'talla': item.talla,
-              'color': item.color,
-            };
-          }).toList(),
-        }),
-      );
-
-      if (response.statusCode == 201) {
-        print('Pedido sincronizado con el backend exitosamente');
-      }
-    } catch (e) {
-      print('Error al conectar con el servidor backend: $e');
     }
   }
 
@@ -314,13 +283,33 @@ class _CompraScreenState extends State<CompraScreen> {
 
     setState(() => _isProcessing = true);
 
-    await _enviarPedidoAlServidor();
+    // Guardar el pedido en la base de datos (se arma con el carrito del servidor)
+    final String idPedidoServidor;
+    try {
+      final id = await PedidosService.crearPedido(
+        nombre: _nombre,
+        cedula: _cedula,
+        telefono: _telefono,
+        metodoPago: _metodoPago,
+      );
+      idPedidoServidor = id.toString();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isProcessing = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     double totalGeneral = widget.total;
 
-    // Guardar el pedido en el historial global
+    // Guardar el pedido en el historial local de la app
     final nuevoPedido = Pedido(
-      idPedido: DateTime.now().millisecondsSinceEpoch.toString().substring(5),
+      idPedido: idPedidoServidor,
       fechaHora: DateTime.now(),
       items: List.from(widget.items),
       total: totalGeneral,
@@ -362,21 +351,9 @@ class _CompraScreenState extends State<CompraScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: () async {
-                try {
-                  await CarritoService.vaciar();
-                } catch (error) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        error.toString().replaceFirst('Exception: ', ''),
-                      ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                  return;
-                }
+              onPressed: () {
+                // El backend ya vació el carrito al crear el pedido
+                CarritoService.itemsCarrito.clear();
                 if (!context.mounted) return;
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const Home()),
