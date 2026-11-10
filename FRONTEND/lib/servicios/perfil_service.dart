@@ -28,19 +28,16 @@ class PerfilService {
     return decimal != null ? decimal.group(1)! : texto;
   }
 
-  /// Datos del usuario con sesión iniciada (tabla usuarios).
-  static Future<PerfilUsuario> obtener() async {
+  static Future<Map<String, String>> _headers() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? prefs.getString('jwt_token');
     if (token == null || token.isEmpty) {
       throw Exception('Inicia sesión para continuar.');
     }
+    return {...ApiConfig.headers, 'Authorization': 'Bearer $token'};
+  }
 
-    final response = await http.get(
-      Uri.parse('${ApiConfig.baseUrl}/perfil'),
-      headers: {...ApiConfig.headers, 'Authorization': 'Bearer $token'},
-    );
-
+  static PerfilUsuario _leerRespuesta(http.Response response) {
     dynamic body;
     try {
       body = response.body.isEmpty ? null : jsonDecode(response.body);
@@ -49,12 +46,15 @@ class PerfilService {
     }
 
     if (response.statusCode != 200) {
-      final mensaje = body is Map<String, dynamic>
-          ? (body['error'] ?? body['message'] ?? 'Error del servidor')
-          : 'Error del servidor (código ${response.statusCode})';
-      throw Exception(mensaje.toString());
+      if (body is Map) {
+        final mensaje =
+            (body['error'] ?? body['message'] ?? 'Error del servidor').toString();
+        final detalle = (body['detalle'] ?? '').toString();
+        throw Exception(detalle.isNotEmpty ? '$mensaje: $detalle' : mensaje);
+      }
+      throw Exception('Error del servidor (código ${response.statusCode})');
     }
-    if (body is! Map<String, dynamic> || body['usuario'] is! Map) {
+    if (body is! Map || body['usuario'] is! Map) {
       throw Exception('El servidor devolvió un perfil inválido.');
     }
 
@@ -65,5 +65,34 @@ class PerfilService {
       telefono: _texto(u['telefono']),
       email: _texto(u['email']),
     );
+  }
+
+  /// Datos del usuario con sesión iniciada (tabla usuarios).
+  static Future<PerfilUsuario> obtener() async {
+    final response = await http
+        .get(Uri.parse('${ApiConfig.baseUrl}/perfil'), headers: await _headers())
+        .timeout(const Duration(seconds: 60));
+    return _leerRespuesta(response);
+  }
+
+  /// Guarda nombre y teléfono. La cédula solo se envía si el usuario aún no tiene una.
+  static Future<PerfilUsuario> actualizar({
+    required String nombre,
+    required String telefono,
+    String? cedula,
+  }) async {
+    final response = await http
+        .put(
+          Uri.parse('${ApiConfig.baseUrl}/perfil'),
+          headers: await _headers(),
+          body: jsonEncode({
+            'nombre': nombre,
+            'telefono': telefono,
+            if (cedula != null && cedula.trim().isNotEmpty)
+              'cedula': cedula.trim(),
+          }),
+        )
+        .timeout(const Duration(seconds: 60));
+    return _leerRespuesta(response);
   }
 }

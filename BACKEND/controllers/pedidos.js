@@ -5,6 +5,7 @@ import {
     obtenerProductosPorIds,
     crearPedido,
     obtenerPedidos,
+    ocultarPedidoDeCliente,
     actualizarEstadoPedido,
     eliminarPedidoCompleto,
     crearDetallesPedido,
@@ -243,13 +244,36 @@ export const getMisPedidos = async (req, res) => {
             return res.status(200).json({ pedidos: [] });
         }
 
-        const { data, error } = await obtenerPedidos({ cedula: usuario.cedula });
+        const { data, error } = await obtenerPedidos({ cedula: usuario.cedula, soloVisibles: true });
         if (error) {
             return res.status(500).json({ error: 'Error al obtener los pedidos', detalle: error.message });
         }
         return res.status(200).json({ pedidos: await armarPedidos(data) });
     } catch (error) {
         console.error('❌ Pedidos: error en getMisPedidos', error);
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+// PUT /pedidos/:id/ocultar  (el cliente quita un pedido de su historial)
+export const putOcultarPedido = async (req, res) => {
+    try {
+        const { data: usuario } = await obtenerUsuarioParaPedido(req.usuario?.id);
+        if (!usuario || usuario.cedula === null || usuario.cedula === undefined) {
+            return res.status(404).json({ error: 'No se encontró el pedido' });
+        }
+
+        const { data, error } = await ocultarPedidoDeCliente(req.params.id, usuario.cedula);
+        if (error) {
+            console.error('❌ Pedidos: error al ocultar', error);
+            return res.status(500).json({ error: 'Error al eliminar el pedido de tu historial', detalle: error.message });
+        }
+        if (!data || data.length === 0) {
+            return res.status(404).json({ error: 'No se encontró el pedido' });
+        }
+        return res.status(200).json({ message: 'Pedido eliminado de tu historial' });
+    } catch (error) {
+        console.error('❌ Pedidos: error en putOcultarPedido', error);
         return res.status(500).json({ error: error.message });
     }
 };

@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:frontend/api_config.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -209,6 +208,23 @@ class PedidosService {
         .whereType<Map>()
         .map((p) => PedidoAdminModel.fromJson(Map<String, dynamic>.from(p)))
         .toList();
+  }
+
+  /// Pedidos del usuario con sesión iniciada (los que no ha quitado de su historial).
+  static Future<List<PedidoAdminModel>> listarMios() async {
+    final body = await _enviar('GET', '/mis-pedidos');
+    final lista = body is Map && body['pedidos'] is List
+        ? body['pedidos'] as List
+        : <dynamic>[];
+    return lista
+        .whereType<Map>()
+        .map((p) => PedidoAdminModel.fromJson(Map<String, dynamic>.from(p)))
+        .toList();
+  }
+
+  /// Quita un pedido del historial del cliente (la tienda conserva el registro).
+  static Future<void> ocultar(int id) async {
+    await _enviar('PUT', '/$id/ocultar', cuerpo: {});
   }
 
   static Future<void> actualizarEstado(int id, String estado) async {
