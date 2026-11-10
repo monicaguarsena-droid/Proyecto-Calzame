@@ -12,7 +12,7 @@ import carritoRouter from "./routers/carrito.js";
 import adminRouter from "./routers/admin.js";
 import chatRoutes from './routers/chatRouters.js';
 import ofertasRouter from "./routers/ofertas.js";
-import perfilRoutes from './routes/perfil.js';
+import perfilRoutes from './routers/perfil.js';
 
 
 dotenv.config();
