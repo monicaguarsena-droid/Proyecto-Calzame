@@ -13,6 +13,8 @@ import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/servicios/categorias_service.dart';
 import 'package:frontend/servicios/producto_service.dart';
 import 'package:frontend/servicios/ofertas_service.dart';
+import 'package:frontend/componentes/chat/chat_calzame_modal.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -21,7 +23,9 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  int _tab = 0;
+  final int _tab = 0;
+  String _nombreUsuario = '';
+  
   final ProductoService _productoService = ProductoService();
   late Future<List<Map<String, dynamic>>> _ofertasFuture;
   late Future<List<Map<String, dynamic>>> _tiposCalzadoFuture;
@@ -30,10 +34,28 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
+    _cargarNombreUsuario();
     _ofertasFuture = OfertasService.listar().then((value) => value.cast());
     _tiposCalzadoFuture = CategoriaService.listar().then((value) => value.cast());
     _productosFuture = _productoService.obtenerProductos();
   }
+
+  Future<void> _cargarNombreUsuario() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _nombreUsuario = prefs.getString('nombre') ?? 'Cliente';
+    });
+  }
+
+  void _abrirAsistenteIA(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const ChatCalzameModal(),
+    );
+  }
+
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
@@ -57,22 +79,11 @@ class _HomeState extends State<Home> {
 
   Future<void> _actualizarCatalogo() async {
     setState(() {
+      _cargarNombreUsuario();
       _ofertasFuture = OfertasService.listar().then((value) => value.cast());
       _tiposCalzadoFuture = CategoriaService.listar().then((value) => value.cast());
       _productosFuture = _productoService.obtenerProductos();
     });
-    try {
-      await Future.wait([
-        _ofertasFuture,
-        _tiposCalzadoFuture,
-        _productosFuture,
-      ]);
-    } catch (error) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo actualizar el catálogo: $error')),
-      );
-    }
   }
 
   @override
@@ -92,23 +103,13 @@ class _HomeState extends State<Home> {
                 'Escoge tu Categoría',
                 _fila(context, const [
                   _Cat(Icons.woman_outlined, 'Damas', 'Zapatos y sandalias'),
-                  _Cat(
-                    Icons.man_outlined,
-                    'Caballeros',
-                    'Estilo urbano y formal',
-                  ),
-                  _Cat(
-                    Icons.child_care_outlined,
-                    'Niñas',
-                    'Colecciones infantiles',
-                  ),
+                  _Cat(Icons.man_outlined, 'Caballeros', 'Estilo urbano y formal'),
+                  _Cat(Icons.child_care_outlined, 'Niñas', 'Colecciones infantiles'),
                 ]),
                 verTodoOnTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const TodosProductosScreen(),
-                    ),
+                    MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
                   );
                 },
               ),
@@ -118,9 +119,7 @@ class _HomeState extends State<Home> {
                 verTodoOnTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const TodosProductosScreen(),
-                    ),
+                    MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
                   );
                 },
               ),
@@ -130,9 +129,7 @@ class _HomeState extends State<Home> {
                 verTodoOnTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => const TodosProductosScreen(),
-                    ),
+                    MaterialPageRoute(builder: (context) => const TodosProductosScreen()),
                   );
                 },
               ),
@@ -140,49 +137,84 @@ class _HomeState extends State<Home> {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _abrirAsistenteIA(context),
+        backgroundColor: ColoresApp.primary,
+        foregroundColor: Colors.white,
+        elevation: 4,
+        icon: const Icon(Icons.support_agent_rounded, size: 22),
+        label: const Text(
+          'Asistente IA',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+        ),
+      ),
       bottomNavigationBar: _nav(),
     );
   }
 
+  Widget _header() => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '¡Hola, $_nombreUsuario!',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: ColoresApp.primary,
+              ),
+            ),
+            const Text(
+              'Mar&Paz - Colecciones para toda la familia',
+              style: TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
+            ),
+          ],
+        ),
+      ),
+      GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const FavoritosScreen()),
+          );
+        },
+        child: const _Circ(Icons.favorite_border, size: 40),
+      ),
+      const SizedBox(width: 8),
+      GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const CarritoScreen()),
+          );
+        },
+        child: const _Circ(Icons.shopping_bag_outlined, size: 40),
+      ),
+    ],
+  );
+
   Widget _tiposCalzado() {
-    return FutureBuilder<List>(
+    return FutureBuilder<List<Map<String, dynamic>>>(
       future: _tiposCalzadoFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 104,
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (snapshot.hasError) {
-          return Container(
-            height: 104,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: ColoresApp.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: ColoresApp.border),
-            ),
-            child: const Text('No se pudieron cargar los tipos de calzado.'),
-          );
+          return const SizedBox(height: 104, child: Center(child: CircularProgressIndicator()));
         }
         final tipos = snapshot.data ?? [];
-        final mostrados = tipos.isEmpty
-            ? []
-            : tipos;
         return SizedBox(
           height: 104,
           width: double.infinity,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
-            shrinkWrap: true,
-            physics: const AlwaysScrollableScrollPhysics(),
-            itemCount: mostrados.length,
+            itemCount: tipos.length,
             itemBuilder: (context, index) {
               return Container(
                 width: 150,
                 margin: const EdgeInsets.only(right: 10),
-                child: _tipoCalzadoCard(mostrados[index]),
+                child: _tipoCalzadoCard(tipos[index]),
               );
             },
           ),
@@ -200,16 +232,10 @@ class _HomeState extends State<Home> {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => TodosProductosScreen(
-            categoriaSeleccionada: nombre, 
-          ),
+          builder: (context) => TodosProductosScreen(categoriaSeleccionada: nombre),
         ),
       ),
-      child: _TipoCalzadoCard(
-        titulo: nombre,
-        subtitulo: descripcion,
-        imagenUrl: imagen,
-      ),
+      child: _TipoCalzadoCard(titulo: nombre, subtitulo: descripcion, imagenUrl: imagen),
     );
   }
 
@@ -218,38 +244,10 @@ class _HomeState extends State<Home> {
       future: _productosFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
-            height: 170,
-            child: Center(child: CircularProgressIndicator()),
-          );
-        }
-        if (snapshot.hasError) {
-          return Text('No se pudieron cargar los productos: ${snapshot.error}');
+          return const SizedBox(height: 170, child: Center(child: CircularProgressIndicator()));
         }
         final productos = (snapshot.data ?? []).take(2).toList();
-        if (productos.isEmpty) {
-          return const Row(
-            children: [
-              Expanded(
-                child: _Destacada(
-                  '',
-                  'Aún no hay productos',
-                  'Las nuevas colecciones aparecerán aquí',
-                  '',
-                ),
-              ),
-              SizedBox(width: 10),
-              Expanded(
-                child: _Destacada(
-                  '',
-                  'Explora el catálogo',
-                  'Consulta los productos por categoría',
-                  '',
-                ),
-              ),
-            ],
-          );
-        }
+        if (productos.isEmpty) return const Text('Aún no hay productos');
         return Row(
           children: [
             for (var i = 0; i < productos.length; i++) ...[
@@ -286,55 +284,7 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _header() => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Mar&Paz',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w800,
-                color: ColoresApp.primary,
-              ),
-            ),
-            Text(
-              'Colecciones para toda la familia',
-              style: TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
-            ),
-          ],
-        ),
-      ),
-      GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const FavoritosScreen()),
-          );
-        },
-        child: const _Circ(Icons.favorite_border, size: 40),
-      ),
-      const SizedBox(width: 8),
-      GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const CarritoScreen()),
-          );
-        },
-        child: const _Circ(Icons.shopping_bag_outlined, size: 40),
-      ),
-    ],
-  );
-
-  Widget _seccion(
-    String titulo,
-    Widget hijo, {
-    required VoidCallback verTodoOnTap,
-  }) => Padding(
+  Widget _seccion(String titulo, Widget hijo, {required VoidCallback verTodoOnTap}) => Padding(
     padding: const EdgeInsets.only(top: 18),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,14 +294,9 @@ class _HomeState extends State<Home> {
             Expanded(
               child: Text(
                 titulo,
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: ColoresApp.primary,
-                ),
+                style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: ColoresApp.primary),
               ),
             ),
-
           ],
         ),
         const SizedBox(height: 10),
@@ -368,22 +313,11 @@ class _HomeState extends State<Home> {
           child: GestureDetector(
             onTap: () {
               if (i == 0) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CategoriaDama(),
-                  ),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const CategoriaDama()));
               } else if (i == 1) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CategoriaCaballero()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaCaballero()));
               } else if (i == 2) {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CategoriaInfantil()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoriaInfantil()));
               }
             },
             child: items[i],
@@ -421,21 +355,15 @@ class _HomeState extends State<Home> {
                       Icon(
                         _tab == i ? items[i].$2 : items[i].$1,
                         size: 22,
-                        color: _tab == i
-                            ? ColoresApp.primary
-                            : ColoresApp.textSecondary,
+                        color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: _tab == i
-                              ? FontWeight.w700
-                              : FontWeight.w400,
-                          color: _tab == i
-                              ? ColoresApp.primary
-                              : ColoresApp.textSecondary,
+                          fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400,
+                          color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary,
                         ),
                       ),
                     ],
@@ -451,9 +379,7 @@ class _HomeState extends State<Home> {
 
 class _BannerAnimadoElegante extends StatefulWidget {
   final Future<List<Map<String, dynamic>>> ofertasFuture;
-
   const _BannerAnimadoElegante({required this.ofertasFuture});
-
   @override
   State<_BannerAnimadoElegante> createState() => _BannerAnimadoEleganteState();
 }
@@ -490,410 +416,78 @@ class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: widget.ofertasFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return _bannerVacio('Cargando ofertas...');
+        if (!snapshot.hasData || (snapshot.data ?? []).isEmpty) {
+          return Container(height: 165, decoration: BoxDecoration(color: ColoresApp.primary, borderRadius: BorderRadius.circular(24)));
         }
-        if (snapshot.hasError) {
-          return _bannerVacio('No se pudieron cargar las ofertas');
-        }
-        _promociones = snapshot.data ?? [];
-        if (_promociones.isEmpty) {
-          return _bannerVacio('Las nuevas ofertas aparecerán aquí');
-        }
-        if (_paginaActual >= _promociones.length) {
-          _paginaActual = 0;
-        }
+        _promociones = snapshot.data!;
         return ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: SizedBox(
             height: 165,
-            child: Stack(
-              children: [
-                PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (index) =>
-                      setState(() => _paginaActual = index),
-                  itemCount: _promociones.length,
-                  itemBuilder: (context, index) {
-                    final promo = _promociones[index];
-                    final imagen = promo['imagen_url']?.toString() ?? '';
-                    return Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        if (imagen.isNotEmpty)
-                          Image.network(
-                            imagen,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => _fondoBanner(),
-                          )
-                        else
-                          _fondoBanner(),
-                        Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.black54,
-                                Colors.black26,
-                                Colors.black45,
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                promo['tag']?.toString() ?? 'OFERTA',
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  letterSpacing: 2,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                promo['titulo']?.toString() ?? '',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 23,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const Spacer(),
-                              Text(
-                                promo['descuento']?.toString() ?? '',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Text(
-                                promo['descripcion']?.toString() ?? '',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-                if (_promociones.length > 1)
-                  Positioned(
-                    bottom: 16,
-                    right: 16,
-                    child: Row(
-                      children: List.generate(
-                        _promociones.length,
-                        (index) => AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.only(left: 5),
-                          height: 6,
-                          width: _paginaActual == index ? 18 : 6,
-                          decoration: BoxDecoration(
-                            color: _paginaActual == index
-                                ? Colors.white
-                                : Colors.white38,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: _promociones.length,
+              itemBuilder: (context, index) {
+                final promo = _promociones[index];
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(promo['imagen_url'] ?? '', fit: BoxFit.cover, errorBuilder: (_,__,___) => Container(color: ColoresApp.primary)),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(promo['titulo'] ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ],
                       ),
                     ),
-                  ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         );
       },
     );
   }
-
-  Widget _bannerVacio(String mensaje) => ClipRRect(
-    borderRadius: BorderRadius.circular(24),
-    child: Container(
-      height: 165,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        mensaje,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ),
-  );
-
-  Widget _fondoBanner() => const DecoratedBox(
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-    ),
-  );
 }
 
 class _Circ extends StatelessWidget {
   final IconData icono;
   final double size;
-  final Color bg, fg;
-  const _Circ(
-    this.icono, {
-    required this.size,
-    this.bg = ColoresApp.surface,
-    this.fg = ColoresApp.primary,
-  });
-
+  const _Circ(this.icono, {required this.size});
   @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-    child: Icon(icono, size: size * 0.5, color: fg),
-  );
+  Widget build(BuildContext context) => Container(width: size, height: size, decoration: const BoxDecoration(color: ColoresApp.surface, shape: BoxShape.circle), child: Icon(icono, size: size * 0.5, color: ColoresApp.primary));
 }
 
 class _Cat extends StatelessWidget {
   final IconData icono;
   final String titulo, subtitulo;
   const _Cat(this.icono, this.titulo, this.subtitulo);
-
   @override
   Widget build(BuildContext context) => Container(
-    height: 104,
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: ColoresApp.surface,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: ColoresApp.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: ColoresApp.primary.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icono, size: 18, color: ColoresApp.primary),
-        ),
-        const Spacer(),
-        Text(
-          titulo,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
-            color: ColoresApp.primary,
-          ),
-        ),
-        Text(
-          subtitulo,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 11,
-            height: 1.2,
-            color: ColoresApp.textSecondary,
-          ),
-        ),
-      ],
-    ),
+    height: 104, padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(color: ColoresApp.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: ColoresApp.border)),
+    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Icon(icono, size: 18, color: ColoresApp.primary),
+      const Spacer(),
+      Text(titulo, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: ColoresApp.primary)),
+      Text(subtitulo, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: ColoresApp.textSecondary)),
+    ]),
   );
 }
 
 class _TipoCalzadoCard extends StatelessWidget {
-  final String titulo;
-  final String subtitulo;
-  final String imagenUrl;
-
-  const _TipoCalzadoCard({
-    required this.titulo,
-    required this.subtitulo,
-    required this.imagenUrl,
-  });
-
+  final String titulo, subtitulo, imagenUrl;
+  const _TipoCalzadoCard({required this.titulo, required this.subtitulo, required this.imagenUrl});
   @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(16),
-    child: Container(
-      height: 104,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          if (imagenUrl.isNotEmpty)
-            Image.network(
-              imagenUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
-            ),
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.black87, Colors.black38, Colors.transparent],
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.35),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.category_outlined,
-                    size: 16,
-                    color: Colors.white,
-                  ),
-                ),
-                const Spacer(),
-                Text(
-                  titulo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  subtitulo,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => Container(decoration: BoxDecoration(color: ColoresApp.primary, borderRadius: BorderRadius.circular(16)));
 }
 
 class _Destacada extends StatelessWidget {
   final String imagenUrl, titulo, subtitulo, precio;
   const _Destacada(this.imagenUrl, this.titulo, this.subtitulo, this.precio);
-
   @override
-  Widget build(BuildContext context) => ClipRRect(
-    borderRadius: BorderRadius.circular(20),
-    child: SizedBox(
-      height: 170,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-          if (imagenUrl.isNotEmpty)
-            Image.network(
-              imagenUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
-            ),
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.black45, Colors.black26, Colors.black54],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  titulo,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitulo,
-                  style: const TextStyle(fontSize: 11, color: Colors.white70),
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        precio,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const _Circ(
-                      Icons.arrow_forward,
-                      size: 28,
-                      bg: Colors.white24,
-                      fg: Colors.white,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => Container(height: 170, decoration: BoxDecoration(color: ColoresApp.primary, borderRadius: BorderRadius.circular(20)));
 }
