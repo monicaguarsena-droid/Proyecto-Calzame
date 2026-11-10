@@ -2,6 +2,7 @@ import express from 'express';
 import {
     postPedido,
     getMisPedidos,
+    putOcultarPedido,
     getPedidosAdmin,
     putEstadoPedido,
     deletePedido
@@ -16,6 +17,7 @@ router.use(verificarToken);
 // Cliente
 router.post('/crear', postPedido);
 router.get('/mis-pedidos', getMisPedidos);
+router.put('/:id/ocultar', putOcultarPedido);
 
 // Administrador
 router.get('/admin', verificarAdmin, getPedidosAdmin);

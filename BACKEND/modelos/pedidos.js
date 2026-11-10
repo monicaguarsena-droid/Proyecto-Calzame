@@ -58,8 +58,9 @@ export const crearPedido = async (pedidoData) => {
     return { data, error };
 };
 
-// Todos los pedidos (admin) o solo los de una cédula
-export const obtenerPedidos = async ({ cedula } = {}) => {
+// Todos los pedidos (admin) o solo los de una cédula.
+// soloVisibles: oculta los que el cliente quitó de su historial.
+export const obtenerPedidos = async ({ cedula, soloVisibles = false } = {}) => {
     let consulta = supabase
         .from('Pedidos')
         .select('*')
@@ -68,8 +69,22 @@ export const obtenerPedidos = async ({ cedula } = {}) => {
     if (cedula !== undefined && cedula !== null) {
         consulta = consulta.eq('Usuario_Cc', cedula);
     }
+    if (soloVisibles) {
+        consulta = consulta.eq('Oculto_Cliente', false);
+    }
 
     const { data, error } = await consulta;
+    return { data, error };
+};
+
+// El cliente quita el pedido de SU historial; el registro sigue existiendo para la tienda
+export const ocultarPedidoDeCliente = async (id, cedula) => {
+    const { data, error } = await supabase
+        .from('Pedidos')
+        .update({ Oculto_Cliente: true })
+        .eq('id', id)
+        .eq('Usuario_Cc', cedula)
+        .select('id');
     return { data, error };
 };
 
