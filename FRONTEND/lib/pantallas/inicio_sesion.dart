@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/admin_panel.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/olvidocontrasena.dart';
-import 'package:frontend/pantallas/registro.dart'; // Importación agregada // Importación agregada
+import 'package:frontend/pantallas/registro.dart';
 import 'package:frontend/servicios/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -14,7 +14,6 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _contrasenaController = TextEditingController();
@@ -40,32 +39,41 @@ class _LoginState extends State<Login> {
       emailIngresado,
       _contrasenaController.text.trim(),
     );
-    print("RESPUESTA COMPLETA DEL LOGIN: $result");
+    
     setState(() => _isLoading = false);
 
     if (result['success']) {
       final prefs = await SharedPreferences.getInstance();
-      final tokenReal = result['data']?['token'];
+      
+      // Guardar token si existe
+      final tokenReal = result['data']?['token'] ?? result['token'];
       if (tokenReal != null) {
         await prefs.setString('token', tokenReal);
-        print("Token guardado con éxito: $tokenReal");
       }
-      // Guardamos el correo
+      
+      // Guardar el correo
       await prefs.setString('email', emailIngresado);
       
-      // Guardamos el nombre y datos que te devuelva el backend
+      // GUARDAR EL NOMBRE DEL USUARIO (Soporta múltiples estructuras del backend)
+      String nombreUsuario = 'Usuario';
       if (result['nombre'] != null) {
-        await prefs.setString('nombre', result['nombre']);
-      } else if (result['usuario'] != null && result['usuario']['nombre'] != null) {
-        await prefs.setString('nombre', result['usuario']['nombre']);
+        nombreUsuario = result['nombre'];
+      } else if (result['data']?['usuario']?['nombre'] != null) {
+        nombreUsuario = result['data']['usuario']['nombre'];
+      } else if (result['usuario']?['nombre'] != null) {
+        nombreUsuario = result['usuario']['nombre'];
+      } else {
+        // Si no viene el nombre explícito, extraemos la parte antes del '@' del correo como respaldo
+        nombreUsuario = emailIngresado.split('@').first;
       }
       
-      // Guardamos el token de autenticación (si tu servidor maneja JWT o Supabase)
-      if (result['token'] != null) {
-        await prefs.setString('token', result['token']);
-      }
+      await prefs.setString('nombre', nombreUsuario);
+
+      // Verificamos si el widget sigue montado antes de usar el context
+      if (!mounted) return;
+
       // Validar si el correo ingresado es el del administrador
-    if (emailIngresado.toLowerCase() == _adminEmail.toLowerCase()) {
+      if (emailIngresado.toLowerCase() == _adminEmail.toLowerCase()) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => AdminPanel()),
@@ -77,7 +85,8 @@ class _LoginState extends State<Login> {
         );
       }
     } else {
-      _showSnackBar(result['message']);
+      if (!mounted) return;
+      _showSnackBar(result['message'] ?? 'Error al iniciar sesión');
     }
   }
 
@@ -88,11 +97,17 @@ class _LoginState extends State<Login> {
 
     setState(() => _isLoading = false);
 
-   if (result['success']) {
-      // Extraemos el correo que viene de la respuesta de Google / Backend
-      final String userEmail = result['data']?['usuario']?['email'] ?? ''; 
+    if (result['success']) {
+      final userData = result['data']?['usuario'] ?? result['usuario'] ?? {};
+      final String userEmail = (userData['email'] ?? result['data']?['email'] ?? '').trim();
+      final String nombre = userData['nombre'] ?? userData['name'] ?? userEmail.split('@').first;
 
-      // Validar si el correo de Google es el del administrador
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('email', userEmail);
+      await prefs.setString('nombre', nombre);
+
+      if (!mounted) return;
+
       if (userEmail.toLowerCase() == _adminEmail.toLowerCase()) {
         Navigator.pushReplacement(
           context,
@@ -105,7 +120,8 @@ class _LoginState extends State<Login> {
         );
       }
     } else {
-      _showSnackBar(result['message']);
+      if (!mounted) return;
+      _showSnackBar(result['message'] ?? 'Error con Google');
     }
   }
 
@@ -128,17 +144,13 @@ class _LoginState extends State<Login> {
         child: Center(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 24.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Ícono superior decorativo
                   Center(
                     child: Container(
                       padding: const EdgeInsets.all(16),
@@ -154,8 +166,6 @@ class _LoginState extends State<Login> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Títulos principales
                   Text(
                     '¡Bienvenido!',
                     textAlign: TextAlign.center,
@@ -173,15 +183,9 @@ class _LoginState extends State<Login> {
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 32),
-
-                  // Campo de Correo Electrónico
                   Text(
                     'Correo electrónico',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -189,49 +193,24 @@ class _LoginState extends State<Login> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       hintText: 'ejemplo@correo.com',
-                      hintStyle: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 14,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.email_outlined,
-                        color: _primaryColor,
-                        size: 20,
-                      ),
+                      prefixIcon: Icon(Icons.email_outlined, color: _primaryColor, size: 20),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(
-                          color: _primaryColor,
-                          width: 1.5,
-                        ),
+                        borderSide: BorderSide(color: _primaryColor, width: 1.5),
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null ||
-                          value.isEmpty ||
-                          !value.contains('@')) {
-                        return 'Ingresa un correo válido';
-                      }
-                      return null;
-                    },
+                    validator: (value) => (value == null || !value.contains('@')) ? 'Ingresa un correo válido' : null,
                   ),
                   const SizedBox(height: 20),
-
-                  // Campo de Contraseña
                   Text(
                     'Contraseña',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.grey.shade700),
                   ),
                   const SizedBox(height: 8),
                   TextFormField(
@@ -239,223 +218,69 @@ class _LoginState extends State<Login> {
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       hintText: '••••••••',
-                      hintStyle: TextStyle(
-                        color: Colors.grey.shade400,
-                        fontSize: 14,
-                      ),
-                      prefixIcon: Icon(
-                        Icons.lock_outline,
-                        color: _primaryColor,
-                        size: 20,
-                      ),
+                      prefixIcon: Icon(Icons.lock_outline, color: _primaryColor, size: 20),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: Colors.grey.shade500,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          setState(() => _obscurePassword = !_obscurePassword);
-                        },
+                        icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                       filled: true,
                       fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(color: Colors.grey.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(
-                          color: _primaryColor,
-                          width: 1.5,
-                        ),
+                        borderSide: BorderSide(color: _primaryColor, width: 1.5),
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.length < 6) {
-                        return 'Mínimo 6 caracteres';
-                      }
-                      return null;
-                    },
+                    validator: (value) => (value == null || value.length < 6) ? 'Mínimo 6 caracteres' : null,
                   ),
-                  const SizedBox(height: 6),
-
-                  // ¿Olvidaste tu contraseña? (CORREGIDO)
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      style: TextButton.styleFrom(
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(50, 30),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => RecuperarCuenta(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        '¿Olvidaste tu contraseña?',
-                        style: TextStyle(
-                          color: _primaryColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => RecuperarCuenta())),
+                      child: Text('¿Olvidaste tu contraseña?', style: TextStyle(color: _primaryColor, fontSize: 12, fontWeight: FontWeight.w600)),
                     ),
                   ),
                   const SizedBox(height: 24),
-
-                  // Botón Iniciar Sesión
                   SizedBox(
                     height: 52,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       onPressed: _isLoading ? null : _handleLogin,
                       child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text(
-                              'Iniciar sesión',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          : const Text('Iniciar sesión', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   const SizedBox(height: 16),
-
-                  // Botón Crear Cuenta
+                  // Botón de Google conectado a _handleGoogleLogin
+                  SizedBox(
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: _primaryColor, width: 1.5),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      onPressed: _isLoading ? null : _handleGoogleLogin,
+                      icon: Icon(Icons.g_mobiledata, color: _primaryColor, size: 28),
+                      label: Text('Continuar con Google', style: TextStyle(color: _primaryColor, fontSize: 15, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   SizedBox(
                     height: 52,
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(color: _primaryColor, width: 1.5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const Registro(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'Crear cuenta nueva',
-                        style: TextStyle(
-                          color: _primaryColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Divisor "o continuar con"
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: Colors.grey.shade300,
-                          thickness: 1,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                        child: Text(
-                          'o continuar con',
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: Colors.grey.shade300,
-                          thickness: 1,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Botón Google (CORREGIDO ERROR DE RED DE IMAGEN)
-                  SizedBox(
-                    height: 52,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.grey.shade300),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        backgroundColor: Colors.white,
-                      ),
-                      onPressed: _handleGoogleLogin,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.network(
-                            'https://www.gstatic.com/images/branding/product/2x/googleg_48dp.png',
-                            height: 22,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.g_mobiledata,
-                              size: 30,
-                              color: Color(0xFF4285F4),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Google',
-                            style: TextStyle(
-                              color: Color(0xFF4A4A4A),
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 28),
-
-                  // Términos y condiciones
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Text(
-                      'Al continuar, aceptas nuestros Términos y condiciones y Política de privacidad.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
-                        height: 1.4,
-                      ),
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const Registro())),
+                      child: Text('Crear cuenta nueva', style: TextStyle(color: _primaryColor, fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],

@@ -2,12 +2,12 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  
-  static const bool useRemote = false;
+  // Configurado en true para usar directamente el servidor en la nube de Render
+  static const bool useRemote = true;
 
   static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/api';
-  static const int _port = 3000; // Puerto de tu servidor local
- 
+  static const int _port = 3000; 
+  
   static const String? _lanIp = null;
 
   static String get baseUrl {
@@ -17,12 +17,11 @@ class ApiConfig {
     if (kIsWeb) {
       return 'http://localhost:$_port/api';
     }
-    // Detecta primero si estás en el emulador de Android y usa la IP loopback
-    if (Platform.isAndroid) {
-      return 'http://10.0.2.2:$_port/api';
-    }
     if (_lanIp != null) {
       return 'http://$_lanIp:$_port/api';
+    }
+    if (Platform.isAndroid) {
+      return 'http://10.0.2.2:$_port/api';
     }
     return 'http://localhost:$_port/api';
   }
