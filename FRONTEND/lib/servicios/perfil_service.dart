@@ -41,8 +41,8 @@ class PerfilService {
     dynamic body;
     try {
       body = response.body.isEmpty ? null : jsonDecode(response.body);
-    } on FormatException {
-      throw Exception('El servidor no respondió con JSON válido.');
+    } catch (_) {
+      body = null; // por ejemplo, una página HTML de error
     }
 
     if (response.statusCode != 200) {
@@ -52,10 +52,15 @@ class PerfilService {
         final detalle = (body['detalle'] ?? '').toString();
         throw Exception(detalle.isNotEmpty ? '$mensaje: $detalle' : mensaje);
       }
+      if (response.statusCode == 404) {
+        throw Exception(
+          'La ruta /perfil no existe en el servidor (404). Falta registrarla en el backend.',
+        );
+      }
       throw Exception('Error del servidor (código ${response.statusCode})');
     }
     if (body is! Map || body['usuario'] is! Map) {
-      throw Exception('El servidor devolvió un perfil inválido.');
+      throw Exception('El servidor devolvió una respuesta inesperada.');
     }
 
     final u = Map<String, dynamic>.from(body['usuario'] as Map);
