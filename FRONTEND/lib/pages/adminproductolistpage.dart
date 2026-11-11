@@ -187,7 +187,7 @@ class _AdminProductListPageState extends State<AdminProductListPage> {
                       child: SizedBox(
                         width: 50,
                         height: 50,
-                        child: _imagenProducto(p.imagenUrl),
+                        child: _imagenProducto(p.imagenes.isNotEmpty ? p.imagenes.first : ''),
                       ),
                     ),
                     title: Text(

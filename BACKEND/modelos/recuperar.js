@@ -1,7 +1,15 @@
 import { supabase } from "../config/supabase.js";
 
-// Crear código de recuperación
+// Crear código de recuperación (los códigos anteriores del usuario dejan de valer)
 export const crearCodigoRecuperar = async (usuarioId, codigo) => {
+    const { error: errorInvalidar } = await supabase
+        .from('recovery_code')
+        .update({ usado: true })
+        .eq('Usuario_Id', usuarioId)
+        .eq('usado', false);
+
+    if (errorInvalidar) throw errorInvalidar;
+
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // Expira en 15 minutos
 
     const { data, error } = await supabase
@@ -18,7 +26,7 @@ export const crearCodigoRecuperar = async (usuarioId, codigo) => {
     return data;
 };
 
-// Obtener código no utilizado por usuario
+// Obtener código no utilizado y vigente por usuario
 export const obtenerCodigoValido = async (usuarioId, codigo) => {
     const { data, error } = await supabase
         .from('recovery_code')
@@ -30,7 +38,7 @@ export const obtenerCodigoValido = async (usuarioId, codigo) => {
         .maybeSingle();
 
     if (error) throw error;
-    return {data,error};
+    return { data, error };
 };
 
 // Marcar código como usado

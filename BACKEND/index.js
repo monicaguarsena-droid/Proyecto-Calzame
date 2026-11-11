@@ -12,6 +12,8 @@ import carritoRouter from "./routers/carrito.js";
 import adminRouter from "./routers/admin.js";
 import chatRoutes from './routers/chatRouters.js';
 import ofertasRouter from "./routers/ofertas.js";
+import perfilRoutes from './routers/perfil.js';
+
 
 dotenv.config();
 conectaDB();
@@ -44,7 +46,7 @@ app.use('/api/carrito', carritoRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ofertas', ofertasRouter);
-
+app.use('/api/perfil', perfilRoutes);
 
 
 const PORT = 3000;

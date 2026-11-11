@@ -7,8 +7,8 @@ import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/categoriacaballero.dart';
 import 'package:frontend/pantallas/categoriadama.dart';
 import 'package:frontend/pantallas/categoriainfantil.dart';
-import 'package:frontend/pantallas/todos_productos.dart';
 import 'package:frontend/pantallas/producto.dart';
+import 'package:frontend/pantallas/todos_productos.dart';
 import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/servicios/categorias_service.dart';
 import 'package:frontend/servicios/producto_service.dart';
@@ -27,8 +27,8 @@ class _HomeState extends State<Home> {
   String _nombreUsuario = '';
   
   final ProductoService _productoService = ProductoService();
-  late Future<List<Map<String, dynamic>>> _ofertasFuture;
-  late Future<List<Map<String, dynamic>>> _tiposCalzadoFuture;
+  late Future<List> _ofertasFuture;
+  late Future<List> _tiposCalzadoFuture;
   late Future<List<ProductoModel>> _productosFuture;
 
   @override
@@ -204,6 +204,7 @@ class _HomeState extends State<Home> {
           return const SizedBox(height: 104, child: Center(child: CircularProgressIndicator()));
         }
         final tipos = snapshot.data ?? [];
+        final mostrados = tipos.isEmpty ? [] : tipos;
         return SizedBox(
           height: 104,
           width: double.infinity,
@@ -227,7 +228,7 @@ class _HomeState extends State<Home> {
     final nombre = tipo['nombre']?.toString() ?? '';
     final descripcion = tipo['descripcion']?.toString() ?? '';
     final imagen = tipo['imagen_url']?.toString() ?? '';
-    
+   
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -247,30 +248,45 @@ class _HomeState extends State<Home> {
           return const SizedBox(height: 170, child: Center(child: CircularProgressIndicator()));
         }
         final productos = (snapshot.data ?? []).take(2).toList();
-        if (productos.isEmpty) return const Text('Aún no hay productos');
-        return Row(
+        if (productos.isEmpty) {
+          return const Row(
+            children: [
+              Expanded(
+                child: _Destacada(
+                  '',
+                  'Aún no hay productos',
+                  'Las nuevas colecciones aparecerán aquí',
+                  '',
+                ),
+              ),
+              SizedBox(width: 10),
+              Expanded(
+                child: _Destacada(
+                  '',
+                  'Explora el catálogo',
+                  'Consulta los productos por categoría',
+                  '',
+                ),
+              ),
+            ],
+          );
+        }
+       return Row(
           children: [
             for (var i = 0; i < productos.length; i++) ...[
               if (i > 0) const SizedBox(width: 10),
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    final producto = productos[i];
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => DetalleProductoScreen(
-                          productoId: producto.id,
-                          imagen: producto.imagenUrl ?? '',
-                          titulo: producto.nombre,
-                          subtitulo: producto.descripcion,
-                          precio: '\$${producto.precio.toStringAsFixed(0)}',
-                        ),
+                        builder: (context) => DetalleProductoScreen(producto: productos[i]),
                       ),
                     );
                   },
                   child: _Destacada(
-                    productos[i].imagenUrl ?? '',
+                    productos[i].imagenes.isNotEmpty ? productos[i].imagenes.first : '', // 📸 Primera imagen de la lista
                     productos[i].nombre,
                     productos[i].descripcion,
                     '\$${productos[i].precio.toStringAsFixed(0)}',
@@ -378,7 +394,8 @@ class _HomeState extends State<Home> {
 }
 
 class _BannerAnimadoElegante extends StatefulWidget {
-  final Future<List<Map<String, dynamic>>> ofertasFuture;
+  final Future<List> ofertasFuture;
+
   const _BannerAnimadoElegante({required this.ofertasFuture});
   @override
   State<_BannerAnimadoElegante> createState() => _BannerAnimadoEleganteState();
@@ -388,7 +405,7 @@ class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
   final PageController _pageController = PageController();
   int _paginaActual = 0;
   Timer? _timer;
-  List<Map<String, dynamic>> _promociones = [];
+  List _promociones = [];
 
   @override
   void initState() {
@@ -413,7 +430,7 @@ class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
+    return FutureBuilder<List>(
       future: widget.ofertasFuture,
       builder: (context, snapshot) {
         if (!snapshot.hasData || (snapshot.data ?? []).isEmpty) {
@@ -489,5 +506,81 @@ class _Destacada extends StatelessWidget {
   final String imagenUrl, titulo, subtitulo, precio;
   const _Destacada(this.imagenUrl, this.titulo, this.subtitulo, this.precio);
   @override
-  Widget build(BuildContext context) => Container(height: 170, decoration: BoxDecoration(color: ColoresApp.primary, borderRadius: BorderRadius.circular(20)));
+  Widget build(BuildContext context) => ClipRRect(
+    borderRadius: BorderRadius.circular(20),
+    child: SizedBox(
+      height: 170,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          const DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+          if (imagenUrl.isNotEmpty)
+            Image.network(
+              imagenUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black45, Colors.black26, Colors.black54],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitulo,
+                  style: const TextStyle(fontSize: 11, color: Colors.white70),
+                ),
+                const Spacer(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        precio,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    const _Circ(
+                      Icons.arrow_forward,
+                      size: 28,
+                      bg: Colors.white24,
+                      fg: Colors.white,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

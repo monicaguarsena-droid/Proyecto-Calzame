@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
 import 'package:frontend/cors/colores.dart';
-import 'package:frontend/pantallas/home.dart';
-import 'package:frontend/pantallas/favoritos.dart';
-import 'package:frontend/pantallas/perfil.dart';
-import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/models/productoModel.dart';
+import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/favoritos.dart';
+import 'package:frontend/pantallas/home.dart';
+import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/pantallas/producto.dart';
 import 'package:frontend/servicios/producto_service.dart';
 
 class TodosProductosScreen extends StatefulWidget {
-  final String? categoriaSeleccionada; // 👈 1. Parámetro opcional para la categoría
+  /// Tipo de calzado (ej. "Sandalias") o categoría (ej. "Dama") a mostrar.
+  /// Si es null o vacío se muestran todos los productos.
+  final String? categoriaSeleccionada;
 
   const TodosProductosScreen({super.key, this.categoriaSeleccionada});
 
@@ -28,33 +32,75 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
     _productosFuture = _productoService.obtenerProductos();
   }
 
-  void _onItemTapped(int index) {
-    if (index == 0) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const Home()),
-      );
-    } else if (index == 1) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const CarritoScreen()),
-      );
-    } else if (index == 2) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const FavoritosScreen()),
-      );
-    } else if (index == 3) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const PerfilScreen()),
-      );
+  Future<void> _refrescar() async {
+    setState(() => _productosFuture = _productoService.obtenerProductos());
+    try {
+      await _productosFuture;
+    } catch (_) {
+      // el error ya se muestra en el FutureBuilder
     }
+  }
+
+  // Compara sin mayúsculas, espacios ni tildes
+  static String _normalizar(String texto) {
+    const mapa = {
+      'á': 'a',
+      'é': 'e',
+      'í': 'i',
+      'ó': 'o',
+      'ú': 'u',
+      'ü': 'u',
+      'ñ': 'n',
+    };
+    var resultado = texto.trim().toLowerCase();
+    mapa.forEach((k, v) => resultado = resultado.replaceAll(k, v));
+    return resultado;
+  }
+
+  /// Coincidencia exacta con el tipo de calzado o con la categoría del producto.
+  List<ProductoModel> _filtrar(List<ProductoModel> productos, String? filtro) {
+    if (filtro == null || filtro.trim().isEmpty) return productos;
+    final buscado = _normalizar(filtro);
+    return productos.where((p) {
+      return _normalizar(p.tipoCalzado ?? '') == buscado ||
+          _normalizar(p.categoria) == buscado;
+    }).toList();
+  }
+
+  String _formatearPrecio(double valor) {
+    return valor
+        .toStringAsFixed(0)
+        .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+  }
+
+  void _onItemTapped(int index) {
+    final Widget? pantalla = switch (index) {
+      0 => const Home(),
+      1 => const CarritoScreen(),
+      2 => const FavoritosScreen(),
+      3 => const PerfilScreen(),
+      _ => null,
+    };
+    if (pantalla == null) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => pantalla),
+    );
+  }
+
+  void _abrirDetalle(ProductoModel producto) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetalleProductoScreen(producto: producto),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final categoriaFiltro = widget.categoriaSeleccionada;
+    final hayFiltro = categoriaFiltro != null && categoriaFiltro.isNotEmpty;
 
     return Scaffold(
       backgroundColor: ColoresApp.background,
@@ -87,7 +133,7 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      categoriaFiltro != null && categoriaFiltro.isNotEmpty
+                      hayFiltro
                           ? categoriaFiltro.toUpperCase()
                           : 'TODAS LAS CATEGORÍAS',
                       maxLines: 1,
@@ -104,7 +150,7 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                categoriaFiltro ?? 'Dama, Caballero e Infantil',
+                hayFiltro ? categoriaFiltro : 'Dama, Caballero e Infantil',
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
@@ -113,66 +159,48 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: FutureBuilder<List<ProductoModel>>(
-                  future: _productosFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return Center(
-                        child: Text(
-                          'No se pudieron cargar los productos: ${snapshot.error}',
-                        ),
+                child: RefreshIndicator(
+                  onRefresh: _refrescar,
+                  child: FutureBuilder<List<ProductoModel>>(
+                    future: _productosFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (snapshot.hasError) {
+                        return _mensaje(
+                          'No se pudieron cargar los productos.\nDesliza hacia abajo para reintentar.',
+                        );
+                      }
+
+                      final productos = _filtrar(
+                        snapshot.data ?? [],
+                        categoriaFiltro,
                       );
-                    }
-                    
-                    final todosLosProductos = snapshot.data ?? [];
 
-                   final productos = categoriaFiltro == null || categoriaFiltro.isEmpty
-                        ? todosLosProductos
-                        : todosLosProductos.where((p) {
-                            final catProducto = p.categoria.toLowerCase().trim();
-                            final nombreProducto = p.nombre.toLowerCase().trim();
-                            final catBuscada = categoriaFiltro.toLowerCase().trim();
-                            
-                            return catProducto.contains(catBuscada) || 
-                                   catBuscada.contains(catProducto) ||
-                                   nombreProducto.contains(catBuscada);
-                          }).toList();
-
-                    if (productos.isEmpty) {
-                      return Center(
-                        child: Text(
-                          categoriaFiltro != null
+                      if (productos.isEmpty) {
+                        return _mensaje(
+                          hayFiltro
                               ? 'No hay productos en "$categoriaFiltro".'
                               : 'Aún no hay productos publicados.',
-                        ),
-                      );
-                    }
-                    return GridView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.62,
-                      ),
-                      itemCount: productos.length,
-                      itemBuilder: (context, index) {
-                        final item = productos[index];
-                        return _tarjetaProducto(
-                          context,
-                          item.id,
-                          item.imagenUrl ?? '',
-                          item.nombre,
-                          '${item.categoria} · ${item.descripcion}',
-                          '\$${item.precio.toStringAsFixed(0)}',
                         );
-                      },
-                    );
-                  },
+                      }
+
+                      return GridView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.62,
+                        ),
+                        itemCount: productos.length,
+                        itemBuilder: (context, index) =>
+                            _tarjetaProducto(productos[index]),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
@@ -183,106 +211,114 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
     );
   }
 
-  Widget _tarjetaProducto(
-    BuildContext context,
-    String productoId,
-    String asset,
-    String titulo,
-    String subtitulo,
-    String precio,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ColoresApp.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  // ListView para que el pull-to-refresh funcione también sin resultados
+  Widget _mensaje(String texto) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: AspectRatio(
-              aspectRatio: 1.15,
-              child: asset.isEmpty
-                  ? Container(
-                      color: ColoresApp.surfaceVariant,
-                      child: const Icon(
-                        Icons.image_not_supported,
-                        color: ColoresApp.textSecondary,
-                      ),
-                    )
-                  : Image.network(
-                      asset,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Container(
-                        color: ColoresApp.surfaceVariant,
-                        child: const Icon(
-                          Icons.image_not_supported,
-                          color: ColoresApp.textSecondary,
-                        ),
-                      ),
-                    ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            titulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: ColoresApp.primary,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            subtitulo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 11,
-              color: ColoresApp.textSecondary,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            precio,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: ColoresApp.primary,
-            ),
-          ),
-          const Spacer(),
           SizedBox(
-            width: double.infinity,
-            height: 36,
-            child: ElevatedButton(
-              onPressed: () {
-                // Lógica de agregar al carrito
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColoresApp.primary,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding: EdgeInsets.zero,
-              ),
-              child: const Text(
-                'Agregar al carrito',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+            height: 300,
+            child: Center(
+              child: Text(
+                texto,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: ColoresApp.textSecondary),
               ),
             ),
           ),
         ],
+      );
+
+  Widget _tarjetaProducto(ProductoModel producto) {
+    final imagen = producto.imagenPrincipal;
+    final subtitulo = [
+      if (producto.categoria.trim().isNotEmpty) producto.categoria.trim(),
+      if ((producto.tipoCalzado ?? '').trim().isNotEmpty)
+        producto.tipoCalzado!.trim(),
+    ].join(' · ');
+
+    return GestureDetector(
+      onTap: () => _abrirDetalle(producto),
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: ColoresApp.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: AspectRatio(
+                aspectRatio: 1.15,
+                child: imagen.isEmpty
+                    ? imagenCatalogoPlaceholder(iconSize: 36)
+                    : Image.network(
+                        imagen,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) =>
+                            imagenCatalogoPlaceholder(iconSize: 36),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              producto.nombre,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: ColoresApp.primary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitulo,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 11,
+                color: ColoresApp.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '\$${_formatearPrecio(producto.precio)}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: ColoresApp.primary,
+              ),
+            ),
+            const Spacer(),
+            SizedBox(
+              width: double.infinity,
+              height: 36,
+              child: ElevatedButton(
+                // Abre el detalle para elegir talla y color antes de agregar
+                onPressed: () => _abrirDetalle(producto),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColoresApp.primary,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+                child: const Text(
+                  'Ver detalle',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -325,9 +361,8 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
                         items[i].$3,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: _tab == i
-                              ? FontWeight.w700
-                              : FontWeight.w400,
+                          fontWeight:
+                              _tab == i ? FontWeight.w700 : FontWeight.w400,
                           color: _tab == i
                               ? ColoresApp.primary
                               : ColoresApp.textSecondary,

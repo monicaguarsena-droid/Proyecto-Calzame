@@ -8,6 +8,7 @@ import 'package:frontend/pantallas/productocard.dart';
 import 'package:frontend/componentes/chat/chat_calzame_modal.dart';
 import 'package:frontend/pantallas/productoformsheet.dart';
 
+
 import 'package:frontend/pages/adminproductolistpage.dart';
 
 class MenuPage extends StatefulWidget {
@@ -124,11 +125,7 @@ class _MenuPageState extends State<MenuPage> {
             context,
             MaterialPageRoute(
               builder: (context) => DetalleProductoScreen(
-                productoId: productos[i].id,
-                imagen: productos[i].imagenUrl ?? '',
-                titulo: productos[i].nombre,
-                subtitulo: productos[i].descripcion,
-                precio: '\$${productos[i].precio.toStringAsFixed(0)}',
+                producto: productos[i] as dynamic,
               ),
             ),
           );

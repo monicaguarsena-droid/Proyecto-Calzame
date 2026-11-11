@@ -67,14 +67,14 @@ export const getCategoriaPorId = async (req, res) => {
 // Crear una categoría nueva
 export const postCategoria = async (req, res) => {
     try {
-        const { nombre, descripcion } = req.body;
+        const { nombre } = req.body;
         const imagenUrl = req.file ? (req.file.path || req.file.secure_url) : null;
 
         if (!nombre) {
             return res.status(400).json({ error: "El nombre de la categoría es obligatorio" });
         }
 
-        const { data, error } = await crearCategoria(nombre, descripcion, imagenUrl);
+        const { data, error } = await crearCategoria(nombre, imagenUrl);
 
         if (error) {
             return res.status(400).json({ error: error.message });

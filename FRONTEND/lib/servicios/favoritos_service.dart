@@ -1,55 +1,43 @@
-class ProductoFavorito {
-  final String productoId;
-  final String imagen;
-  final String titulo;
-  final String subtitulo;
-  final String precio;
+import 'dart:convert';
 
-  ProductoFavorito({
-    required this.productoId,
-    required this.imagen,
-    required this.titulo,
-    required this.subtitulo,
-    required this.precio,
-  });
-}
+import 'package:shared_preferences/shared_preferences.dart';
 
+/// Guarda en el dispositivo los ids de los productos favoritos.
+/// Solo se guardan ids: la pantalla de favoritos vuelve a pedir los
+/// productos al backend, así el precio y las fotos siempre están al día.
 class FavoritosService {
-  // Lista global en memoria para almacenar los favoritos
-  static final List<ProductoFavorito> _favoritos = [];
+  static const _clave = 'favoritos_ids';
 
-  static List<ProductoFavorito> get favoritos => _favoritos;
-
-  // Verifica si un producto ya está marcado como favorito
-  static bool esFavorito(String titulo) {
-    return _favoritos.any((prod) => prod.titulo == titulo);
+  /// Ids en orden de agregado (el último es el más reciente).
+  static Future<List<String>> obtenerIds() async {
+    final prefs = await SharedPreferences.getInstance();
+    final texto = prefs.getString(_clave);
+    if (texto == null || texto.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(texto);
+      if (decoded is List) {
+        return decoded.map((e) => e.toString()).toList();
+      }
+    } catch (_) {}
+    return [];
   }
 
-  // Agrega o quita el producto de la lista global
-  static void toggleFavorito({
-    required String productoId,
-    required String imagen,
-    required String titulo,
-    required String subtitulo,
-    required String precio,
-  }) {
-    final index = _favoritos.indexWhere((prod) => prod.titulo == titulo);
-    if (index >= 0) {
-      _favoritos.removeAt(index); // Si ya estaba, lo saca
-      print("Producto eliminado. Total en favoritos: ${_favoritos.length}");
+  static Future<bool> esFavorito(String id) async {
+    return (await obtenerIds()).contains(id);
+  }
+
+  /// Agrega el producto si no estaba y lo quita si ya estaba.
+  /// Devuelve true si quedó como favorito.
+  static Future<bool> alternar(String id) async {
+    final ids = await obtenerIds();
+    final ahoraEsFavorito = !ids.contains(id);
+    if (ahoraEsFavorito) {
+      ids.add(id);
     } else {
-      _favoritos.add(
-        ProductoFavorito(
-          productoId: productoId,
-          imagen: imagen,
-          titulo: titulo,
-          subtitulo: subtitulo,
-          precio: precio,
-        ),
-      ); // Si no estaba, lo añade
-      print(
-        "Producto guardado: $titulo. Total en favoritos: ${_favoritos.length}",
-      );
+      ids.remove(id);
     }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_clave, jsonEncode(ids));
+    return ahoraEsFavorito;
   }
 }
