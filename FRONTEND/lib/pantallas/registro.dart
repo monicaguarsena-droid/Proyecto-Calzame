@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/pantallas/home.dart';
+import 'package:frontend/pantallas/inicio_sesion.dart';
 import 'package:frontend/pantallas/verificacioncongoogle.dart';
 import 'package:frontend/servicios/auth_service.dart'; // Asegúrate de importar tu AuthService
 import 'package:shared_preferences/shared_preferences.dart';
@@ -78,7 +79,7 @@ class _RegistroState extends State<Registro> {
               );
 
               if (verifResult['success']) {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
+                Navigator.push(context, MaterialPageRoute(builder: (context) => Login()));
               } else {
                 // AQUÍ CAMBIAMOS: Lanzamos el mensaje real que venga del backend (ej. Supabase o Express)
                 throw Exception(verifResult['message'] ?? 'Código incorrecto');
@@ -143,7 +144,7 @@ class _RegistroState extends State<Registro> {
                 children: [
                   const Center(
                     child: Text(
-                      "Bienvenida a CalzaMe",
+                      "Bienvenido a Mar&Paz",
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,

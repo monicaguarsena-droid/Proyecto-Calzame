@@ -1,5 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
+import admin from "firebase-admin"; 
+import notificacionesRouter from "./routers/notificaciones.js";
+import serviceAccount from "./serviceAccountKey.json" assert { type: "json" };
 import { supabase, conectaDB } from "./config/supabase.js";
 import authRoutes from "./routers/auth.js";
 import userRouter from "./routers/user.js";
@@ -14,9 +17,12 @@ import chatRoutes from './routers/chatRouters.js';
 import ofertasRouter from "./routers/ofertas.js";
 import perfilRoutes from './routers/perfil.js';
 
-
 dotenv.config();
 conectaDB();
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 const app = express();
 app.use(express.json());
@@ -34,8 +40,7 @@ app.get('/health', (req, res) => {
     res.status(200).send('ok');
 });
 
-
-app.use('/api/auth', authRoutes); // Cambiado de '/auth' a '/api/auth'
+app.use('/api/auth', authRoutes);
 app.use('/api/usuarios', userRouter);
 app.use('/api/productos', productosRouter);
 app.use('/api/pedidos', pedidosRouter);
@@ -43,11 +48,11 @@ app.use('/api/favoritos', favoritosRouter);
 app.use('/api/categorias', categoriasRouter);
 app.use('/api/direcciones', direccionesRouter);
 app.use('/api/carrito', carritoRouter);
+app.use('/api/notificaciones', notificacionesRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ofertas', ofertasRouter);
 app.use('/api/perfil', perfilRoutes);
-
 
 const PORT = 3000;
 

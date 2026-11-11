@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/servicios/pedido_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
@@ -8,8 +9,8 @@ import 'package:frontend/pantallas/pedido.dart';
 import 'package:frontend/pantallas/detalle_pedido.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart';
 import 'package:frontend/pantallas/ubicacion_tienda.dart';
-import 'package:frontend/servicios/perfil_service.dart';
 import 'package:frontend/servicios/pedido_service.dart';
+import 'package:frontend/servicios/perfil_service.dart';
 
 String _pesos(double valor) {
   final entero = valor.toStringAsFixed(0).replaceAllMapped(
@@ -83,6 +84,18 @@ class _PerfilScreenState extends State<PerfilScreen> {
         backgroundColor: error ? ColoresApp.error : ColoresApp.success,
       ),
     );
+  }
+
+  /// Vuelve a la pantalla anterior; si no hay ninguna (se llegó con pushReplacement
+  /// desde la barra inferior), va al inicio en vez de cerrar la única pantalla.
+  void _volver() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
+    }
   }
 
   // ---------- Navegación ----------
@@ -180,165 +193,23 @@ class _PerfilScreenState extends State<PerfilScreen> {
     final perfil = _perfil;
     if (perfil == null) return;
 
-    final nombreCtrl = TextEditingController(text: perfil.nombre);
-    final telefonoCtrl = TextEditingController(text: perfil.telefono);
-    final cedulaCtrl = TextEditingController(text: perfil.cedula);
-    final tieneCedula = perfil.cedula.trim().isNotEmpty;
-    var guardando = false;
-    String? mensajeError;
-
-    await showModalBottomSheet<void>(
+    // La hoja guarda los cambios en el servidor y devuelve el perfil actualizado
+    final actualizado = await showModalBottomSheet<PerfilUsuario>(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (sheetContext) => StatefulBuilder(
-        builder: (context, setModal) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 20,
-            right: 20,
-            top: 20,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Editar Información Personal',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: ColoresApp.primary,
-                  ),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: nombreCtrl,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(labelText: 'Nombre completo'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: TextEditingController(text: perfil.email),
-                  enabled: false,
-                  decoration: const InputDecoration(
-                    labelText: 'Correo electrónico',
-                    helperText: 'El correo no se puede cambiar',
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: telefonoCtrl,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(labelText: 'Teléfono'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: cedulaCtrl,
-                  enabled: !tieneCedula,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Cédula',
-                    helperText: tieneCedula
-                        ? 'La cédula no se puede cambiar'
-                        : 'Se guarda una sola vez',
-                  ),
-                ),
-                if (mensajeError != null) ...[
-                  const SizedBox(height: 10),
-                  Text(
-                    mensajeError!,
-                    style: const TextStyle(color: Colors.red, fontSize: 12),
-                  ),
-                ],
-                const SizedBox(height: 14),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ColoresApp.primary,
-                      disabledBackgroundColor: ColoresApp.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    onPressed: guardando
-                        ? null
-                        : () async {
-                            final nombre = nombreCtrl.text.trim();
-                            final telefono = telefonoCtrl.text.trim();
-                            final digitos = telefono.replaceAll(RegExp(r'\D'), '');
-
-                            if (nombre.isEmpty) {
-                              setModal(() => mensajeError = 'Escribe tu nombre');
-                              return;
-                            }
-                            if (telefono.isNotEmpty && digitos.length < 7) {
-                              setModal(
-                                () => mensajeError = 'Escribe un teléfono válido',
-                              );
-                              return;
-                            }
-
-                            setModal(() {
-                              guardando = true;
-                              mensajeError = null;
-                            });
-                            try {
-                              final actualizado = await PerfilService.actualizar(
-                                nombre: nombre,
-                                telefono: telefono,
-                                cedula: tieneCedula ? null : cedulaCtrl.text,
-                              );
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setString('nombre', actualizado.nombre);
-                              if (!mounted) return;
-                              setState(() => _perfil = actualizado);
-                              if (sheetContext.mounted) Navigator.pop(sheetContext);
-                              _mostrar('¡Datos actualizados con éxito!', error: false);
-                            } catch (error) {
-                              if (!sheetContext.mounted) return;
-                              setModal(() {
-                                guardando = false;
-                                mensajeError = error
-                                    .toString()
-                                    .replaceFirst('Exception: ', '');
-                              });
-                            }
-                          },
-                    child: guardando
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Guardar cambios',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          ),
-        ),
-      ),
+      builder: (_) => _EditarPerfilSheet(perfil: perfil),
     );
+    if (actualizado == null || !mounted) return;
 
-    nombreCtrl.dispose();
-    telefonoCtrl.dispose();
-    cedulaCtrl.dispose();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('nombre', actualizado.nombre);
+    if (!mounted) return;
+
+    setState(() => _perfil = actualizado);
+    _mostrar('¡Datos actualizados con éxito!', error: false);
   }
 
   // ---------- Interfaz ----------
@@ -370,7 +241,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           InkWell(
-                            onTap: () => Navigator.pop(context),
+                            onTap: _volver,
                             borderRadius: BorderRadius.circular(20),
                             child: Container(
                               width: 40,
@@ -1014,6 +885,178 @@ class _HistorialPedidosSheetState extends State<_HistorialPedidosSheet> {
           onPressed: () => _eliminar(pedido),
         ),
         onTap: () => widget.onAbrir(pedido),
+      ),
+    );
+  }
+}
+
+
+/// Formulario para editar los datos. Los controladores se crean y se liberan aquí,
+/// dentro de su propio ciclo de vida, para no destruirlos mientras la hoja se cierra.
+class _EditarPerfilSheet extends StatefulWidget {
+  final PerfilUsuario perfil;
+
+  const _EditarPerfilSheet({required this.perfil});
+
+  @override
+  State<_EditarPerfilSheet> createState() => _EditarPerfilSheetState();
+}
+
+class _EditarPerfilSheetState extends State<_EditarPerfilSheet> {
+  late final TextEditingController _nombreCtrl =
+      TextEditingController(text: widget.perfil.nombre);
+  late final TextEditingController _telefonoCtrl =
+      TextEditingController(text: widget.perfil.telefono);
+  late final TextEditingController _cedulaCtrl =
+      TextEditingController(text: widget.perfil.cedula);
+
+  bool _guardando = false;
+  String? _mensajeError;
+
+  bool get _tieneCedula => widget.perfil.cedula.trim().isNotEmpty;
+
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _telefonoCtrl.dispose();
+    _cedulaCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _guardar() async {
+    if (_guardando) return;
+
+    final nombre = _nombreCtrl.text.trim();
+    final telefono = _telefonoCtrl.text.trim();
+    final digitos = telefono.replaceAll(RegExp(r'\D'), '');
+
+    if (nombre.isEmpty) {
+      setState(() => _mensajeError = 'Escribe tu nombre');
+      return;
+    }
+    if (telefono.isNotEmpty && digitos.length < 7) {
+      setState(() => _mensajeError = 'Escribe un teléfono válido');
+      return;
+    }
+
+    setState(() {
+      _guardando = true;
+      _mensajeError = null;
+    });
+
+    try {
+      final actualizado = await PerfilService.actualizar(
+        nombre: nombre,
+        telefono: telefono,
+        cedula: _tieneCedula ? null : _cedulaCtrl.text,
+      );
+      if (!mounted) return;
+      Navigator.pop(context, actualizado);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _guardando = false;
+        _mensajeError = error.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 20,
+        right: 20,
+        top: 20,
+      ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Editar Información Personal',
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+                color: ColoresApp.primary,
+              ),
+            ),
+            const SizedBox(height: 14),
+            TextField(
+              controller: _nombreCtrl,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(labelText: 'Nombre completo'),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              initialValue: widget.perfil.email,
+              enabled: false,
+              decoration: const InputDecoration(
+                labelText: 'Correo electrónico',
+                helperText: 'El correo no se puede cambiar',
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _telefonoCtrl,
+              keyboardType: TextInputType.phone,
+              decoration: const InputDecoration(labelText: 'Teléfono'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _cedulaCtrl,
+              enabled: !_tieneCedula,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                labelText: 'Cédula',
+                helperText: _tieneCedula
+                    ? 'La cédula no se puede cambiar'
+                    : 'Se guarda una sola vez',
+              ),
+            ),
+            if (_mensajeError != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                _mensajeError!,
+                style: const TextStyle(color: Colors.red, fontSize: 12),
+              ),
+            ],
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: ColoresApp.primary,
+                  disabledBackgroundColor: ColoresApp.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _guardando ? null : _guardar,
+                child: _guardando
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Guardar cambios',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
       ),
     );
   }

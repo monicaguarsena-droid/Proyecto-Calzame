@@ -30,7 +30,7 @@ class _CompraScreenState extends State<CompraScreen> {
   String _telefono = '';
   bool _cargandoDatos = true;
   final String _puntoRecogida =
-      'Tienda CalzaMe - Calle Principal #12-34, Garzón, Huila';
+      'Calzado Mar&paz - Calle Principal #12-34, Garzón, Huila';
 
   // Método de pago seleccionado
   String _metodoPago = 'Nequi';
@@ -633,7 +633,7 @@ class _CompraScreenState extends State<CompraScreen> {
             _buildCard([
               _filaResumen('Subtotal', '\$${widget.total.toStringAsFixed(0)}'),
               const SizedBox(height: 8),
-              _filaResumen('Recogida en tienda', 'Gratis'),
+              _filaResumen('Descuento', '\$0'),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 10.0),
                 child: Divider(height: 1),

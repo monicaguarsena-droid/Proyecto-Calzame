@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
@@ -15,6 +18,19 @@ import 'package:frontend/servicios/producto_service.dart';
 import 'package:frontend/servicios/ofertas_service.dart';
 import 'package:frontend/componentes/chat/chat_calzame_modal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/api_config.dart';
+
+/// Las imágenes pueden guardarse como URL completa o como ruta parcial de Cloudinary.
+String _urlImagen(String? valor) {
+  final url = (valor ?? '').trim();
+  if (url.isEmpty) return '';
+  if (url.startsWith('http')) return url;
+  final limpia = url.startsWith('/') ? url.substring(1) : url;
+  if (limpia.startsWith('upload/')) {
+    return 'https://res.cloudinary.com/vicsxzqj/$limpia';
+  }
+  return 'https://res.cloudinary.com/vicsxzqj/image/upload/$limpia';
+}
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -25,7 +41,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final int _tab = 0;
   String _nombreUsuario = '';
-  
+
   final ProductoService _productoService = ProductoService();
   late Future<List> _ofertasFuture;
   late Future<List> _tiposCalzadoFuture;
@@ -38,10 +54,54 @@ class _HomeState extends State<Home> {
     _ofertasFuture = OfertasService.listar().then((value) => value.cast());
     _tiposCalzadoFuture = CategoriaService.listar().then((value) => value.cast());
     _productosFuture = _productoService.obtenerProductos();
+
+    _inicializarNotificacionesFCM();
+  }
+  // Método para pedir permisos y obtener el token de notificaciones FCM
+  Future<void> _inicializarNotificacionesFCM() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      String? token = await messaging.getToken();
+      print('Token FCM del dispositivo: $token');
+
+      if (token != null) {
+        final prefs = await SharedPreferences.getInstance();
+        final emailUsuario = prefs.getString('email');
+
+        if (emailUsuario != null) {
+          try {
+            final response = await http.post(
+              Uri.parse('${ApiConfig.baseUrl}/usuarios/actualizar-token'),
+              headers: {'Content-Type': 'application/json'},
+              body: jsonEncode({
+                'email': emailUsuario,
+                'fcm_token': token,
+              }),
+            );
+            if (response.statusCode == 200) {
+              print('Token FCM vinculado al usuario en Supabase con éxito.');
+            } else {
+              print('Error del servidor al guardar token: ${response.body}');
+            }
+          } catch (e) {
+            print('Excepción de red al enviar el token FCM: $e');
+          }
+        }
+      }
+    } else {
+      print('El usuario denegó o no otorgó los permisos de notificación.');
+    }
   }
 
   Future<void> _cargarNombreUsuario() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       _nombreUsuario = prefs.getString('nombre') ?? 'Cliente';
     });
@@ -78,12 +138,24 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> _actualizarCatalogo() async {
+    _cargarNombreUsuario();
     setState(() {
-      _cargarNombreUsuario();
       _ofertasFuture = OfertasService.listar().then((value) => value.cast());
       _tiposCalzadoFuture = CategoriaService.listar().then((value) => value.cast());
       _productosFuture = _productoService.obtenerProductos();
     });
+    try {
+      await Future.wait([
+        _ofertasFuture,
+        _tiposCalzadoFuture,
+        _productosFuture,
+      ]);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo actualizar el catálogo: $error')),
+      );
+    }
   }
 
   @override
@@ -181,7 +253,7 @@ class _HomeState extends State<Home> {
             MaterialPageRoute(builder: (context) => const FavoritosScreen()),
           );
         },
-        child: const _Circ(Icons.favorite_border, size: 40),
+        child: const _Circ(Icons.favorite_border, size: 40, bg: Colors.white24, fg: Colors.white),
       ),
       const SizedBox(width: 8),
       GestureDetector(
@@ -191,25 +263,34 @@ class _HomeState extends State<Home> {
             MaterialPageRoute(builder: (context) => const CarritoScreen()),
           );
         },
-        child: const _Circ(Icons.shopping_bag_outlined, size: 40),
+        child: const _Circ(Icons.shopping_bag_outlined, size: 40, bg: Colors.white24, fg: Colors.white),
       ),
     ],
   );
 
   Widget _tiposCalzado() {
-    return FutureBuilder<List<Map<String, dynamic>>>(
+    return FutureBuilder<List>(
       future: _tiposCalzadoFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(height: 104, child: Center(child: CircularProgressIndicator()));
+          return const SizedBox(
+            height: 104,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+        if (snapshot.hasError) {
+          return _mensajeCaja('No se pudieron cargar los tipos de calzado.');
         }
         final tipos = snapshot.data ?? [];
-        final mostrados = tipos.isEmpty ? [] : tipos;
+        if (tipos.isEmpty) {
+          return _mensajeCaja('Aún no hay tipos de calzado registrados.');
+        }
         return SizedBox(
           height: 104,
           width: double.infinity,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
+            physics: const AlwaysScrollableScrollPhysics(),
             itemCount: tipos.length,
             itemBuilder: (context, index) {
               return Container(
@@ -224,11 +305,26 @@ class _HomeState extends State<Home> {
     );
   }
 
-  Widget _tipoCalzadoCard(Map<String, dynamic> tipo) {
-    final nombre = tipo['nombre']?.toString() ?? '';
+  Widget _mensajeCaja(String texto) => Container(
+    height: 104,
+    alignment: Alignment.center,
+    decoration: BoxDecoration(
+      color: ColoresApp.surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: ColoresApp.border),
+    ),
+    child: Text(
+      texto,
+      style: const TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
+    ),
+  );
+
+  Widget _tipoCalzadoCard(dynamic item) {
+    final tipo = Map<String, dynamic>.from(item as Map);
+    final nombre = (tipo['nombre'] ?? tipo['titulo'] ?? '').toString();
     final descripcion = tipo['descripcion']?.toString() ?? '';
-    final imagen = tipo['imagen_url']?.toString() ?? '';
-   
+    final imagen = (tipo['imagen_url'] ?? tipo['imagen'] ?? '').toString();
+
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -271,7 +367,7 @@ class _HomeState extends State<Home> {
             ],
           );
         }
-       return Row(
+        return Row(
           children: [
             for (var i = 0; i < productos.length; i++) ...[
               if (i > 0) const SizedBox(width: 10),
@@ -286,7 +382,7 @@ class _HomeState extends State<Home> {
                     );
                   },
                   child: _Destacada(
-                    productos[i].imagenes.isNotEmpty ? productos[i].imagenes.first : '', // 📸 Primera imagen de la lista
+                    productos[i].imagenPrincipal,
                     productos[i].nombre,
                     productos[i].descripcion,
                     '\$${productos[i].precio.toStringAsFixed(0)}',
@@ -433,49 +529,178 @@ class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
     return FutureBuilder<List>(
       future: widget.ofertasFuture,
       builder: (context, snapshot) {
-        if (!snapshot.hasData || (snapshot.data ?? []).isEmpty) {
-          return Container(height: 165, decoration: BoxDecoration(color: ColoresApp.primary, borderRadius: BorderRadius.circular(24)));
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _bannerVacio('Cargando ofertas...');
         }
-        _promociones = snapshot.data!;
+        if (snapshot.hasError) {
+          return _bannerVacio('No se pudieron cargar las ofertas');
+        }
+        _promociones = snapshot.data ?? [];
+        if (_promociones.isEmpty) {
+          return _bannerVacio('Las nuevas ofertas aparecerán aquí');
+        }
+        if (_paginaActual >= _promociones.length) {
+          _paginaActual = 0;
+        }
         return ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: SizedBox(
             height: 165,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: _promociones.length,
-              itemBuilder: (context, index) {
-                final promo = _promociones[index];
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Image.network(promo['imagen_url'] ?? '', fit: BoxFit.cover, errorBuilder: (_,__,___) => Container(color: ColoresApp.primary)),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(promo['titulo'] ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-                        ],
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: _pageController,
+                  onPageChanged: (index) => setState(() => _paginaActual = index),
+                  itemCount: _promociones.length,
+                  itemBuilder: (context, index) {
+                    final promo = _promociones[index];
+                    final imagen = _urlImagen(promo['imagen_url']?.toString());
+                    final tag = promo['tag']?.toString() ?? '';
+                    final descuento = promo['descuento']?.toString() ?? '';
+                    final descripcion = promo['descripcion']?.toString() ?? '';
+                    return Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (imagen.isNotEmpty)
+                          Image.network(
+                            imagen,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _fondoBanner(),
+                          )
+                        else
+                          _fondoBanner(),
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Colors.black54, Colors.black26, Colors.black45],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                tag.isEmpty ? 'OFERTA' : tag,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  letterSpacing: 2,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                promo['titulo']?.toString() ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 23,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const Spacer(),
+                              if (descuento.isNotEmpty)
+                                Text(
+                                  descuento,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              if (descripcion.isNotEmpty)
+                                Text(
+                                  descripcion,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                if (_promociones.length > 1)
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: Row(
+                      children: List.generate(
+                        _promociones.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.only(left: 5),
+                          height: 6,
+                          width: _paginaActual == index ? 18 : 6,
+                          decoration: BoxDecoration(
+                            color: _paginaActual == index ? Colors.white : Colors.white38,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
                       ),
                     ),
-                  ],
-                );
-              },
+                  ),
+              ],
             ),
           ),
         );
       },
     );
   }
+
+  Widget _bannerVacio(String mensaje) => ClipRRect(
+    borderRadius: BorderRadius.circular(24),
+    child: Container(
+      height: 165,
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        mensaje,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      ),
+    ),
+  );
+
+  Widget _fondoBanner() => const DecoratedBox(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    ),
+  );
 }
 
 class _Circ extends StatelessWidget {
   final IconData icono;
+  final Color bg, fg;
   final double size;
-  const _Circ(this.icono, {required this.size});
+  const _Circ(this.icono, {required this.size, required this.bg, required this.fg});
   @override
-  Widget build(BuildContext context) => Container(width: size, height: size, decoration: const BoxDecoration(color: ColoresApp.surface, shape: BoxShape.circle), child: Icon(icono, size: size * 0.5, color: ColoresApp.primary));
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    decoration: const BoxDecoration(color: ColoresApp.surface, shape: BoxShape.circle),
+    child: Icon(icono, size: size * 0.5, color: ColoresApp.primary),
+  );
 }
 
 class _Cat extends StatelessWidget {
@@ -484,22 +709,123 @@ class _Cat extends StatelessWidget {
   const _Cat(this.icono, this.titulo, this.subtitulo);
   @override
   Widget build(BuildContext context) => Container(
-    height: 104, padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(color: ColoresApp.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: ColoresApp.border)),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Icon(icono, size: 18, color: ColoresApp.primary),
-      const Spacer(),
-      Text(titulo, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: ColoresApp.primary)),
-      Text(subtitulo, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 11, color: ColoresApp.textSecondary)),
-    ]),
+    height: 104,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: ColoresApp.surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: ColoresApp.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icono, size: 18, color: ColoresApp.primary),
+        const Spacer(),
+        Text(
+          titulo,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: ColoresApp.primary),
+        ),
+        Text(
+          subtitulo,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 11, color: ColoresApp.textSecondary),
+        ),
+      ],
+    ),
   );
 }
 
 class _TipoCalzadoCard extends StatelessWidget {
-  final String titulo, subtitulo, imagenUrl;
-  const _TipoCalzadoCard({required this.titulo, required this.subtitulo, required this.imagenUrl});
+  final String titulo;
+  final String subtitulo;
+  final String imagenUrl;
+
+  const _TipoCalzadoCard({
+    required this.titulo,
+    required this.subtitulo,
+    required this.imagenUrl,
+  });
+
   @override
-  Widget build(BuildContext context) => Container(decoration: BoxDecoration(color: ColoresApp.primary, borderRadius: BorderRadius.circular(16)));
+  Widget build(BuildContext context) {
+    final url = _urlImagen(imagenUrl);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        height: 104,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [ColoresApp.primaryLight, ColoresApp.primaryDark],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (url.isNotEmpty)
+              Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.black87, Colors.black38, Colors.transparent],
+                  begin: Alignment.bottomCenter,
+                  end: Alignment.topCenter,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.35),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.category_outlined,
+                      size: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(
+                    subtitulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _Destacada extends StatelessWidget {
@@ -553,6 +879,8 @@ class _Destacada extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   subtitulo,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(fontSize: 11, color: Colors.white70),
                 ),
                 const Spacer(),

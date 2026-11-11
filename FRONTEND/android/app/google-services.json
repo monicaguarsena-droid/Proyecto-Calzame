@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "15702634721",
+    "project_id": "calzado-marypaz",
+    "storage_bucket": "calzado-marypaz.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:15702634721:android:27d0b79fafdf73648847a0",
+        "android_client_info": {
+          "package_name": "com.example.calzame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSOCpjrm-IlijecsDKX55mSNBkK4SnnXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

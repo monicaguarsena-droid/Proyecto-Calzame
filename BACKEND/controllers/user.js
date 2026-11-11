@@ -104,3 +104,35 @@ export const deleteUsuario = async (req,res)=>{
         });
     }
 };
+// Actualizar el token FCM del usuario
+export const actualizarTokenFCM = async (req, res) => {
+    try {
+        const { email, fcm_token } = req.body;
+
+        if (!email || !fcm_token) {
+            return res.status(400).json({ error: 'El email y el fcm_token son obligatorios' });
+        }
+
+        // Buscamos primero al usuario por email para obtener su ID
+        const { data: usuarioExistente, error: errorBusqueda } = await obtenerPorEmail(email);
+
+        if (errorBusqueda || !usuarioExistente) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        // Actualizamos únicamente el campo fcm_token
+        const { data, error } = await actualizarUsuario(usuarioExistente.id, { fcm_token });
+
+        if (error) {
+            return res.status(500).json({ error: 'Error al actualizar el token FCM' });
+        }
+
+        return res.status(200).json({ 
+            mensaje: 'Token FCM actualizado exitosamente',
+            usuario: data 
+        });
+    } catch (error) {
+        console.error('Error al actualizar el token FCM:', error);
+        return res.status(500).json({ error: 'Error interno al actualizar el token FCM' });
+    }
+};

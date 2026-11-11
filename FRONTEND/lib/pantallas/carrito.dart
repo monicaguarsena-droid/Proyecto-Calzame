@@ -79,6 +79,18 @@ class _CarritoScreenState extends State<CarritoScreen> {
     );
   }
 
+  /// Vuelve a la pantalla anterior; si no hay ninguna (se llegó con pushReplacement
+  /// desde la barra inferior), va al inicio en vez de cerrar la única pantalla.
+  void _volver() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
+    }
+  }
+
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
@@ -110,6 +122,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
   /// Abre el detalle con el producto real; si no se encontró, arma uno básico.
   void _abrirDetalle(ItemCarrito item) {
     final producto =
+        item.producto ??
         ProductoModel(
           id: item.productoId,
           nombre: item.titulo,
@@ -227,7 +240,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
     return Row(
       children: [
         InkWell(
-          onTap: () => Navigator.pop(context),
+          onTap: _volver,
           borderRadius: BorderRadius.circular(20),
           child: Container(
             width: 40,
