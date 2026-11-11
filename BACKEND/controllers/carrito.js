@@ -7,39 +7,56 @@ import {
 } from '../modelos/carrito.js';
 import { supabase } from '../config/supabase.js';
 
-const usuarioCarritoId = (req) => req.usuario.cedula ?? req.usuario.id;
+// El carrito se asocia al id del usuario (usuarios.id), que nunca es nulo.
+// La cédula puede ser NULL (por ejemplo, usuarios registrados con Google).
+const usuarioCarritoId = (req) =>
+    req.usuario?.id ?? req.usuario?.userId ?? req.usuario?.usuario_id;
 
 export const postItemCarrito = async (req, res) => {
     try {
         const { producto_id, cantidad = 1, talla = 'Única', color = 'Único' } = req.body;
+        const productoIdNumero = Number(producto_id);
         const cantidadNumero = Number(cantidad);
-        if (!producto_id || !Number.isInteger(cantidadNumero) || cantidadNumero < 1) {
+
+        if (!Number.isInteger(productoIdNumero) || !Number.isInteger(cantidadNumero) || cantidadNumero < 1) {
             return res.status(400).json({ error: 'El producto y una cantidad válida son obligatorios' });
+        }
+
+        const usuarioId = usuarioCarritoId(req);
+        if (usuarioId === undefined || usuarioId === null || usuarioId === '') {
+            console.error('❌ Carrito: el token no trae el id del usuario. req.usuario =', req.usuario);
+            return res.status(401).json({ error: 'No se pudo identificar al usuario desde el token' });
         }
 
         const { data: producto, error: errorProducto } = await supabase
             .from('Productos')
             .select('Precio')
-            .eq('id', producto_id)
+            .eq('id', productoIdNumero)
             .single();
         if (errorProducto || !producto) {
+            console.error('❌ Carrito: producto no encontrado', productoIdNumero, errorProducto);
             return res.status(404).json({ error: 'No se encontró el producto seleccionado' });
         }
 
-        const { data, error } = await agregarAlCarrito({
-            usuario_id: usuarioCarritoId(req),
-            producto_id,
+        const { data, error, actualizado } = await agregarAlCarrito({
+            usuario_id: usuarioId,
+            producto_id: productoIdNumero,
             cantidad: cantidadNumero,
             precio: Number(producto.Precio),
             talla,
             color
         });
         if (error) {
+            console.error('❌ Carrito: falló el guardado. usuario_id =', usuarioId, '| error =', error);
             return res.status(500).json({ error: 'Error al agregar producto al carrito', detalle: error.message });
         }
 
-        return res.status(201).json({ message: 'Producto agregado al carrito', item: data });
+        // 200 si ya existía el mismo producto/talla/color y se sumó la cantidad; 201 si es nuevo
+        return res
+            .status(actualizado ? 200 : 201)
+            .json({ message: 'Producto agregado al carrito', item: data });
     } catch (error) {
+        console.error('❌ Carrito: error inesperado', error);
         return res.status(500).json({ error: error.message });
     }
 };
@@ -48,6 +65,7 @@ export const getCarritoUsuario = async (req, res) => {
     try {
         const { data, error } = await obtenerCarritoPorUsuario(usuarioCarritoId(req));
         if (error) {
+            console.error('❌ Carrito: error al obtener', error);
             return res.status(500).json({ error: 'Error al obtener el carrito', detalle: error.message });
         }
         return res.status(200).json({ carrito: data ?? [] });

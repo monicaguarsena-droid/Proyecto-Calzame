@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
+import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/pantallas/compra.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
@@ -103,6 +104,29 @@ class _CarritoScreenState extends State<CarritoScreen> {
     return CarritoService.itemsCarrito.fold(
       0,
       (sum, item) => sum + (item.precio * item.cantidad),
+    );
+  }
+
+  /// Abre el detalle con el producto real; si no se encontró, arma uno básico.
+  void _abrirDetalle(ItemCarrito item) {
+    final producto =
+        ProductoModel(
+          id: item.productoId,
+          nombre: item.titulo,
+          descripcion: item.subtitulo,
+          precio: item.precio,
+          imagenes: [item.imagen],
+          categoria: '',
+          stock: 0,
+          tallas: [item.talla],
+          colores: const [],
+        );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetalleProductoScreen(producto: producto),
+      ),
     );
   }
 
@@ -277,20 +301,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DetalleProductoScreen(
-                  productoId: item.productoId,
-                  imagen: item.imagen,
-                  titulo: item.titulo,
-                  subtitulo: item.subtitulo,
-                  precio: '\$${item.precio.toStringAsFixed(0)}',
-                ),
-              ),
-            );
-          },
+          onTap: () => _abrirDetalle(item),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Row(

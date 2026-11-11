@@ -39,17 +39,19 @@ class ProductoCard extends StatelessWidget {
     );
   }
 
+  
   Widget _construirImagen() {
-    final String? imagen = producto.imagenUrl;
-    final double alturaFoto = 150.0; // Altura original del primer diseño
+    // 📸 Obtenemos la primera imagen de la lista de forma segura
+    final String imagen = producto.imagenes.isNotEmpty ? producto.imagenes.first : '';
+    final double alturaFoto = 150.0;
 
-    if (imagen == null || imagen.isEmpty) {
+    if (imagen.isEmpty) {
       return Container(
         height: alturaFoto,
         width: double.infinity,
         color: Colors.pink.shade50,
         child: const Icon(
-          Icons.shopping_bag_rounded, // Icono original del primer diseño
+          Icons.shopping_bag_rounded,
           size: 64,
           color: Color(0xFFE91E63),
         ),

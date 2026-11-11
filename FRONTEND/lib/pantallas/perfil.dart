@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/home.dart';
@@ -9,7 +7,17 @@ import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/pedido.dart';
 import 'package:frontend/pantallas/detalle_pedido.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart';
-import 'package:frontend/pantallas/ubicacion_tienda.dart'; // Importa la pantalla del mapa
+import 'package:frontend/pantallas/ubicacion_tienda.dart';
+import 'package:frontend/servicios/perfil_service.dart';
+import 'package:frontend/servicios/pedido_service.dart';
+
+String _pesos(double valor) {
+  final entero = valor.toStringAsFixed(0).replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (_) => '.',
+  );
+  return '\$$entero';
+}
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -21,415 +29,585 @@ class PerfilScreen extends StatefulWidget {
 class _PerfilScreenState extends State<PerfilScreen> {
   final int _tab = 3; // Pestaña Cuenta seleccionada
 
-  // Datos de la cuenta (iniciales vacíos o por defecto mientras cargan de la BD)
-  String _nombre = '';
-  String _email = '';
-  String _telefono = 'No registrado';
+  PerfilUsuario? _perfil;
+  bool _cargando = true;
+  String? _errorCarga;
   bool _notificacionesActivas = true;
-  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _cargarDatosUsuario();
+    _cargarPerfil();
   }
 
-  // 1. Cargar datos desde SharedPreferences o el Backend
-  Future<void> _cargarDatosUsuario() async {
+  // ---------- Datos ----------
+
+  /// Carga los datos reales desde la base de datos (tabla usuarios).
+  Future<void> _cargarPerfil() async {
+    setState(() {
+      _cargando = true;
+      _errorCarga = null;
+    });
     try {
+      final perfil = await PerfilService.obtener();
       final prefs = await SharedPreferences.getInstance();
-      
-      String? emailGuardado = prefs.getString('email');
-      String? nombreGuardado = prefs.getString('nombre');
-      String? token = prefs.getString('token');
-
-      if (mounted) {
-        setState(() {
-          if (nombreGuardado != null && nombreGuardado.isNotEmpty) {
-            _nombre = nombreGuardado;
-          }
-          if (emailGuardado != null && emailGuardado.isNotEmpty) {
-            _email = emailGuardado;
-          }
-        });
-      }
-
-      if (emailGuardado != null && emailGuardado.isNotEmpty) {
-        final response = await http.get(
-          Uri.parse('http://10.0.2.2:3000/usuarios/perfil?email=$emailGuardado'),
-          headers: {
-            'Content-Type': 'application/json',
-            if (token != null) 'Authorization': 'Bearer $token',
-          },
+      await prefs.setString('nombre', perfil.nombre);
+      await prefs.setString('email', perfil.email);
+      if (!mounted) return;
+      setState(() {
+        _perfil = perfil;
+        _cargando = false;
+      });
+    } catch (error) {
+      // Si no hay conexión mostramos lo último que se guardó en el teléfono
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      setState(() {
+        _perfil = PerfilUsuario(
+          nombre: prefs.getString('nombre') ?? '',
+          cedula: '',
+          telefono: '',
+          email: prefs.getString('email') ?? '',
         );
-
-        if (response.statusCode == 200) {
-          final data = jsonDecode(response.body);
-          final usuarioBD = (data is Map && data.containsKey('usuario'))
-              ? data['usuario']
-              : data;
-
-          if (mounted && usuarioBD != null) {
-            setState(() {
-              _nombre = usuarioBD['nombre'] ?? usuarioBD['nombre_completo'] ?? usuarioBD['name'] ?? 'sin nombre';
-              _email = usuarioBD['email'] ?? usuarioBD['correo'] ?? _email;
-              _telefono = usuarioBD['telefono'] ?? usuarioBD['phone'] ?? _telefono;
-            });
-          }
-        }
-      }
-    } catch (e) {
-      print('Excepción al cargar el perfil desde la BD: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+        _cargando = false;
+        _errorCarga = error.toString().replaceFirst('Exception: ', '');
+      });
     }
   }
 
-  // 2. Función para actualizar los datos en el Backend
-  Future<void> _actualizarDatosEnBD(String nuevoNombre, String nuevoEmail, String nuevoTelefono) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
-
-      final response = await http.put(
-        Uri.parse('http://10.0.2.2:3000/api/usuarios/actualizar'),
-        headers: {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'emailActual': _email,
-          'nombre': nuevoNombre,
-          'email': nuevoEmail,
-          'telefono': nuevoTelefono,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        await prefs.setString('nombre', nuevoNombre);
-        await prefs.setString('email', nuevoEmail);
-      }
-    } catch (e) {
-      print('Error al actualizar en el servidor: $e');
-    }
+  void _mostrar(String mensaje, {bool error = true}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: error ? ColoresApp.error : ColoresApp.success,
+      ),
+    );
   }
+
+  // ---------- Navegación ----------
 
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
     if (index == 0) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const Home()),
+      );
     } else if (index == 1) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CarritoScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const CarritoScreen()),
+      );
     } else if (index == 2) {
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const FavoritosScreen()));
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const FavoritosScreen()),
+      );
     }
   }
 
-  // Modal para ver el historial de pedidos
+  Future<void> _cerrarSesion() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Solo se borran los datos de la sesión (así no se pierden, por ejemplo, los favoritos)
+    for (final clave in ['token', 'jwt_token', 'email', 'nombre', 'cedula', 'telefono']) {
+      await prefs.remove(clave);
+    }
+
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const Login()),
+      (route) => false,
+    );
+  }
+
+  // ---------- Pedidos ----------
+
+  /// Convierte un pedido de la base de datos al modelo que usa la pantalla de detalle.
+  Pedido _aPedido(PedidoAdminModel p) {
+    return Pedido(
+      idPedido: 'ORD-${p.id}',
+      fechaHora: p.fecha ?? DateTime.now(),
+      items: p.detalles
+          .map(
+            (d) => ItemCarrito(
+              id: '',
+              productoId: '',
+              imagen: d.imagen,
+              titulo: d.producto,
+              subtitulo: 'Talla ${d.talla}  •  Color ${d.color}',
+              precio: d.precioUnitario,
+              talla: d.talla,
+              color: d.color,
+              cantidad: d.cantidad,
+            ),
+          )
+          .toList(),
+      total: p.total,
+      metodoPago: p.metodoPago.isEmpty ? 'No registrado' : p.metodoPago,
+      direccion: 'Tienda CalzaMe - Calle Principal #12-34, Garzón, Huila',
+      telefono: p.celular.isEmpty ? 'No registrado' : p.celular,
+      nombreCliente: p.cliente,
+      estado: p.estado,
+    );
+  }
+
   void _mostrarHistorialPedidos() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          height: MediaQuery.of(context).size.height * 0.6,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Mis Pedidos Realizados',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: ColoresApp.primary),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Selecciona un pedido para ver el detalle completo.',
-                style: TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
-              ),
-              const SizedBox(height: 14),
-              const Divider(height: 1),
-              const SizedBox(height: 10),
-              Expanded(
-                child: HistorialPedidosService.listaPedidos.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Aún no tienes pedidos registrados.',
-                          style: TextStyle(color: ColoresApp.textSecondary, fontSize: 14),
-                        ),
-                      )
-                    : ListView.builder(
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: HistorialPedidosService.listaPedidos.length,
-                        itemBuilder: (context, index) {
-                          final pedido = HistorialPedidosService.listaPedidos[index];
-                          String fecha = '${pedido.fechaHora.day}/${pedido.fechaHora.month}/${pedido.fechaHora.year}';
-                          
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: ColoresApp.border),
-                            ),
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              leading: Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: ColoresApp.primary.withOpacity(0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Icon(Icons.shopping_bag, color: ColoresApp.primary, size: 20),
-                              ),
-                              title: Text(
-                                'Pedido #${pedido.idPedido}',
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: ColoresApp.primary),
-                              ),
-                              subtitle: Text(
-                                'Fecha: $fecha  •  Estado: ${pedido.estado}\nTotal: \$${pedido.total.toStringAsFixed(0)}',
-                                style: const TextStyle(fontSize: 11, color: ColoresApp.textSecondary, height: 1.3),
-                              ),
-                              isThreeLine: true,
-                              trailing: const Icon(Icons.arrow_forward_ios, size: 14, color: ColoresApp.primary),
-                              onTap: () {
-                                Navigator.pop(context);
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => DetallePedidoScreen(pedido: pedido),
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
-              ),
-            ],
-          ),
-        );
-      },
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => _HistorialPedidosSheet(
+        onAbrir: (pedido) {
+          Navigator.pop(sheetContext);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => DetallePedidoScreen(pedido: _aPedido(pedido)),
+            ),
+          );
+        },
+      ),
     );
   }
 
-  // Modal para editar Nombre, Correo y Teléfono
-  void _mostrarModalEdicion() {
-    final nombreCtrl = TextEditingController(text: _nombre);
-    final emailCtrl = TextEditingController(text: _email);
-    final telefonoCtrl = TextEditingController(text: _telefono);
+  // ---------- Edición ----------
 
-    showModalBottomSheet(
+  Future<void> _mostrarModalEdicion() async {
+    final perfil = _perfil;
+    if (perfil == null) return;
+
+    final nombreCtrl = TextEditingController(text: perfil.nombre);
+    final telefonoCtrl = TextEditingController(text: perfil.telefono);
+    final cedulaCtrl = TextEditingController(text: perfil.cedula);
+    final tieneCedula = perfil.cedula.trim().isNotEmpty;
+    var guardando = false;
+    String? mensajeError;
+
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return Padding(
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setModal) => Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 20, right: 20, top: 20,
+            left: 20,
+            right: 20,
+            top: 20,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Editar Información Personal', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: ColoresApp.primary)),
-              const SizedBox(height: 14),
-              TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre completo')),
-              const SizedBox(height: 10),
-              TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Correo electrónico (Gmail)')),
-              const SizedBox(height: 10),
-              TextField(controller: telefonoCtrl, decoration: const InputDecoration(labelText: 'Teléfono')),
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ColoresApp.primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Editar Información Personal',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.bold,
+                    color: ColoresApp.primary,
                   ),
-                  onPressed: () async {
-                    setState(() {
-                      _nombre = nombreCtrl.text;
-                      _email = emailCtrl.text;
-                      _telefono = telefonoCtrl.text;
-                    });
-
-                    await _actualizarDatosEnBD(_nombre, _email, _telefono);
-
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('¡Datos actualizados con éxito!'), backgroundColor: ColoresApp.success),
-                    );
-                  },
-                  child: const Text('Guardar cambios', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 ),
-              ),
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 14),
+                TextField(
+                  controller: nombreCtrl,
+                  textCapitalization: TextCapitalization.words,
+                  decoration: const InputDecoration(labelText: 'Nombre completo'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: TextEditingController(text: perfil.email),
+                  enabled: false,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo electrónico',
+                    helperText: 'El correo no se puede cambiar',
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: telefonoCtrl,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(labelText: 'Teléfono'),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: cedulaCtrl,
+                  enabled: !tieneCedula,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Cédula',
+                    helperText: tieneCedula
+                        ? 'La cédula no se puede cambiar'
+                        : 'Se guarda una sola vez',
+                  ),
+                ),
+                if (mensajeError != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    mensajeError!,
+                    style: const TextStyle(color: Colors.red, fontSize: 12),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: ColoresApp.primary,
+                      disabledBackgroundColor: ColoresApp.primary,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: guardando
+                        ? null
+                        : () async {
+                            final nombre = nombreCtrl.text.trim();
+                            final telefono = telefonoCtrl.text.trim();
+                            final digitos = telefono.replaceAll(RegExp(r'\D'), '');
+
+                            if (nombre.isEmpty) {
+                              setModal(() => mensajeError = 'Escribe tu nombre');
+                              return;
+                            }
+                            if (telefono.isNotEmpty && digitos.length < 7) {
+                              setModal(
+                                () => mensajeError = 'Escribe un teléfono válido',
+                              );
+                              return;
+                            }
+
+                            setModal(() {
+                              guardando = true;
+                              mensajeError = null;
+                            });
+                            try {
+                              final actualizado = await PerfilService.actualizar(
+                                nombre: nombre,
+                                telefono: telefono,
+                                cedula: tieneCedula ? null : cedulaCtrl.text,
+                              );
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setString('nombre', actualizado.nombre);
+                              if (!mounted) return;
+                              setState(() => _perfil = actualizado);
+                              if (sheetContext.mounted) Navigator.pop(sheetContext);
+                              _mostrar('¡Datos actualizados con éxito!', error: false);
+                            } catch (error) {
+                              if (!sheetContext.mounted) return;
+                              setModal(() {
+                                guardando = false;
+                                mensajeError = error
+                                    .toString()
+                                    .replaceFirst('Exception: ', '');
+                              });
+                            }
+                          },
+                    child: guardando
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text(
+                            'Guardar cambios',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
-        );
-      },
+        ),
+      ),
     );
+
+    nombreCtrl.dispose();
+    telefonoCtrl.dispose();
+    cedulaCtrl.dispose();
   }
+
+  // ---------- Interfaz ----------
 
   @override
   Widget build(BuildContext context) {
+    final perfil = _perfil;
+    final nombre = (perfil?.nombre ?? '').trim();
+
     return Scaffold(
       backgroundColor: ColoresApp.background,
       body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: ColoresApp.primary))
-            : SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                child: Column(
-                  children: [
-                    // Encabezado
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        InkWell(
-                          onTap: () => Navigator.pop(context),
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                            child: const Icon(Icons.arrow_back, color: ColoresApp.primary, size: 20),
-                          ),
-                        ),
-                        const Text('MI CUENTA', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: ColoresApp.primary)),
-                        const SizedBox(width: 40),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Avatar y Nombre dinámico
-                    Container(
-                      width: 90,
-                      height: 90,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: ColoresApp.primary, width: 2),
-                        color: const Color(0xFFEFE6EE),
-                      ),
-                      child: const Icon(Icons.person, size: 50, color: ColoresApp.primary),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(_nombre, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: ColoresApp.primary)),
-                    const SizedBox(height: 2),
-                    Text(_email, style: const TextStyle(fontSize: 13, color: ColoresApp.textSecondary)),
-                    const SizedBox(height: 24),
-
-                    // Tarjetas de Opciones
-                    _tarjetaOpcion(
-                      icon: Icons.shopping_bag_outlined,
-                      titulo: 'Mis pedidos',
-                      subtitulo: 'Revisa el estado de tus compras',
-                      onTap: _mostrarHistorialPedidos,
-                    ),
-                    const SizedBox(height: 12),
-                    _tarjetaOpcion(
-                      icon: Icons.person_outline,
-                      titulo: 'Editar información personal',
-                      subtitulo: 'Nombre, Gmail, teléfono',
-                      onTap: _mostrarModalEdicion,
-                    ),
-                    const SizedBox(height: 12),
-                    // Tarjeta modificada para ver la ubicación del local en Garzón Huila
-                    _tarjetaOpcion(
-                      icon: Icons.storefront_outlined,
-                      titulo: 'Ubicación de la tienda',
-                      subtitulo: 'Garzón, Huila (Recogida en local)',
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const UbicacionTiendaScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 12),
-
-                    // Configuración con Switch de Notificaciones
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: ColoresApp.border),
-                      ),
-                      child: Row(
+        child: _cargando
+            ? const Center(
+                child: CircularProgressIndicator(color: ColoresApp.primary),
+              )
+            : RefreshIndicator(
+                color: ColoresApp.primary,
+                onRefresh: _cargarPerfil,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: ColoresApp.primary.withOpacity(0.08),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(Icons.notifications_outlined, color: ColoresApp.primary, size: 22),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Notificaciones push', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: ColoresApp.primary)),
-                                const SizedBox(height: 2),
-                                Text(_notificacionesActivas ? 'Activadas' : 'Desactivadas', style: const TextStyle(fontSize: 12, color: ColoresApp.textSecondary)),
-                              ],
+                          InkWell(
+                            onTap: () => Navigator.pop(context),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              width: 40,
+                              height: 40,
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_back,
+                                color: ColoresApp.primary,
+                                size: 20,
+                              ),
                             ),
                           ),
-                          Switch(
-                            value: _notificacionesActivas,
-                            activeColor: ColoresApp.primary,
-                            onChanged: (value) {
-                              setState(() {
-                                _notificacionesActivas = value;
-                              });
-                            },
+                          const Text(
+                            'MI CUENTA',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: ColoresApp.primary,
+                            ),
                           ),
+                          const SizedBox(width: 40),
                         ],
                       ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Botón Cerrar Sesión
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF7A1D32),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          elevation: 0,
+                      const SizedBox(height: 20),
+                      Container(
+                        width: 90,
+                        height: 90,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: ColoresApp.primary, width: 2),
+                          color: const Color(0xFFEFE6EE),
                         ),
-                        onPressed: () async {
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.clear();
+                        child: const Icon(
+                          Icons.person,
+                          size: 50,
+                          color: ColoresApp.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        nombre.isEmpty ? 'Completa tu nombre' : nombre,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: ColoresApp.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        perfil?.email ?? '',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: ColoresApp.textSecondary,
+                        ),
+                      ),
+                      if (_errorCarga != null) ...[
+                        const SizedBox(height: 12),
+                        InkWell(
+                          onTap: _cargarPerfil,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'No se pudieron cargar tus datos ($_errorCarga). Toca para reintentar.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.red,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
 
-                          if (!context.mounted) return;
-                          Navigator.of(context).pushAndRemoveUntil(
-                            MaterialPageRoute(builder: (context) => const Login()),
-                            (route) => false,
+                      // Datos de la cuenta
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: ColoresApp.border),
+                        ),
+                        child: Column(
+                          children: [
+                            _filaDato(
+                              Icons.badge_outlined,
+                              'Cédula',
+                              perfil?.cedula ?? '',
+                            ),
+                            const Divider(height: 22),
+                            _filaDato(
+                              Icons.phone_outlined,
+                              'Teléfono',
+                              perfil?.telefono ?? '',
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      _tarjetaOpcion(
+                        icon: Icons.shopping_bag_outlined,
+                        titulo: 'Mis pedidos',
+                        subtitulo: 'Revisa el estado de tus compras',
+                        onTap: _mostrarHistorialPedidos,
+                      ),
+                      const SizedBox(height: 12),
+                      _tarjetaOpcion(
+                        icon: Icons.person_outline,
+                        titulo: 'Editar información personal',
+                        subtitulo: 'Nombre, teléfono, cédula',
+                        onTap: _mostrarModalEdicion,
+                      ),
+                      const SizedBox(height: 12),
+                      _tarjetaOpcion(
+                        icon: Icons.storefront_outlined,
+                        titulo: 'Ubicación de la tienda',
+                        subtitulo: 'Garzón, Huila (Recogida en local)',
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const UbicacionTiendaScreen(),
+                            ),
                           );
                         },
-                        child: const Text('Cerrar sesión', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Text('🔒 Tus datos están protegidos y seguros', style: TextStyle(fontSize: 11, color: ColoresApp.textSecondary)),
-                    const SizedBox(height: 20),
-                  ],
+                      const SizedBox(height: 12),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: ColoresApp.border),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: ColoresApp.primary.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.notifications_outlined,
+                                color: ColoresApp.primary,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Notificaciones push',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: ColoresApp.primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    _notificacionesActivas
+                                        ? 'Activadas'
+                                        : 'Desactivadas',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: ColoresApp.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: _notificacionesActivas,
+                              activeColor: ColoresApp.primary,
+                              onChanged: (value) {
+                                setState(() => _notificacionesActivas = value);
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF7A1D32),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: _cerrarSesion,
+                          child: const Text(
+                            'Cerrar sesión',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        '🔒 Tus datos están protegidos y seguros',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: ColoresApp.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
       ),
@@ -437,7 +615,39 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
-  Widget _tarjetaOpcion({required IconData icon, required String titulo, required String subtitulo, required VoidCallback onTap}) {
+  Widget _filaDato(IconData icono, String etiqueta, String valor) {
+    final vacio = valor.trim().isEmpty;
+    return Row(
+      children: [
+        Icon(icono, color: ColoresApp.primary, size: 20),
+        const SizedBox(width: 12),
+        Text(
+          etiqueta,
+          style: const TextStyle(
+            fontSize: 13,
+            color: ColoresApp.textSecondary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const Spacer(),
+        Text(
+          vacio ? 'Sin registrar' : valor,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: vacio ? ColoresApp.textSecondary : ColoresApp.primary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _tarjetaOpcion({
+    required IconData icon,
+    required String titulo,
+    required String subtitulo,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
@@ -463,13 +673,32 @@ class _PerfilScreenState extends State<PerfilScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(titulo, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: ColoresApp.primary)),
+                  Text(
+                    titulo,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: ColoresApp.primary,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text(subtitulo, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: ColoresApp.textSecondary)),
+                  Text(
+                    subtitulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: ColoresApp.textSecondary,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, size: 14, color: ColoresApp.textSecondary),
+            const Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: ColoresApp.textSecondary,
+            ),
           ],
         ),
       ),
@@ -502,15 +731,289 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(_tab == i ? items[i].$2 : items[i].$1, size: 22, color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary),
+                      Icon(
+                        _tab == i ? items[i].$2 : items[i].$1,
+                        size: 22,
+                        color: _tab == i
+                            ? ColoresApp.primary
+                            : ColoresApp.textSecondary,
+                      ),
                       const SizedBox(height: 2),
-                      Text(items[i].$3, style: TextStyle(fontSize: 11, fontWeight: _tab == i ? FontWeight.w700 : FontWeight.w400, color: _tab == i ? ColoresApp.primary : ColoresApp.textSecondary)),
+                      Text(
+                        items[i].$3,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight:
+                              _tab == i ? FontWeight.w700 : FontWeight.w400,
+                          color: _tab == i
+                              ? ColoresApp.primary
+                              : ColoresApp.textSecondary,
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Historial de pedidos del cliente, leído de la base de datos.
+/// El cliente puede quitar un pedido de su lista manualmente.
+class _HistorialPedidosSheet extends StatefulWidget {
+  final void Function(PedidoAdminModel pedido) onAbrir;
+
+  const _HistorialPedidosSheet({required this.onAbrir});
+
+  @override
+  State<_HistorialPedidosSheet> createState() => _HistorialPedidosSheetState();
+}
+
+class _HistorialPedidosSheetState extends State<_HistorialPedidosSheet> {
+  bool _cargando = true;
+  String? _error;
+  List<PedidoAdminModel> _pedidos = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _cargar();
+  }
+
+  Future<void> _cargar({bool spinner = true}) async {
+    if (spinner) {
+      setState(() {
+        _cargando = true;
+        _error = null;
+      });
+    }
+    try {
+      final lista = await PedidosService.listarMios();
+      if (!mounted) return;
+      setState(() {
+        _pedidos = lista;
+        _cargando = false;
+        _error = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _cargando = false;
+        _error = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
+  Color _colorEstado(String estado) {
+    switch (estado) {
+      case 'Listo para recoger':
+        return Colors.blue;
+      case 'Entregado':
+        return Colors.green;
+      case 'Cancelado':
+        return Colors.red;
+      default:
+        return Colors.orange;
+    }
+  }
+
+  Future<void> _eliminar(PedidoAdminModel pedido) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar pedido'),
+        content: Text(
+          '¿Quieres quitar el pedido #ORD-${pedido.id} de tu historial? La tienda conserva el registro de la compra.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+
+    try {
+      await PedidosService.ocultar(pedido.id);
+      if (!mounted) return;
+      setState(() => _pedidos.removeWhere((p) => p.id == pedido.id));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
+          backgroundColor: ColoresApp.error,
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      height: MediaQuery.of(context).size.height * 0.7,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Mis Pedidos Realizados',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: ColoresApp.primary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Toca un pedido para ver el detalle completo.',
+            style: TextStyle(fontSize: 12, color: ColoresApp.textSecondary),
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+          Expanded(child: _contenido()),
+        ],
+      ),
+    );
+  }
+
+  Widget _contenido() {
+    if (_cargando) {
+      return const Center(
+        child: CircularProgressIndicator(color: ColoresApp.primary),
+      );
+    }
+
+    return RefreshIndicator(
+      color: ColoresApp.primary,
+      onRefresh: () => _cargar(spinner: false),
+      child: _error != null
+          ? _mensaje(
+              'No se pudieron cargar tus pedidos.\n$_error',
+              accion: TextButton(
+                onPressed: _cargar,
+                child: const Text('Reintentar'),
+              ),
+            )
+          : _pedidos.isEmpty
+              ? _mensaje('Aún no tienes pedidos registrados.')
+              : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: _pedidos.length,
+                  itemBuilder: (context, index) => _tarjeta(_pedidos[index]),
+                ),
+    );
+  }
+
+  Widget _mensaje(String texto, {Widget? accion}) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: 260,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    texto,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: ColoresApp.textSecondary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                if (accion != null) accion,
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _tarjeta(PedidoAdminModel pedido) {
+    final fecha = pedido.fecha;
+    final fechaTexto = fecha == null
+        ? 'Sin fecha'
+        : '${fecha.day}/${fecha.month}/${fecha.year}';
+    final color = _colorEstado(pedido.estado);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: ColoresApp.border),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.only(left: 16, right: 4, top: 6, bottom: 6),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: ColoresApp.primary.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.shopping_bag, color: ColoresApp.primary, size: 20),
+        ),
+        title: Text(
+          'Pedido #ORD-${pedido.id}',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+            color: ColoresApp.primary,
+          ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Fecha: $fechaTexto  •  Total: ${_pesos(pedido.total)}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: ColoresApp.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  pedido.estado,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        trailing: IconButton(
+          tooltip: 'Eliminar de mi historial',
+          icon: const Icon(Icons.delete_outline, color: ColoresApp.error, size: 22),
+          onPressed: () => _eliminar(pedido),
+        ),
+        onTap: () => widget.onAbrir(pedido),
       ),
     );
   }

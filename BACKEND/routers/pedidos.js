@@ -1,12 +1,27 @@
 import express from 'express';
-import { postPedido, getPedidosUsuario } from '../controllers/pedidos.js';
+import {
+    postPedido,
+    getMisPedidos,
+    putOcultarPedido,
+    getPedidosAdmin,
+    putEstadoPedido,
+    deletePedido
+} from '../controllers/pedidos.js';
+import { verificarToken, verificarAdmin } from '../middlewares/authmiddleware.js';
 
 const router = express.Router();
 
-// guardar un pedido nuevbo
-router.post('/crear', postPedido);
+// Todas las rutas de pedidos requieren sesión iniciada
+router.use(verificarToken);
 
-// ver compras de un cliente que uno quiera buscar 
-router.get('/usuario/:usuario_id', getPedidosUsuario);
+// Cliente
+router.post('/crear', postPedido);
+router.get('/mis-pedidos', getMisPedidos);
+router.put('/:id/ocultar', putOcultarPedido);
+
+// Administrador
+router.get('/admin', verificarAdmin, getPedidosAdmin);
+router.put('/:id/estado', verificarAdmin, putEstadoPedido);
+router.delete('/:id', verificarAdmin, deletePedido);
 
 export default router;

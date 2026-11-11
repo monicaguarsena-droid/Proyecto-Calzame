@@ -27,9 +27,7 @@ class _AdminTiposCalzadoPageState extends State<AdminTiposCalzadoPage> {
 
   Future<void> _editarTipo({Map<String, dynamic>? tipo}) async {
     final nombre = TextEditingController(text: tipo?['nombre']?.toString());
-    final descripcion = TextEditingController(
-      text: tipo?['descripcion']?.toString(),
-    );
+    
     File? imagen;
     final formKey = GlobalKey<FormState>();
     var guardando = false;
@@ -111,15 +109,7 @@ class _AdminTiposCalzadoPageState extends State<AdminTiposCalzadoPage> {
                         ? 'Escribe el nombre del tipo'
                         : null,
                   ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: descripcion,
-                    maxLines: 2,
-                    decoration: const InputDecoration(
-                      labelText: 'Descripción',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
+                  
                   const SizedBox(height: 18),
                   SizedBox(
                     width: double.infinity,
@@ -142,7 +132,6 @@ class _AdminTiposCalzadoPageState extends State<AdminTiposCalzadoPage> {
                                   imagen: imagen,
                                   campos: {
                                     'nombre': nombre.text.trim(),
-                                    'descripcion': descripcion.text.trim(),
                                   },
                                 );
                                 if (!mounted || !sheetContext.mounted) return;
@@ -179,7 +168,6 @@ class _AdminTiposCalzadoPageState extends State<AdminTiposCalzadoPage> {
       ),
     );
     nombre.dispose();
-    descripcion.dispose();
   }
 
   Widget _imagenGuardada(String? url) {
@@ -318,11 +306,6 @@ class _AdminTiposCalzadoPageState extends State<AdminTiposCalzadoPage> {
                                 color: ColoresApp.primary,
                                 fontWeight: FontWeight.bold,
                               ),
-                            ),
-                            Text(
-                              tipo['descripcion']?.toString() ?? '',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
                             ),
                             Wrap(
                               children: [

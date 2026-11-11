@@ -7,15 +7,23 @@ import 'package:frontend/api_config.dart';
 
 // Operaciones del panel administrativo sobre el calzado (requieren token de admin)
 class AdminProductService {
-  static Future<String?> _obtenerToken() async {
+  static Future<String> _obtenerToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt_token');
+    final token = prefs.getString('token') ?? prefs.getString('jwt_token');
+    if (token == null || token.isEmpty) {
+      throw Exception(
+        'Inicia sesión como administrador para guardar productos.',
+      );
+    }
+    return token;
   }
 
   static String _mensajeError(http.Response response) {
     try {
       final data = jsonDecode(response.body);
-      return (data['message'] ?? data['error'] ?? 'Error del servidor (código ${response.statusCode})')
+      return (data['message'] ??
+              data['error'] ??
+              'Error del servidor (código ${response.statusCode})')
           .toString();
     } catch (_) {
       return 'El servidor no respondió con JSON válido (código ${response.statusCode}). '
@@ -23,8 +31,6 @@ class AdminProductService {
     }
   }
 
-  // Arma la parte "imagen" de la petición multipart con Content-Type explícito:
-  // Cloudinary rechaza el archivo si no se reconoce como imagen
   static Future<http.MultipartFile> _archivoImagen(File imagen) async {
     final bytes = await imagen.readAsBytes();
     final ext = imagen.path.split('.').last.toLowerCase();
@@ -35,10 +41,11 @@ class AdminProductService {
       _ => 'jpeg',
     };
     return http.MultipartFile.fromBytes(
-      'imagen', // Nombre del campo que espera Multer en el backend
+      'Imagen',
       bytes,
       contentType: MediaType('image', subtipo),
-      filename: 'producto_${DateTime.now().millisecondsSinceEpoch}.${subtipo == 'jpeg' ? 'jpg' : subtipo}',
+      filename:
+          'producto_${DateTime.now().millisecondsSinceEpoch}.${subtipo == 'jpeg' ? 'jpg' : subtipo}',
     );
   }
 
@@ -49,12 +56,14 @@ class AdminProductService {
     required File imagen,
   }) async {
     final token = await _obtenerToken();
-
-    final request = http.MultipartRequest('POST', Uri.parse('${ApiConfig.baseUrl}/helados'));
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('${ApiConfig.baseUrl}/productos/crear'),
+    );
     request.headers['Authorization'] = 'Bearer $token';
-    request.fields['nombre'] = nombre;
-    request.fields['descripcion'] = descripcion;
-    request.fields['precio'] = precio.toString();
+    request.fields['Nombre'] = nombre;
+    request.fields['Descripcion'] = descripcion;
+    request.fields['Precio'] = precio.toString();
     request.files.add(await _archivoImagen(imagen));
 
     final response = await http.Response.fromStream(await request.send());
@@ -68,11 +77,13 @@ class AdminProductService {
     required String nombre,
     required String descripcion,
     required double precio,
-    File? imagen, // opcional: solo si el admin cambió la foto
+    File? imagen,
   }) async {
     final token = await _obtenerToken();
-
-    final request = http.MultipartRequest('PUT', Uri.parse('${ApiConfig.baseUrl}/helados/$id'));
+    final request = http.MultipartRequest(
+      'PUT',
+      Uri.parse('${ApiConfig.baseUrl}/productos/actualizar/$id'),
+    );
     request.headers['Authorization'] = 'Bearer $token';
     request.fields['nombre'] = nombre;
     request.fields['descripcion'] = descripcion;
@@ -89,9 +100,8 @@ class AdminProductService {
 
   static Future<void> eliminarProducto(String id) async {
     final token = await _obtenerToken();
-
     final response = await http.delete(
-      Uri.parse('${ApiConfig.baseUrl}/helados/$id'),
+      Uri.parse('${ApiConfig.baseUrl}/productos/eliminar/$id'),
       headers: {'Authorization': 'Bearer $token'},
     );
     if (response.statusCode != 200) {
