@@ -9,7 +9,7 @@ import 'package:frontend/pantallas/pedido.dart';
 import 'package:frontend/pantallas/detalle_pedido.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart';
 import 'package:frontend/pantallas/ubicacion_tienda.dart';
-import 'package:frontend/servicios/pedido_service.dart';
+
 import 'package:frontend/servicios/perfil_service.dart';
 
 String _pesos(double valor) {
