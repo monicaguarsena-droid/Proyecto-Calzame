@@ -7,6 +7,7 @@ import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/producto.dart';
 import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/servicios/producto_service.dart';
+import 'package:frontend/servicios/carrito_service.dart';
 import 'package:frontend/componentes/imagen_catalogo_placeholder.dart';
 import 'package:frontend/models/guia_tallas.dart';
 
@@ -107,27 +108,26 @@ class _CategoriaDamaState extends State<CategoriaDama> {
                       ),
                     ],
                   ),
-                // Botón superior actualizado con icono elegante y texto "Guía de Tallas"
-                    TextButton.icon(
-                      onPressed: () => mostrarGuiaTallasModal(context, 'Dama'),
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: ColoresApp.border),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  TextButton.icon(
+                    onPressed: () => mostrarGuiaTallasModal(context, 'Dama'),
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: ColoresApp.border),
                       ),
-                      icon: const Icon(Icons.checkroom_rounded, color: ColoresApp.primary, size: 16),
-                      label: const Text(
-                        'Guía de Tallas',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: ColoresApp.primary,
-                        ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    ),
+                    icon: const Icon(Icons.checkroom_rounded, color: ColoresApp.primary, size: 16),
+                    label: const Text(
+                      'Guía de Tallas',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: ColoresApp.primary,
                       ),
                     ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -282,7 +282,7 @@ class _CategoriaDamaState extends State<CategoriaDama> {
             ),
           ),
           const SizedBox(height: 6),
-          // Botón Agregar al carrito
+          // Botón Agregar al carrito con captura y registro de error detallado
           SizedBox(
             width: double.infinity,
             height: 34,
@@ -290,32 +290,39 @@ class _CategoriaDamaState extends State<CategoriaDama> {
               onPressed: () async {
                 try {
                   await CarritoService.agregarProducto(
-                    productoId: item.id,
+                    productoId: item.id.toString(),
                     imagen: imagen,
                     titulo: titulo,
                     subtitulo: subtitulo,
                     precioStr: precio,
+                    talla: 'Única',
+                    color: 'Único',
+                  );
+
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('¡Producto agregado al carrito!'),
+                      backgroundColor: Colors.green,
+                      duration: Duration(seconds: 1),
+                    ),
                   );
                 } catch (error) {
+                  // Imprime el error exacto en la consola de depuración para rastrearlo
+                  print("=== ERROR AL AGREGAR AL CARRITO ===");
+                  print(error);
+
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        error.toString().replaceFirst('Exception: ', ''),
+                        'Error: ${error.toString().replaceFirst('Exception: ', '')}',
                       ),
                       backgroundColor: Colors.red,
+                      duration: const Duration(seconds: 3),
                     ),
                   );
-                  return;
                 }
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('¡Producto agregado al carrito!'),
-                    backgroundColor: Colors.green,
-                    duration: Duration(seconds: 1),
-                  ),
-                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColoresApp.primary,

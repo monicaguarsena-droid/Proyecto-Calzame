@@ -1,9 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // <--- 1. Importas esto
 import '../componentes/producto_card.dart';
 import '../componentes/chat/chat_calzame_modal.dart';
 
-class MenuPage extends StatelessWidget {
+class MenuPage extends StatefulWidget { // <--- 2. Cambia a StatefulWidget
   const MenuPage({super.key});
+
+  @override
+  State<MenuPage> createState() => _MenuPageState();
+}
+
+class _MenuPageState extends State<MenuPage> {
+  String _nombreUsuario = ''; // <--- 3. Variable para guardar el nombre
+
+  @override
+  void initState() {
+    super.initState();
+    _obtenerNombre(); // <--- 4. Lo cargamos al abrir la pantalla
+  }
+
+  // Esta función busca el nombre que se guardó al iniciar sesión
+  Future<void> _obtenerNombre() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _nombreUsuario = prefs.getString('nombre') ?? 'Usuario';
+    });
+  }
 
   void _abrirChatCalzame(BuildContext context) {
     showModalBottomSheet(
@@ -47,9 +69,23 @@ class MenuPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(255, 246, 244, 1),
       appBar: AppBar(
-        title: const Text(
-          'Catálogo Calzame',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // <--- 5. AQUÍ MOSTRAMOS EL SALUDO PERSONALIZADO ARRIBA --->
+            Text(
+              _nombreUsuario.isEmpty ? '¡Hola!' : '¡Hola, $_nombreUsuario!',
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Colors.white,
+              ),
+            ),
+            const Text(
+              'Catálogo Calzame',
+              style: TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+          ],
         ),
         backgroundColor: const Color(0xFFE91E63),
         elevation: 0,

@@ -2,11 +2,13 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 
 class ApiConfig {
-  static const bool useRemote = true; // Cambiado a false para usar tu servidor local por IP
+  // Configurado en true para usar directamente el servidor en la nube de Render
+  static const bool useRemote = true;
 
-static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/api';
-  static const int _port = 3000; // Puerto del servidor local
-  static const String? _lanIp = '192.168.1.160'; // Tu IP local de Wi-Fi
+  static const String _remoteUrl = 'https://calzado-marandpaz.onrender.com/api';
+  static const int _port = 3000; 
+  
+  static const String? _lanIp = null;
 
   static String get baseUrl {
     if (useRemote) {
