@@ -1,5 +1,4 @@
 node_modules/
 .env
 upload/
-BACKEND/serviceAccountkey.json
 serviceAccountKey.json
