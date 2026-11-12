@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
@@ -43,6 +44,9 @@ class _HomeState extends State<Home> {
   String _nombreUsuario = '';
 
   final ProductoService _productoService = ProductoService();
+  final FlutterLocalNotificationsPlugin _notificacionesLocales =
+      FlutterLocalNotificationsPlugin();
+  StreamSubscription<RemoteMessage>? _suscripcionMensajes;
   late Future<List> _ofertasFuture;
   late Future<List> _tiposCalzadoFuture;
   late Future<List<ProductoModel>> _productosFuture;
@@ -59,6 +63,40 @@ class _HomeState extends State<Home> {
   }
   // Método para pedir permisos y obtener el token de notificaciones FCM
   Future<void> _inicializarNotificacionesFCM() async {
+    const canal = AndroidNotificationChannel(
+      'calzame_notifications',
+      'Notificaciones',
+      description: 'Notificaciones de CalzaMe',
+      importance: Importance.high,
+    );
+    await _notificacionesLocales.initialize(
+      const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+      ),
+    );
+    await _notificacionesLocales
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(canal);
+    _suscripcionMensajes = FirebaseMessaging.onMessage.listen((mensaje) {
+      final notificacion = mensaje.notification;
+      if (notificacion == null) return;
+      _notificacionesLocales.show(
+        mensaje.hashCode,
+        notificacion.title,
+        notificacion.body,
+        const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'calzame_notifications',
+            'Notificaciones',
+            channelDescription: 'Notificaciones de CalzaMe',
+            importance: Importance.high,
+            priority: Priority.high,
+          ),
+        ),
+      );
+    });
+
     FirebaseMessaging messaging = FirebaseMessaging.instance;
 
     NotificationSettings settings = await messaging.requestPermission(
@@ -97,6 +135,12 @@ class _HomeState extends State<Home> {
     } else {
       print('El usuario denegó o no otorgó los permisos de notificación.');
     }
+  }
+
+  @override
+  void dispose() {
+    _suscripcionMensajes?.cancel();
+    super.dispose();
   }
 
   Future<void> _cargarNombreUsuario() async {

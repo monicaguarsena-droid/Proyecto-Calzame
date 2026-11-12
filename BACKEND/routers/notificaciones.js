@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import admin from '../config/firebase.js';
+import messaging from '../config/firebase.js';
 
 const router = Router();
 
@@ -23,7 +23,7 @@ router.post('/enviar', async (req, res) => {
   };
 
   try {
-    const response = await admin.messaging().send(message);
+    const response = await messaging.send(message);
     console.log('Notificación enviada correctamente:', response);
     res.status(200).json({ success: true, messageId: response });
   } catch (error) {

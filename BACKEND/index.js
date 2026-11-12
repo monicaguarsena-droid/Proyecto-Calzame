@@ -1,6 +1,5 @@
 import express from "express";
 import dotenv from "dotenv";
-import admin from "firebase-admin"; 
 import notificacionesRouter from "./routers/notificaciones.js";
 import { supabase, conectaDB } from "./config/supabase.js";
 import authRoutes from "./routers/auth.js";
@@ -16,22 +15,8 @@ import chatRoutes from './routers/chatRouters.js';
 import ofertasRouter from "./routers/ofertas.js";
 import perfilRoutes from './routers/perfil.js';
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const serviceAccount = JSON.parse(
-  fs.readFileSync(path.join(__dirname, './serviceAccountKey.json'), 'utf8')
-);
-
 dotenv.config();
 conectaDB();
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
 
 const app = express();
 app.use(express.json());

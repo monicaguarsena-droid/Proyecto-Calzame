@@ -1,4 +1,4 @@
-import { obtenerUsuarios, obtenerUsuarioPorId, actualizarUsuario, eliminarUsuario} from "../modelos/user.js";
+import { obtenerUsuarios, obtenerUsuarioPorId, obtenerPorEmail, actualizarUsuario, eliminarUsuario} from "../modelos/user.js";
 import bcrypt from 'bcrypt';
 
 //obtener todos los usuarios

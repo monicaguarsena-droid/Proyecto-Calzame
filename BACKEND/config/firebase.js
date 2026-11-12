@@ -1,6 +1,6 @@
-import pkg from 'firebase-admin';
-const { admin } = pkg;
-import admin from 'firebase-admin';
+import 'dotenv/config';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,15 +12,12 @@ if (process.env.FIREBASE_CREDENTIALS) {
 } else {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
-  const jsonPath = path.join(__dirname, '../serviceAccountKey.json');
+  const jsonPath = path.join(__dirname, '../serviceAccountkey.json');
   serviceAccount = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 }
 
-// Validación de seguridad para asegurarnos de que admin está definido
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-  });
-}
+const app = getApps().length === 0
+  ? initializeApp({ credential: cert(serviceAccount) })
+  : getApps()[0];
 
-export default admin;
+export default getMessaging(app);
