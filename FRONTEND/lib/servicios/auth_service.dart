@@ -33,6 +33,7 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
   }
   //Registrarse con Correo, Contraseña, Cédula y Nombre
   Future<Map<String, dynamic>> registerWithEmail({
+    required String tipoDocumento,
     required String cedula,
     required String nombre,
     required String email,
@@ -43,6 +44,7 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
         Uri.parse('$baseUrl/auth/register'), // Asegúrate de que esta ruta coincida con la de tu Node.js/Express
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
+          'tipoDocumento': tipoDocumento,
           'cedula': cedula,
           'nombre': nombre,
           'email': email,
@@ -136,6 +138,7 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
           'email': googleUser.email,
           'name': googleUser.displayName,
           'photoUrl': googleUser.photoUrl,
+          'tipoDocumento': 'CC',
         }),
       );
 

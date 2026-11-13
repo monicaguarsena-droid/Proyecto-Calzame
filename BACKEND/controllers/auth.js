@@ -1,42 +1,62 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {supabase} from '../config/supabase.js';
-import { crearUsuario,obtenerPorEmail} from '../modelos/user.js';
+import { crearUsuario,obtenerPorEmail,obtenerPorDocumento} from '../modelos/user.js';
 import { enviarCodigoVerificacion } from '../utils/emailservices.js';
 
 
 //registro
-export const registro = async (req,res)=>{
-    try{
-        const {cedula, nombre,email,contrasena}=req.body;
-        //validar datos
-    
-    if(!cedula||!nombre||!email||!contrasena){
-        return res.status (400).json({
-            error: 'faltan datos'
-        });
-    }
-    //verificamos el gmail si ya existe
-    const {data: usuarioExiste} = await obtenerPorEmail(email);
-    if(usuarioExiste){
-        return res.status(400).json({
-            error: 'El Email ya esta registrado'
-        });
-    }
-    //encriptar la contraseña
-    const hashedPassword = await bcrypt.hash(contrasena, 10);
 
-    //crear la constante  para rol por default
+export const registro = async (req, res) => {
+    try {
+        const { tipo_documento, cedula, nombre, email, contrasena } = req.body;
 
-    const rolpordefecto = 'usuario';
+        // validar datos
+        if (!tipo_documento || !cedula || !nombre || !email || !contrasena) {
+            return res.status(400).json({ error: 'faltan datos' });
+        }
 
-    //generar codigo de verificacion
-    const codigoVerificacion = Math.floor(100000 + Math.random() * 900000).toString();
-    const codigoVerificacionExpiracion = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
-    
-     //guardarmos la base de datos
-    const {data,error} = await crearUsuario(cedula,nombre,email,hashedPassword,rolpordefecto,codigoVerificacion,codigoVerificacionExpiracion);
-    
+        if (!['CC', 'TI'].includes(tipo_documento)) {
+            return res.status(400).json({ error: 'Tipo de documento inválido' });
+        }
+
+        if (!/^\d{6,11}$/.test(String(cedula))) {
+            return res.status(400).json({
+                error: 'El número de documento debe tener entre 6 y 11 dígitos'
+            });
+        }
+
+        // verificamos si el email ya existe
+        const { data: usuarioExiste } = await obtenerPorEmail(email);
+        if (usuarioExiste) {
+            return res.status(400).json({ error: 'El Email ya esta registrado' });
+        }
+
+        // verificamos si el documento ya existe
+        const { data: documentoExiste } = await obtenerPorDocumento(tipo_documento, cedula);
+        if (documentoExiste) {
+            return res.status(400).json({ error: 'Este documento ya esta registrado' });
+        }
+
+        // encriptar la contraseña
+        const hashedPassword = await bcrypt.hash(contrasena, 10);
+        const rolpordefecto = 'usuario';
+
+        // generar codigo de verificacion
+        const codigoVerificacion = Math.floor(100000 + Math.random() * 900000).toString();
+        const codigoVerificacionExpiracion = new Date(Date.now() + 15 * 60 * 1000);
+
+        // guardamos en la base de datos
+        const { data, error } = await crearUsuario(
+            tipo_documento,
+            cedula,
+            nombre,
+            email,
+            hashedPassword,
+            rolpordefecto,
+            codigoVerificacion,
+            codigoVerificacionExpiracion
+        );
     if(error){
         return res.status(500).json({
             error: 'Error al registrar el usuario'
@@ -49,6 +69,7 @@ export const registro = async (req,res)=>{
 
     const  usuarioRespuesta = {
         id: usuarioCreado.id,
+        tipo_documento: usuarioCreado.tipo_documento,
         cedula: usuarioCreado.cedula,
         nombre: usuarioCreado.nombre,
         email: usuarioCreado.email,

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart';
 import 'package:frontend/pantallas/verificacioncongoogle.dart';
-import 'package:frontend/servicios/auth_service.dart'; // Asegúrate de importar tu AuthService
+import 'package:frontend/servicios/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Registro extends StatefulWidget {
@@ -15,8 +16,13 @@ class Registro extends StatefulWidget {
 class _RegistroState extends State<Registro> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controladores para los campos de texto
-  final TextEditingController _cedulaController = TextEditingController();
+  // Colores
+  static const Color primaryColor = Color.fromARGB(255, 96, 24, 46);
+  static const Color backgroundColor = Color.fromARGB(255, 251, 248, 246);
+  static const Color labelColor = Color.fromARGB(255, 97, 27, 48);
+
+  // Controladores
+  final TextEditingController _documentoController = TextEditingController();
   final TextEditingController _nombreController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _contrasenaController = TextEditingController();
@@ -25,13 +31,16 @@ class _RegistroState extends State<Registro> {
 
   final AuthService _authService = AuthService();
 
+  // 'CC' = Cédula de ciudadanía, 'TI' = Tarjeta de identidad
+  String _tipoDocumento = 'CC';
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
 
   @override
   void dispose() {
-    _cedulaController.dispose();
+    _documentoController.dispose();
     _nombreController.dispose();
     _emailController.dispose();
     _contrasenaController.dispose();
@@ -51,43 +60,51 @@ class _RegistroState extends State<Registro> {
     setState(() => _isLoading = true);
 
     final result = await _authService.registerWithEmail(
-      cedula: _cedulaController.text.trim(),
+      tipoDocumento: _tipoDocumento,
+      cedula: _documentoController.text.trim(),
       nombre: _nombreController.text.trim(),
       email: _emailController.text.trim(),
       contrasena: _contrasenaController.text.trim(),
     );
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (result['success']) {
       _showSnackBar('¡Registro exitoso! Revisa tu correo');
 
+      final email = _emailController.text.trim();
+
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('email', _emailController.text.trim());
+      await prefs.setString('email', email);
       await prefs.setString('nombre', _nombreController.text.trim());
-      //Navegamos a la pantalla de VerificaciónCorreo
+      await prefs.setString('tipo_documento', _tipoDocumento);
+
+      if (!mounted) return;
+
+      // Navegamos a la pantalla de VerificaciónCorreo
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => VerificacionCorreo(
-            email: _emailController.text.trim(),
+          builder: (ctx) => VerificacionCorreo(
+            email: email,
             onVerificar: (codigo) async {
-              // Llamamos al servicio de backend para verificar el código en la BD
               final verifResult = await _authService.verificarCodigo(
-                _emailController.text.trim(),
+                email,
                 codigo,
               );
 
               if (verifResult['success']) {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => Login()));
+                Navigator.push(
+                  ctx,
+                  MaterialPageRoute(builder: (context) => Login()),
+                );
               } else {
-                // AQUÍ CAMBIAMOS: Lanzamos el mensaje real que venga del backend (ej. Supabase o Express)
                 throw Exception(verifResult['message'] ?? 'Código incorrecto');
               }
             },
             onReenviar: () async {
-              // Llamamos al servicio para solicitar un nuevo código de verificación
-              await _authService.reenviarCodigo(_emailController.text.trim());
+              await _authService.reenviarCodigo(email);
             },
           ),
         ),
@@ -102,6 +119,7 @@ class _RegistroState extends State<Registro> {
 
     final result = await _authService.loginWithGoogle();
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (result['success']) {
@@ -115,18 +133,100 @@ class _RegistroState extends State<Registro> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: const Color.fromARGB(255, 96, 24, 46),
+        backgroundColor: primaryColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Helpers de UI
+  // ---------------------------------------------------------------------------
+
+  Widget _label(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontWeight: FontWeight.bold,
+        color: labelColor,
+        fontSize: 15,
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({
+    required IconData icon,
+    required String hint,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      prefixIcon: Icon(
+        icon,
+        color: const Color.fromARGB(255, 135, 134, 134),
+        size: 20,
+      ),
+      suffixIcon: suffixIcon,
+      hintText: hint,
+      hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: primaryColor, width: 1.5),
+      ),
+    );
+  }
+
+  Widget _tipoDocumentoChip({required String value, required String text}) {
+    final selected = _tipoDocumento == value;
+    return Expanded(
+      child: ChoiceChip(
+        label: SizedBox(
+          width: double.infinity,
+          child: Text(text, textAlign: TextAlign.center),
+        ),
+        selected: selected,
+        selectedColor: primaryColor,
+        backgroundColor: Colors.white,
+        showCheckmark: false,
+        labelStyle: TextStyle(
+          color: selected ? Colors.white : primaryColor,
+          fontWeight: FontWeight.bold,
+          fontSize: 13,
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: selected ? primaryColor : Colors.grey.shade300,
+          ),
+        ),
+        onSelected: (_) {
+          setState(() {
+            _tipoDocumento = value;
+            _documentoController.clear();
+          });
+        },
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
-    const primaryColor = Color.fromARGB(255, 96, 24, 46);
-    const backgroundColor = Color.fromARGB(255, 251, 248, 246);
-
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
@@ -161,53 +261,46 @@ class _RegistroState extends State<Registro> {
                   ),
                   const SizedBox(height: 28),
 
-                  // Cédula
-                  const Text(
-                    "Cédula",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 97, 27, 48),
-                      fontSize: 15,
-                    ),
+                  // Tipo de documento
+                  _label("Tipo de documento"),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      _tipoDocumentoChip(value: 'CC', text: "Cédula"),
+                      const SizedBox(width: 10),
+                      _tipoDocumentoChip(
+                        value: 'TI',
+                        text: "Tarjeta de identidad",
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Número de documento
+                  _label(
+                    _tipoDocumento == 'CC'
+                        ? "Número de cédula"
+                        : "Número de tarjeta de identidad",
                   ),
                   const SizedBox(height: 6),
                   TextFormField(
-                    controller: _cedulaController,
+                    controller: _documentoController,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                    ],
                     style: const TextStyle(color: primaryColor, fontSize: 14),
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.credit_card,
-                        color: Colors.grey,
-                        size: 20,
-                      ),
-                      hintText: "0000000000",
-                      hintStyle: const TextStyle(
-                        color: Colors.black26,
-                        fontSize: 14,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: primaryColor,
-                          width: 1.5,
-                        ),
-                      ),
+                    decoration: _inputDecoration(
+                      icon: Icons.credit_card,
+                      hint: "Número de documento",
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Ingresa tu cédula';
+                        return 'Ingresa tu número de documento';
+                      }
+                      if (value.length < 6) {
+                        return 'El número de documento es muy corto';
                       }
                       return null;
                     },
@@ -215,50 +308,17 @@ class _RegistroState extends State<Registro> {
                   const SizedBox(height: 16),
 
                   // Nombre completo
-                  const Text(
-                    "Nombre completo",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 97, 27, 48),
-                      fontSize: 15,
-                    ),
-                  ),
+                  _label("Nombre completo"),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _nombreController,
                     style: const TextStyle(color: primaryColor, fontSize: 14),
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.person_outline,
-                        color: Colors.grey,
-                        size: 20,
-                      ),
-                      hintText: "Nombre y apellido",
-                      hintStyle: const TextStyle(
-                        color: Colors.black26,
-                        fontSize: 14,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: primaryColor,
-                          width: 1.5,
-                        ),
-                      ),
+                    decoration: _inputDecoration(
+                      icon: Icons.person_outline,
+                      hint: "Nombre y apellido",
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
+                      if (value == null || value.trim().isEmpty) {
                         return 'Ingresa tu nombre completo';
                       }
                       return null;
@@ -267,48 +327,15 @@ class _RegistroState extends State<Registro> {
                   const SizedBox(height: 16),
 
                   // Correo electrónico
-                  const Text(
-                    "Correo electrónico",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 97, 27, 48),
-                      fontSize: 15,
-                    ),
-                  ),
+                  _label("Correo electrónico"),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     style: const TextStyle(color: primaryColor, fontSize: 14),
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.email_outlined,
-                        color: Colors.grey,
-                        size: 20,
-                      ),
-                      hintText: "ejemplo@correo.com",
-                      hintStyle: const TextStyle(
-                        color: Colors.black26,
-                        fontSize: 14,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: primaryColor,
-                          width: 1.5,
-                        ),
-                      ),
+                    decoration: _inputDecoration(
+                      icon: Icons.email_outlined,
+                      hint: "ejemplo@correo.com",
                     ),
                     validator: (value) {
                       if (value == null ||
@@ -322,25 +349,15 @@ class _RegistroState extends State<Registro> {
                   const SizedBox(height: 16),
 
                   // Contraseña
-                  const Text(
-                    "Contraseña",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 100, 27, 49),
-                      fontSize: 15,
-                    ),
-                  ),
+                  _label("Contraseña"),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _contrasenaController,
                     obscureText: _obscurePassword,
                     style: const TextStyle(color: primaryColor, fontSize: 14),
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.lock_outline,
-                        color: Color.fromARGB(255, 135, 134, 134),
-                        size: 20,
-                      ),
+                    decoration: _inputDecoration(
+                      icon: Icons.lock_outline,
+                      hint: "••••••••",
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
@@ -350,33 +367,8 @@ class _RegistroState extends State<Registro> {
                           size: 20,
                         ),
                         onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
+                          setState(() => _obscurePassword = !_obscurePassword);
                         },
-                      ),
-                      hintText: "••••••••",
-                      hintStyle: const TextStyle(
-                        color: Colors.black26,
-                        fontSize: 14,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: primaryColor,
-                          width: 1.5,
-                        ),
                       ),
                     ),
                     validator: (value) {
@@ -389,25 +381,15 @@ class _RegistroState extends State<Registro> {
                   const SizedBox(height: 16),
 
                   // Confirmar contraseña
-                  const Text(
-                    "Confirmar contraseña",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 100, 27, 49),
-                      fontSize: 15,
-                    ),
-                  ),
+                  _label("Confirmar contraseña"),
                   const SizedBox(height: 6),
                   TextFormField(
                     controller: _confirmcontrasenaController,
                     obscureText: _obscureConfirmPassword,
                     style: const TextStyle(color: primaryColor, fontSize: 14),
-                    decoration: InputDecoration(
-                      prefixIcon: const Icon(
-                        Icons.lock_outline,
-                        color: Color.fromARGB(255, 135, 134, 134),
-                        size: 20,
-                      ),
+                    decoration: _inputDecoration(
+                      icon: Icons.lock_outline,
+                      hint: "••••••••",
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscureConfirmPassword
@@ -421,29 +403,6 @@ class _RegistroState extends State<Registro> {
                             _obscureConfirmPassword = !_obscureConfirmPassword;
                           });
                         },
-                      ),
-                      hintText: "••••••••",
-                      hintStyle: const TextStyle(
-                        color: Colors.black26,
-                        fontSize: 14,
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(
-                          color: primaryColor,
-                          width: 1.5,
-                        ),
                       ),
                     ),
                     validator: (value) {
@@ -501,9 +460,7 @@ class _RegistroState extends State<Registro> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                      onPressed: () => Navigator.pop(context),
                       child: const Text(
                         "Ya tengo cuenta",
                         style: TextStyle(
@@ -557,9 +514,9 @@ class _RegistroState extends State<Registro> {
                         ),
                       ),
                       onPressed: _isLoading ? null : _handleGoogleRegister,
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Text(
                             "G",
                             style: TextStyle(

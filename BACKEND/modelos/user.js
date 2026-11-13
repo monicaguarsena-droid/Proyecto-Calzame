@@ -1,19 +1,20 @@
 import { supabase } from '../config/supabase.js';
 
-export const crearUsuario = async (cedula,nombre, email, contrasena, rol, codigoVerificacion, codigoVerificacionExpiracion) => {
+export const crearUsuario = async (tipo_documento, cedula, nombre, email, contrasena, rol, codigoVerificacion, codigoVerificacionExpiracion) => {
     const { data, error } = await supabase
         .from('usuarios')
-        .insert({ 
-            cedula:Number(cedula),
-            nombre, 
-            email, 
-            contrasena, 
+        .insert({
+            tipo_documento,
+            cedula: Number(cedula),
+            nombre,
+            email,
+            contrasena,
             rol: rol || 'usuario',
             isVerified: false,
             codigoVerificacion,
             codigoVerificacionExpiracion
         })
-        .select('id, cedula, nombre, email, rol, isVerified');
+        .select('id, tipo_documento, cedula, nombre, email, rol, isVerified');
     return { data, error };
 };
 
@@ -21,7 +22,7 @@ export const crearUsuario = async (cedula,nombre, email, contrasena, rol, codigo
 export const obtenerUsuarios = async () => {
     const { data, error } = await supabase
         .from('usuarios')
-        .select('id, cedula, nombre, email, rol,isVerified');
+        .select('id, tipo_documento, cedula, nombre, email, rol, isVerified');
     return { data, error };
 };
 
@@ -34,23 +35,32 @@ export const obtenerPorEmail = async (email) => {
         .maybeSingle();
     return { data, error };
 };
-
+export const obtenerPorDocumento = async (tipo_documento, cedula) => {
+    const { data, error } = await supabase
+        .from('usuarios')
+        .select('id')
+        .eq('tipo_documento', tipo_documento)
+        .eq('cedula', Number(cedula))
+        .maybeSingle();
+    return { data, error };
+};
 // Obtener un usuario por id
 export const obtenerUsuarioPorId = async (id) => {
     const { data, error } = await supabase
         .from('usuarios')
-        .select('id, cedula, nombre, email, rol,isVerified')
+        .select('id, tipo_documento, cedula, nombre, email, rol, isVerified')
         .eq('id', id)
         .single();
     return { data, error };
 };
 
 //funcion especifica para los usuarios autenticados con google
-export const crearUsuarioGoogle = async ({cedula,nombre,email,googleId, avatar = null, rol = 'cliente'}) => {
+export const crearUsuarioGoogle = async ({tipo_documento, cedula, nombre, email, googleId, avatar = null, rol = 'cliente'}) => {
     const {data,error} = await supabase
     .from('usuarios')
     .insert({
-        cedula,
+        tipo_documento,
+        cedula: Number(cedula),
         nombre,
         email,
         contrasena: null, //no requiere contraseña
@@ -61,7 +71,7 @@ export const crearUsuarioGoogle = async ({cedula,nombre,email,googleId, avatar =
         codigoVerificacion: null,
         codigoVerificacionExpiracion:null
     })
-    .select('id,cedula,nombre,rol,avatar')
+    .select('id, tipo_documento, cedula, nombre, email, rol, isVerified')
     .single();
 
     return {data,error};
