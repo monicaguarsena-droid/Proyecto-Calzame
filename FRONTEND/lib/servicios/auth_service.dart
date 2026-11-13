@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:frontend/api_config.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -33,38 +34,44 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
   }
   //Registrarse con Correo, Contraseña, Cédula y Nombre
   Future<Map<String, dynamic>> registerWithEmail({
-    required String tipoDocumento,
-    required String cedula,
-    required String nombre,
-    required String email,
-    required String contrasena,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'), // Asegúrate de que esta ruta coincida con la de tu Node.js/Express
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'tipoDocumento': tipoDocumento,
-          'cedula': cedula,
-          'nombre': nombre,
-          'email': email,
-          'contrasena': contrasena,
-        }),
-      );
+  required String tipoDocumento,
+  required String cedula,
+  required String nombre,
+  required String email,
+  required String contrasena,
+}) async {
+  try {
+final url = Uri.parse('$baseUrl/auth/register');print('POST a: $url');
 
-      final data = jsonDecode(response.body);
+final response = await http.post(
+  url,
+  headers: {'Content-Type': 'application/json'},
+  body: jsonEncode({
+    'tipo_documento': tipoDocumento,
+    'cedula': cedula,
+    'nombre': nombre,
+    'email': email,
+    'contrasena': contrasena,
+  }),
+);
 
-      // Aceptamos 200 o 201 como respuestas exitosas de creación
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {'success': true, 'data': data};
-      } else {
-        return {'success': false, 'message': data['message'] ?? 'Error al registrar el usuario'};
-      }
-    } catch (e) {
-      return {'success': false, 'message': 'Error de conexión con el servidor: $e'};
+print('STATUS: ${response.statusCode}');
+print('BODY: ${response.body}');
+
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode == 201) {
+      return {'success': true, 'data': data};
     }
-  }
-
+    return {
+      'success': false,
+      'message': data['error'] ?? data['message'] ?? 'Error al registrar el usuario',
+    };
+  } catch (e) {
+  print('ERROR registerWithEmail: $e');
+  return {'success': false, 'message': 'No se pudo conectar con el servidor'};
+}
+}
   // Verificar el código de 6 dígitos con el backend
   Future<Map<String, dynamic>> verificarCodigo(String email, String codigo) async {
     try {
@@ -109,6 +116,43 @@ final GoogleSignIn _googleSignIn = GoogleSignIn(
       return {'success': false, 'message': 'Error de conexión: $e'};
     }
   }
+
+  // Guarda la sesión igual que el login normal (sirve para Google y correo)
+Future<void> guardarSesion(Map<String, dynamic> data) async {
+  final prefs = await SharedPreferences.getInstance();
+  final usuario = data['usuario'] is Map
+      ? Map<String, dynamic>.from(data['usuario'])
+      : <String, dynamic>{};
+
+  final token = data['token'];
+  if (token is String) await prefs.setString('token', token);
+
+  final email = (usuario['email'] ?? '').toString().trim();
+  final nombre = (usuario['nombre'] ??
+          (email.isNotEmpty ? email.split('@').first : 'Usuario'))
+      .toString();
+  final rol = (usuario['rol'] ?? '').toString().trim();
+
+  await prefs.setString('email', email);
+  await prefs.setString('nombre', nombre);
+  await prefs.setString('user_email', email);
+  await prefs.setString('user_name', nombre);
+  await prefs.setString('user_role', rol);
+
+  // Datos opcionales: si no vienen, se borran los de una sesión anterior
+  Future<void> opcional(String clave, dynamic valor) async {
+    if (valor != null && valor.toString().isNotEmpty) {
+      await prefs.setString(clave, valor.toString());
+    } else {
+      await prefs.remove(clave);
+    }
+  }
+
+  await opcional('cedula', usuario['cedula']);
+  await opcional('tipo_documento', usuario['tipo_documento']);
+  await opcional('telefono', usuario['telefono']);
+  await opcional('avatar', usuario['avatar']);
+}
 
   // Iniciar sesión / Registro con Google (Guarda automáticamente en la BD del Backend/Supabase)
   Future<Map<String, dynamic>> loginWithGoogle() async {

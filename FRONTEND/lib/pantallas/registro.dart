@@ -5,6 +5,7 @@ import 'package:frontend/pantallas/inicio_sesion.dart';
 import 'package:frontend/pantallas/verificacioncongoogle.dart';
 import 'package:frontend/servicios/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:frontend/pantallas/admin_panel.dart';
 
 class Registro extends StatefulWidget {
   const Registro({super.key});
@@ -119,19 +120,34 @@ class _RegistroState extends State<Registro> {
   }
 
   void _handleGoogleRegister() async {
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    final result = await _authService.loginWithGoogle();
+  final result = await _authService.loginWithGoogle();
+
+  if (!mounted) return;
+  setState(() => _isLoading = false);
+
+  if (result['success']) {
+    final data = Map<String, dynamic>.from(result['data']);
+    await _authService.guardarSesion(data);
+
+    final usuario = data['usuario'] is Map ? data['usuario'] : {};
+    final email = (usuario['email'] ?? '').toString().trim().toLowerCase();
+    final rol = (usuario['rol'] ?? '').toString().toLowerCase();
+    final esAdmin = email == 'monicaguarsena@gmail.com' || rol == 'admin';
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    if (result['success']) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
-    } else {
-      _showSnackBar(result['message'] ?? 'Error con Google');
-    }
+    // Limpia la pila para que "atrás" no vuelva al registro
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => esAdmin ? AdminPanel() : Home()),
+      (route) => false,
+    );
+  } else {
+    _showSnackBar(result['message'] ?? 'Error con Google');
   }
+}
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(

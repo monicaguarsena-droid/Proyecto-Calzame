@@ -55,26 +55,26 @@ export const obtenerUsuarioPorId = async (id) => {
 };
 
 //funcion especifica para los usuarios autenticados con google
-export const crearUsuarioGoogle = async ({tipo_documento, cedula, nombre, email, googleId, avatar = null, rol = 'cliente'}) => {
-    const {data,error} = await supabase
-    .from('usuarios')
-    .insert({
-        tipo_documento,
-        cedula: Number(cedula),
-        nombre,
-        email,
-        contrasena: null, //no requiere contraseña
-        rol,
-        isVerified: true,
-        googleId,
-        avatar,
-        codigoVerificacion: null,
-        codigoVerificacionExpiracion:null
-    })
-    .select('id, tipo_documento, cedula, nombre, email, rol, isVerified')
-    .single();
+export const crearUsuarioGoogle = async ({ tipo_documento = null, cedula = null, nombre, email, googleId, avatar = null, rol = 'cliente' }) => {
+    const { data, error } = await supabase
+        .from('usuarios')
+        .insert({
+            tipo_documento,
+            cedula: cedula ? Number(cedula) : null,
+            nombre,
+            email,
+            contrasena: null,
+            rol,
+            isVerified: true,
+            googleId,
+            avatar,
+            codigoVerificacion: null,
+            codigoVerificacionExpiracion: null
+        })
+        .select('id, tipo_documento, cedula, nombre, email, rol, isVerified')
+        .single();
 
-    return {data,error};
+    return { data, error };
 };
  
 

@@ -94,42 +94,35 @@ class _LoginState extends State<Login> {
     }
   }
 
-  void _handleGoogleLogin() async {
-    setState(() => _isLoading = true);
+void _handleGoogleLogin() async {
+  setState(() => _isLoading = true);
 
-    final result = await _authService.loginWithGoogle();
+  final result = await _authService.loginWithGoogle();
+
+  if (!mounted) return;
+  setState(() => _isLoading = false);
+
+  if (result['success']) {
+    final data = Map<String, dynamic>.from(result['data']);
+    await _authService.guardarSesion(data);
+
+    final usuario = data['usuario'] is Map ? data['usuario'] : {};
+    final email = (usuario['email'] ?? '').toString().trim().toLowerCase();
+    final rol = (usuario['rol'] ?? '').toString().toLowerCase();
+    final esAdmin = email == _adminEmail.toLowerCase() || rol == 'admin';
 
     if (!mounted) return;
-    setState(() => _isLoading = false);
 
-    if (result['success']) {
-      final userData = result['data']?['usuario'] ?? result['usuario'] ?? {};
-      final String userEmail =
-          (userData['email'] ?? result['data']?['email'] ?? '').trim();
-      final String nombre =
-          userData['nombre'] ?? userData['name'] ?? userEmail.split('@').first;
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('email', userEmail);
-      await prefs.setString('nombre', nombre);
-
-      if (!mounted) return;
-
-      if (userEmail.toLowerCase() == _adminEmail.toLowerCase()) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => AdminPanel()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Home()),
-        );
-      }
-    } else {
-      _showSnackBar(result['message'] ?? 'Error con Google');
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => esAdmin ? AdminPanel() : Home(),
+      ),
+    );
+  } else {
+    _showSnackBar(result['message'] ?? 'Error con Google');
   }
+}
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
