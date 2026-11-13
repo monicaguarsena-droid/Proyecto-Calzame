@@ -30,12 +30,36 @@ class CubetaReporte {
   }
 }
 
+class ProductoReporteData {
+  final String nombre;
+  final int cantidadVendida;
+  final double ventas;
+  final int pedidos;
+
+  const ProductoReporteData({
+    required this.nombre,
+    required this.cantidadVendida,
+    required this.ventas,
+    required this.pedidos,
+  });
+
+  factory ProductoReporteData.fromJson(Map<String, dynamic> json) {
+    return ProductoReporteData(
+      nombre: json['nombre']?.toString() ?? 'Producto',
+      cantidadVendida: _aInt(json['cantidadVendida']),
+      ventas: _aDouble(json['ventas']),
+      pedidos: _aInt(json['pedidos']),
+    );
+  }
+}
+
 class ReporteVentasData {
   final String periodo;
   final double totalVentas;
   final int cantidadPedidos;
   final double promedioPorPedido;
   final List<CubetaReporte> desglose;
+  final List<ProductoReporteData> productos;
 
   const ReporteVentasData({
     required this.periodo,
@@ -43,11 +67,18 @@ class ReporteVentasData {
     required this.cantidadPedidos,
     required this.promedioPorPedido,
     required this.desglose,
+    required this.productos,
   });
 
   factory ReporteVentasData.fromJson(Map<String, dynamic> json) {
     final lista = (json['desglose'] as List? ?? [])
         .map((e) => CubetaReporte.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+    final productos = (json['productos'] as List? ?? [])
+        .map(
+          (e) =>
+              ProductoReporteData.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
         .toList();
 
     return ReporteVentasData(
@@ -56,6 +87,41 @@ class ReporteVentasData {
       cantidadPedidos: _aInt(json['cantidadPedidos']),
       promedioPorPedido: _aDouble(json['promedioPorPedido']),
       desglose: lista,
+      productos: productos,
+    );
+  }
+}
+
+class ResumenAdminData {
+  final double ventasMesActual;
+  final double ventasMesAnterior;
+  final double? variacionPorcentual;
+  final int pedidosPendientes;
+  final int productosActivos;
+  final List<CubetaReporte> ventasPorDia;
+
+  const ResumenAdminData({
+    required this.ventasMesActual,
+    required this.ventasMesAnterior,
+    required this.variacionPorcentual,
+    required this.pedidosPendientes,
+    required this.productosActivos,
+    required this.ventasPorDia,
+  });
+
+  factory ResumenAdminData.fromJson(Map<String, dynamic> json) {
+    final ventasPorDia = (json['ventasPorDia'] as List? ?? [])
+        .map((e) => CubetaReporte.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+    final variacion = json['variacionPorcentual'];
+
+    return ResumenAdminData(
+      ventasMesActual: _aDouble(json['ventasMesActual']),
+      ventasMesAnterior: _aDouble(json['ventasMesAnterior']),
+      variacionPorcentual: variacion is num ? variacion.toDouble() : null,
+      pedidosPendientes: _aInt(json['pedidosPendientes']),
+      productosActivos: _aInt(json['productosActivos']),
+      ventasPorDia: ventasPorDia,
     );
   }
 }
@@ -70,7 +136,7 @@ class ReporteService {
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token');
+      final token = prefs.getString('token') ?? prefs.getString('jwt_token');
 
       if (token == null || token.isEmpty) {
         return {'success': false, 'message': 'Inicia sesión para continuar'};
@@ -126,5 +192,43 @@ class ReporteService {
     } catch (e) {
       return {'success': false, 'message': 'No se pudo conectar con el servidor'};
     }
+  }
+
+  Future<ResumenAdminData> obtenerResumen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? prefs.getString('jwt_token');
+    if (token == null || token.isEmpty) {
+      throw Exception('Inicia sesión como administrador para continuar.');
+    }
+
+    final response = await http
+        .get(
+          Uri.parse('$baseUrl/reportes/resumen'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        )
+        .timeout(const Duration(seconds: 45));
+
+    dynamic decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } on FormatException {
+      throw Exception(
+        'Respuesta inesperada del servidor (${response.statusCode}).',
+      );
+    }
+
+    if (decoded is! Map<String, dynamic>) {
+      throw Exception('Respuesta inesperada del servidor.');
+    }
+    if (response.statusCode != 200) {
+      throw Exception(
+        decoded['error']?.toString() ?? 'No se pudo cargar el resumen.',
+      );
+    }
+
+    return ResumenAdminData.fromJson(decoded);
   }
 }

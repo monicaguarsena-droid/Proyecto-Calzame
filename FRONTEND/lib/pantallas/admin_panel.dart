@@ -5,6 +5,18 @@ import 'package:frontend/pantallas/adminpedido.dart';
 import 'package:frontend/pantallas/paneldeusuarios.dart';
 import 'package:frontend/pantallas/admincategorias.dart';
 import 'package:frontend/pantallas/reporte_ventas.dart';
+import 'package:frontend/servicios/reporte_service.dart';
+
+String _formatearCOP(num valor) {
+  final entero = valor.round().abs().toString();
+  final buffer = StringBuffer(valor < 0 ? '-\$ ' : '\$ ');
+  for (int i = 0; i < entero.length; i++) {
+    final restante = entero.length - i;
+    buffer.write(entero[i]);
+    if (restante > 1 && restante % 3 == 1) buffer.write('.');
+  }
+  return buffer.toString();
+}
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
@@ -20,6 +32,8 @@ class _AdminPanelState extends State<AdminPanel> {
 
   final Color _primaryColor = const Color(0xFF6B2D3C);
   final Color _backgroundColor = const Color(0xFFF7F4F0);
+  final ReporteService _reporteService = ReporteService();
+  late final Future<ResumenAdminData> _resumenFuture;
 
   late final List<Widget> _paginas = [
     _buildInicioAdmin(),
@@ -27,6 +41,12 @@ class _AdminPanelState extends State<AdminPanel> {
     const Center(child: Text('Pantalla Pedidos', style: TextStyle(fontSize: 18))), 
     const Center(child: Text('Pantalla Ajustes', style: TextStyle(fontSize: 18))), 
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _resumenFuture = _reporteService.obtenerResumen();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +58,7 @@ class _AdminPanelState extends State<AdminPanel> {
         adminName: 'Mónica Molina',
         adminEmail: 'monicaguarsena@gmail.com',
       ),
-      
+
       body: _paginas[_currentIndex],
     );
   }
@@ -86,97 +106,17 @@ class _AdminPanelState extends State<AdminPanel> {
             ),
             const SizedBox(height: 20),
 
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [_primaryColor, const Color(0xFF4A1525)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: _primaryColor.withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Ventas totales',
-                        style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.18),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: const [
-                            Icon(Icons.trending_up, color: Colors.greenAccent, size: 14),
-                            SizedBox(width: 4),
-                            Text(
-                              '+15.4%',
-                              style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    '\$12.480',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    height: 45,
-                    width: double.infinity,
-                    child: CustomPaint(
-                      painter: LineChartPainter(color: Colors.white70),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'respecto al mes anterior',
-                    style: TextStyle(color: Colors.white60, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
+            _tarjetaVentasResumen(),
             const SizedBox(height: 16),
 
             Row(
               children: [
                 Expanded(
-                  child: _buildStatCard(
-                    value: '12',
-                    title: 'Pedidos pendientes',
-                    icon: Icons.access_time_filled,
-                  ),
+                  child: _buildDashboardStatCard(pedidosPendientes: true),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _buildStatCard(
-                    value: '148',
-                    title: 'Productos activos',
-                    icon: Icons.inventory,
-                  ),
+                  child: _buildDashboardStatCard(pedidosPendientes: false),
                 ),
               ],
             ),
@@ -245,6 +185,145 @@ class _AdminPanelState extends State<AdminPanel> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _tarjetaVentasResumen() {
+    return FutureBuilder<ResumenAdminData>(
+      future: _resumenFuture,
+      builder: (context, snapshot) {
+        final resumen = snapshot.data;
+        final variacion = resumen?.variacionPorcentual;
+        final colorVariacion = variacion == null
+            ? Colors.white70
+            : variacion >= 0
+            ? Colors.greenAccent
+            : Colors.redAccent;
+        final iconoVariacion = variacion == null
+            ? Icons.remove
+            : variacion >= 0
+            ? Icons.trending_up
+            : Icons.trending_down;
+        final textoVariacion = variacion == null
+            ? '—'
+            : '${variacion > 0 ? '+' : ''}${variacion.toStringAsFixed(1)}%';
+
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [_primaryColor, const Color(0xFF4A1525)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: _primaryColor.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Ventas totales del mes',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.18),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(iconoVariacion, color: colorVariacion, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          textoVariacion,
+                          style: TextStyle(
+                            color: colorVariacion,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                resumen == null
+                    ? (snapshot.hasError ? 'No disponible' : 'Cargando…')
+                    : _formatearCOP(resumen.ventasMesActual),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 45,
+                width: double.infinity,
+                child: CustomPaint(
+                  painter: LineChartPainter(
+                    color: Colors.white70,
+                    values:
+                        resumen?.ventasPorDia
+                            .map((dia) => dia.ventas)
+                            .toList() ??
+                        [],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                snapshot.hasError
+                    ? snapshot.error.toString().replaceFirst('Exception: ', '')
+                    : variacion == null
+                    ? 'Sin ventas el mes anterior para comparar'
+                    : 'respecto al mes anterior',
+                style: const TextStyle(color: Colors.white60, fontSize: 11),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDashboardStatCard({required bool pedidosPendientes}) {
+    return FutureBuilder<ResumenAdminData>(
+      future: _resumenFuture,
+      builder: (context, snapshot) {
+        final valor = snapshot.data == null
+            ? (snapshot.hasError ? '—' : '…')
+            : pedidosPendientes
+            ? snapshot.data!.pedidosPendientes.toString()
+            : snapshot.data!.productosActivos.toString();
+        return _buildStatCard(
+          value: valor,
+          title: pedidosPendientes ? 'Pedidos pendientes' : 'Productos activos',
+          icon: pedidosPendientes ? Icons.access_time_filled : Icons.inventory,
+        );
+      },
     );
   }
 
@@ -342,27 +421,42 @@ class _AdminPanelState extends State<AdminPanel> {
 
 class LineChartPainter extends CustomPainter {
   final Color color;
-  LineChartPainter({required this.color});
+  final List<double> values;
+
+  LineChartPainter({required this.color, required this.values});
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+
     final paint = Paint()
       ..color = color
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
+    var minimo = values.first;
+    var maximo = values.first;
+    for (final valor in values.skip(1)) {
+      if (valor < minimo) minimo = valor;
+      if (valor > maximo) maximo = valor;
+    }
+    final rango = maximo - minimo;
     final path = Path();
-    path.moveTo(0, size.height * 0.8);
-    path.lineTo(size.width * 0.15, size.height * 0.7);
-    path.lineTo(size.width * 0.3, size.height * 0.85);
-    path.lineTo(size.width * 0.45, size.height * 0.6);
-    path.lineTo(size.width * 0.6, size.height * 0.65);
-    path.lineTo(size.width * 0.75, size.height * 0.4);
-    path.lineTo(size.width, size.height * 0.2);
+    for (int i = 0; i < values.length; i++) {
+      final x = size.width * i / (values.length - 1);
+      final proporcion = rango == 0 ? 0.5 : (values[i] - minimo) / rango;
+      final y = size.height - 4 - proporcion * (size.height - 8);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
 
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant LineChartPainter oldDelegate) =>
+      color != oldDelegate.color || values != oldDelegate.values;
 }

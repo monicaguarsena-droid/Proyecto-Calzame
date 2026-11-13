@@ -493,6 +493,86 @@ class _ReporteVentasState extends State<ReporteVentas> {
     );
   }
 
+  Widget _tarjetaProductos(ReporteVentasData r) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      decoration: _decoracionTarjeta(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Ventas por producto',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              color: ColoresApp.primary,
+            ),
+          ),
+          if (r.productos.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 14),
+              child: Text(
+                'Los pedidos entregados no tienen productos asociados.',
+                style: TextStyle(color: ColoresApp.textSecondary, fontSize: 13),
+              ),
+            )
+          else
+            ...r.productos.asMap().entries.map((entrada) {
+              final producto = entrada.value;
+              return Column(
+                children: [
+                  if (entrada.key > 0)
+                    Divider(height: 1, color: Colors.grey.shade200),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                producto.nombre,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: ColoresApp.textPrimary,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${producto.cantidadVendida} unidades · '
+                                '${producto.pedidos} '
+                                '${producto.pedidos == 1 ? 'pedido' : 'pedidos'}',
+                                style: const TextStyle(
+                                  color: ColoresApp.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _formatearCOP(producto.ventas),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: ColoresApp.primary,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }),
+        ],
+      ),
+    );
+  }
+
   Widget _estadoVacio() {
     return Container(
       width: double.infinity,
@@ -547,6 +627,8 @@ class _ReporteVentasState extends State<ReporteVentas> {
             _tarjetaGrafico(r),
             const SizedBox(height: 12),
             _tarjetaDetalle(r),
+            const SizedBox(height: 12),
+            _tarjetaProductos(r),
           ],
           const SizedBox(height: 16),
           const Text(

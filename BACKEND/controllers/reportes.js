@@ -1,4 +1,10 @@
-import { obtenerPedidosEntregadosPorRango } from '../modelos/reportes.js';
+import {
+    obtenerConteoPedidosPendientes,
+    obtenerConteoProductos,
+    obtenerDetallesDePedidos,
+    obtenerPedidosEntregadosPorRango,
+    obtenerProductosPorIds
+} from '../modelos/reportes.js';
 
 const ZONA_HORARIA = 'America/Bogota';
 const FORMATTER_BOGOTA = new Intl.DateTimeFormat('en-CA', {
@@ -116,6 +122,52 @@ export const getReporteVentas = async (req, res) => {
             return res.status(500).json({ error: 'No se pudo generar el reporte de ventas.' });
         }
 
+        const pedidoIds = (pedidos ?? []).map((pedido) => pedido.id);
+        const { data: detalles, error: errorDetalles } = await obtenerDetallesDePedidos(pedidoIds);
+        if (errorDetalles) {
+            console.error('Error al consultar productos vendidos:', errorDetalles);
+            return res.status(500).json({ error: 'No se pudo generar el detalle por producto.' });
+        }
+
+        const productoIds = [
+            ...new Set(
+                (detalles ?? [])
+                    .map((detalle) => detalle.Producto_Id)
+                    .filter((id) => id !== null && id !== undefined)
+            )
+        ];
+        const { data: productos, error: errorProductos } = await obtenerProductosPorIds(productoIds);
+        if (errorProductos) {
+            console.error('Error al consultar nombres de productos vendidos:', errorProductos);
+            return res.status(500).json({ error: 'No se pudo cargar el detalle por producto.' });
+        }
+
+        const nombresPorId = new Map(
+            (productos ?? []).map((producto) => [String(producto.id), producto.Nombre])
+        );
+        const productosVendidos = new Map();
+        for (const detalle of detalles ?? []) {
+            const id = String(detalle.Producto_Id);
+            const cantidad = Number(detalle.Cantidad);
+            const subtotal = Number(detalle.Subtotal);
+            if (!Number.isFinite(cantidad) || !Number.isFinite(subtotal)) continue;
+
+            let producto = productosVendidos.get(id);
+            if (!producto) {
+                producto = {
+                    productoId: detalle.Producto_Id,
+                    nombre: nombresPorId.get(id) ?? 'Producto eliminado',
+                    cantidadVendida: 0,
+                    ventasCentavos: 0,
+                    pedidos: new Set()
+                };
+                productosVendidos.set(id, producto);
+            }
+            producto.cantidadVendida += cantidad;
+            producto.ventasCentavos += Math.round(subtotal * 100);
+            producto.pedidos.add(String(detalle.Pedido_Id));
+        }
+
         const cubetasPorClave = new Map(rango.cubetas.map((cubeta) => [cubeta.periodo, cubeta]));
         let totalCentavos = 0;
         let totalPedidos = 0;
@@ -144,10 +196,90 @@ export const getReporteVentas = async (req, res) => {
             desglose: rango.cubetas.map((cubeta) => ({
                 ...cubeta,
                 ventas: cubeta.ventas / 100
-            }))
+            })),
+            productos: [...productosVendidos.values()]
+                .map((producto) => ({
+                    productoId: producto.productoId,
+                    nombre: producto.nombre,
+                    cantidadVendida: producto.cantidadVendida,
+                    ventas: producto.ventasCentavos / 100,
+                    pedidos: producto.pedidos.size
+                }))
+                .sort((a, b) => b.ventas - a.ventas || a.nombre.localeCompare(b.nombre))
         });
     } catch (error) {
         console.error('Error al generar el reporte de ventas:', error);
         return res.status(500).json({ error: 'No se pudo generar el reporte de ventas.' });
+    }
+};
+
+export const getResumenAdmin = async (req, res) => {
+    try {
+        const fechaActual = analizarFecha(fechaBogotaActual());
+        const fechaMesAnterior = new Date(
+            Date.UTC(fechaActual.year, fechaActual.month - 2, 1)
+        ).toISOString().slice(0, 10);
+        const rangoActual = crearPeriodo('mensual', fechaActual);
+        const rangoAnterior = crearPeriodo('mensual', analizarFecha(fechaMesAnterior));
+
+        const [
+            pedidosActuales,
+            pedidosAnteriores,
+            conteoPendientes,
+            conteoProductos
+        ] = await Promise.all([
+            obtenerPedidosEntregadosPorRango(
+                rangoActual.desde.toISOString(),
+                rangoActual.hasta.toISOString()
+            ),
+            obtenerPedidosEntregadosPorRango(
+                rangoAnterior.desde.toISOString(),
+                rangoAnterior.hasta.toISOString()
+            ),
+            obtenerConteoPedidosPendientes(),
+            obtenerConteoProductos()
+        ]);
+
+        const resultados = [pedidosActuales, pedidosAnteriores, conteoPendientes, conteoProductos];
+        const error = resultados.find((resultado) => resultado.error)?.error;
+        if (error) {
+            console.error('Error al consultar los datos del panel de administración:', error);
+            return res.status(500).json({ error: 'No se pudo cargar el resumen de ventas.' });
+        }
+
+        const ventasCentavos = (pedidos) => (pedidos ?? []).reduce((total, pedido) => {
+            const valor = Number(pedido.Total);
+            return total + (Number.isFinite(valor) ? Math.round(valor * 100) : 0);
+        }, 0);
+
+        const totalActual = ventasCentavos(pedidosActuales.data);
+        const totalAnterior = ventasCentavos(pedidosAnteriores.data);
+        const cubetasPorClave = new Map(
+            rangoActual.cubetas.map((cubeta) => [cubeta.periodo, cubeta])
+        );
+
+        for (const pedido of pedidosActuales.data ?? []) {
+            const cubeta = cubetasPorClave.get(claveCubeta(pedido.created_at, 'mensual'));
+            const total = Number(pedido.Total);
+            if (!cubeta || !Number.isFinite(total)) continue;
+            cubeta.ventas += Math.round(total * 100);
+        }
+
+        return res.status(200).json({
+            ventasMesActual: totalActual / 100,
+            ventasMesAnterior: totalAnterior / 100,
+            variacionPorcentual: totalAnterior
+                ? Math.round(((totalActual - totalAnterior) / totalAnterior) * 1000) / 10
+                : null,
+            pedidosPendientes: conteoPendientes.data ?? 0,
+            productosActivos: conteoProductos.data ?? 0,
+            ventasPorDia: rangoActual.cubetas.map((cubeta) => ({
+                ...cubeta,
+                ventas: cubeta.ventas / 100
+            }))
+        });
+    } catch (error) {
+        console.error('Error al generar el resumen de administración:', error);
+        return res.status(500).json({ error: 'No se pudo cargar el resumen de ventas.' });
     }
 };
