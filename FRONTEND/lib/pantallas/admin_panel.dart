@@ -4,6 +4,7 @@ import 'package:frontend/pantallas/admininventario.dart';
 import 'package:frontend/pantallas/adminpedido.dart';
 import 'package:frontend/pantallas/paneldeusuarios.dart';
 import 'package:frontend/pantallas/admincategorias.dart';
+import 'package:frontend/pantallas/reporte_ventas.dart';
 
 class AdminPanel extends StatefulWidget {
   const AdminPanel({super.key});
@@ -230,7 +231,9 @@ class _AdminPanelState extends State<AdminPanel> {
                 _buildMenuCard(
                   icon: Icons.bar_chart_outlined,
                   title: 'Reportes de\nVentas',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => ReporteVentas()));
+                  },
                 ),
                 _buildMenuCard(
                   icon: Icons.tune_outlined,

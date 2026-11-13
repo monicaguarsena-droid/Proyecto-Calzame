@@ -14,6 +14,7 @@ import adminRouter from "./routers/admin.js";
 import chatRoutes from './routers/chatRouters.js';
 import ofertasRouter from "./routers/ofertas.js";
 import perfilRoutes from './routers/perfil.js';
+import reportesRouter from "./routers/reportes.js";
 
 dotenv.config();
 conectaDB();
@@ -47,6 +48,7 @@ app.use('/api/admin', adminRouter);
 app.use('/api/chat', chatRoutes);
 app.use('/api/ofertas', ofertasRouter);
 app.use('/api/perfil', perfilRoutes);
+app.use('/api/reportes', reportesRouter);
 
 const PORT = process.env.PORT || 3000;
 
