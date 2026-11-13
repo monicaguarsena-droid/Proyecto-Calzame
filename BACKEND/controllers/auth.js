@@ -1,23 +1,28 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import {supabase} from '../config/supabase.js';
-import { crearUsuario,obtenerPorEmail,obtenerPorDocumento} from '../modelos/user.js';
+import { supabase } from '../config/supabase.js';
+import { crearUsuario, obtenerPorEmail, obtenerPorDocumento } from '../modelos/user.js';
 import { enviarCodigoVerificacion } from '../utils/emailservices.js';
 
+// Mínimo 6 caracteres, 1 mayúscula, 1 minúscula, 2 números y 1 símbolo
+const REGEX_CONTRASENA = /^(?=.*[a-z])(?=.*[A-Z])(?=(?:.*\d){2,})(?=.*[!-\/:-@\[-`{-~]).{6,}$/;
 
-//registro
-
+// registro
 export const registro = async (req, res) => {
     try {
         const { tipo_documento, cedula, nombre, email, contrasena } = req.body;
 
         // validar datos
         if (!tipo_documento || !cedula || !nombre || !email || !contrasena) {
-            return res.status(400).json({ error: 'faltan datos' });
+            return res.status(400).json({
+                error: 'faltan datos'
+            });
         }
 
         if (!['CC', 'TI'].includes(tipo_documento)) {
-            return res.status(400).json({ error: 'Tipo de documento inválido' });
+            return res.status(400).json({
+                error: 'Tipo de documento inválido'
+            });
         }
 
         if (!/^\d{6,11}$/.test(String(cedula))) {
@@ -26,25 +31,37 @@ export const registro = async (req, res) => {
             });
         }
 
+        if (!REGEX_CONTRASENA.test(contrasena)) {
+            return res.status(400).json({
+                error: 'La contraseña debe tener mínimo 6 caracteres, con al menos una mayúscula, una minúscula, dos números y un símbolo'
+            });
+        }
+
         // verificamos si el email ya existe
         const { data: usuarioExiste } = await obtenerPorEmail(email);
         if (usuarioExiste) {
-            return res.status(400).json({ error: 'El Email ya esta registrado' });
+            return res.status(400).json({
+                error: 'El Email ya esta registrado'
+            });
         }
 
         // verificamos si el documento ya existe
         const { data: documentoExiste } = await obtenerPorDocumento(tipo_documento, cedula);
         if (documentoExiste) {
-            return res.status(400).json({ error: 'Este documento ya esta registrado' });
+            return res.status(400).json({
+                error: 'Este documento ya esta registrado'
+            });
         }
 
         // encriptar la contraseña
         const hashedPassword = await bcrypt.hash(contrasena, 10);
+
+        // rol por defecto
         const rolpordefecto = 'usuario';
 
         // generar codigo de verificacion
         const codigoVerificacion = Math.floor(100000 + Math.random() * 900000).toString();
-        const codigoVerificacionExpiracion = new Date(Date.now() + 15 * 60 * 1000);
+        const codigoVerificacionExpiracion = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
         // guardamos en la base de datos
         const { data, error } = await crearUsuario(
@@ -57,56 +74,61 @@ export const registro = async (req, res) => {
             codigoVerificacion,
             codigoVerificacionExpiracion
         );
-    if(error){
-        return res.status(500).json({
-            error: 'Error al registrar el usuario'
-        });
-    }
 
-    const resultadoEnvio = await enviarCodigoVerificacion(email, nombre, codigoVerificacion);
+        if (error) {
+            return res.status(500).json({
+                error: 'Error al registrar el usuario'
+            });
+        }
 
-    const usuarioCreado = Array.isArray(data) ? data[0] : data;
+        const resultadoEnvio = await enviarCodigoVerificacion(email, nombre, codigoVerificacion);
 
-    const  usuarioRespuesta = {
-        id: usuarioCreado.id,
-        tipo_documento: usuarioCreado.tipo_documento,
-        cedula: usuarioCreado.cedula,
-        nombre: usuarioCreado.nombre,
-        email: usuarioCreado.email,
-        rol: usuarioCreado.rol
-    }
-    if (!resultadoEnvio.exito) {
+        const usuarioCreado = Array.isArray(data) ? data[0] : data;
+
+        const usuarioRespuesta = {
+            id: usuarioCreado.id,
+            tipo_documento: usuarioCreado.tipo_documento,
+            cedula: usuarioCreado.cedula,
+            nombre: usuarioCreado.nombre,
+            email: usuarioCreado.email,
+            rol: usuarioCreado.rol
+        };
+
+        if (!resultadoEnvio.exito) {
+            return res.status(201).json({
+                message: 'Tu cuenta fue creada, pero hubo un problema enviando el codigo de verificacion a tu correo. Intenta registrarte de nuevo en unos minutos o contacta soporte.',
+                emailEnviado: false,
+                usuario: usuarioRespuesta
+            });
+        }
+
         return res.status(201).json({
-            message:'Tu cuenta fue creada, pero hubo un problema enviando el codigo de verificacion a tu correo. Intenta registrarte de nuevo en unos minutos o contacta soporte.',
-            emailEnviado: false,
+            mensaje: 'Usuario registrado exitosamente. Hemos enviado un codigo de 6 digitos a tu correo.',
+            emailEnviado: true,
             usuario: usuarioRespuesta
         });
-    }
-    return res.status(201).json({
-        mensaje: 'Usuario registrado exitosamente. Hemos enviado un codigo de 6 digitos a tu correo.',
-        emailEnviado: true,
-        usuario: usuarioRespuesta
-        });
 
-    }catch(error){
+    } catch (error) {
         console.error('Error en el registro:', error);
         return res.status(500).json({
             error: error.message
         });
-}
+    }
 };
 
-//crear el login
+// crear el login
 export const login = async (req, res) => {
-    try{
+    try {
         const { email, contrasena } = req.body;
-        //validar datos
+
+        // validar datos
         if (!email || !contrasena) {
             return res.status(400).json({
                 error: 'todos los campos son requeridos: email y contraseña'
             });
         }
-        //validamos si el correo existe
+
+        // validamos si el correo existe
         const { data: usuario } = await obtenerPorEmail(email);
         if (!usuario) {
             return res.status(401).json({
@@ -114,19 +136,21 @@ export const login = async (req, res) => {
             });
         }
 
-        //validar la contraseña
+        // validar la contraseña
         const contraseñavalida = await bcrypt.compare(contrasena, usuario.contrasena);
         if (!contraseñavalida) {
             return res.status(400).json({
                 error: 'Contraseña incorrecta'
             });
         }
-        if (!usuario.isVerified){
+
+        if (!usuario.isVerified) {
             return res.status(403).json({
                 error: 'Tu cuenta no ha sido veriificada. Por favor ingresa el codigo enviado a tu correo antes de iniciar sesion.'
             });
         }
-        //generar el token jwt
+
+        // generar el token jwt
         const token = jwt.sign(
             {
                 id: usuario.id,
@@ -140,16 +164,15 @@ export const login = async (req, res) => {
         return res.status(200).json({
             mensaje: 'Login exitoso',
             token,
-            usuario:{
-                id:usuario.id,
-                nombre:usuario.nombre,
+            usuario: {
+                id: usuario.id,
+                nombre: usuario.nombre,
                 email: usuario.email,
-                rol:usuario.rol
+                rol: usuario.rol
             }
         });
-   
 
-     } catch(error){
+    } catch (error) {
         console.error('Error en el login:', error);
         return res.status(500).json({
             error: error.message
@@ -157,78 +180,78 @@ export const login = async (req, res) => {
     }
 };
 
-//verificar cuenta con codigo de 6 digitos 
+// verificar cuenta con codigo de 6 digitos
 export const verificarCuenta = async (req, res) => {
-  try {
-    const { email, codigo } = req.body;
+    try {
+        const { email, codigo } = req.body;
 
-    if (!email || !codigo) {
-      return res.status(400).json({
-        error: 'El email y el codigo de verificacion son requeridos'
-      });
+        if (!email || !codigo) {
+            return res.status(400).json({
+                error: 'El email y el codigo de verificacion son requeridos'
+            });
+        }
+
+        // 1. Buscar al usuario en Supabase
+        const { data: usuario, error: errorUsuario } = await supabase
+            .from('usuarios')
+            .select('id, email, isVerified, codigoVerificacion, codigoVerificacionExpiracion')
+            .eq('email', email)
+            .single();
+
+        if (errorUsuario || !usuario) {
+            return res.status(404).json({
+                error: 'Usuario no encontrado'
+            });
+        }
+
+        // 2. Revisar si ya esta activo
+        if (usuario.isVerified) {
+            return res.status(400).json({
+                error: 'La cuenta ya se encuentra verificada'
+            });
+        }
+
+        // 3. Comparar el codigo
+        if (String(usuario.codigoVerificacion).trim() !== String(codigo).trim()) {
+            return res.status(400).json({
+                error: 'El codigo de verificacion es incorrecto'
+            });
+        }
+
+        // 4. Validar expiracion (15 minutos)
+        const ahora = new Date();
+        const expiracion = new Date(usuario.codigoVerificacionExpiracion);
+
+        if (ahora > expiracion) {
+            return res.status(400).json({
+                error: 'El codigo ha expirado. Por favor solicita uno nuevo'
+            });
+        }
+
+        // 5. Activar la cuenta
+        const { error: errorUpdate } = await supabase
+            .from('usuarios')
+            .update({
+                isVerified: true,
+                codigoVerificacion: null,
+                codigoVerificacionExpiracion: null
+            })
+            .eq('id', usuario.id);
+
+        if (errorUpdate) {
+            return res.status(500).json({
+                error: 'Error al actualizar el estado de verificacion'
+            });
+        }
+
+        return res.status(200).json({
+            message: 'Cuenta verificada exitosamente. Ya puedes iniciar sesion en Calzame.'
+        });
+
+    } catch (error) {
+        console.error('Error en verificarCuenta:', error);
+        return res.status(500).json({
+            error: error.message
+        });
     }
-
-    // 1. Buscar al usuario en Supabase
-    const { data: usuario, error: errorUsuario } = await supabase
-      .from('usuarios')
-      .select('id, email, isVerified, codigoVerificacion, codigoVerificacionExpiracion')
-      .eq('email', email)
-      .single();
-
-    if (errorUsuario || !usuario) {
-      return res.status(404).json({
-        error: 'Usuario no encontrado'
-      });
-    }
-
-    // 2. Revisar si ya esta activo
-    if (usuario.isVerified) {
-      return res.status(400).json({
-        error: 'La cuenta ya se encuentra verificada'
-      });
-    }
-
-    // 3. Comparar el codigo
-    if (String(usuario.codigoVerificacion).trim() !== String(codigo).trim()) {
-      return res.status(400).json({
-        error: 'El codigo de verificacion es incorrecto'
-      });
-    }
-
-    // 4. Validar expiracion (15 minutos)
-    const ahora = new Date();
-    const expiracion = new Date(usuario.codigoVerificacionExpiracion);
-
-    if (ahora > expiracion) {
-      return res.status(400).json({
-        error: 'El codigo ha expirado. Por favor solicita uno nuevo'
-      });
-    }
-
-    // 5. Activar la cuenta
-    const { error: errorUpdate } = await supabase
-      .from('usuarios')
-      .update({
-        isVerified: true,
-        codigoVerificacion: null,
-        codigoVerificacionExpiracion: null
-      })
-      .eq('id', usuario.id);
-
-    if (errorUpdate) {
-      return res.status(500).json({
-        error: 'Error al actualizar el estado de verificacion'
-      });
-    }
-
-    return res.status(200).json({
-      message: 'Cuenta verificada exitosamente. Ya puedes iniciar sesion en Calzame.'
-    });
-
-  } catch (error) {
-    console.error('Error en verificarCuenta:', error);
-    return res.status(500).json({
-      error: error.message
-    });
-  }
 };

@@ -48,6 +48,10 @@ class _RegistroState extends State<Registro> {
     super.dispose();
   }
 
+  // ---------------------------------------------------------------------------
+  // Lógica
+  // ---------------------------------------------------------------------------
+
   void _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -140,6 +144,31 @@ class _RegistroState extends State<Registro> {
     );
   }
 
+  /// Reglas: mínimo 6 caracteres, 1 mayúscula, 1 minúscula,
+  /// 2 números y 1 símbolo.
+  String? _validarContrasena(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Ingresa una contraseña';
+    }
+    if (value.length < 6) {
+      return 'Debe tener al menos 6 caracteres';
+    }
+    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return 'Debe incluir al menos una mayúscula';
+    }
+    if (!RegExp(r'[a-z]').hasMatch(value)) {
+      return 'Debe incluir al menos una minúscula';
+    }
+    if (RegExp(r'\d').allMatches(value).length < 2) {
+      return 'Debe incluir al menos dos números';
+    }
+    // Símbolos ASCII: ! " # $ % & ' ( ) * + , - . / : ; < = > ? @ [ \ ] ^ _ ` { | } ~
+    if (!RegExp(r'[!-/:-@\[-`{-~]').hasMatch(value)) {
+      return 'Debe incluir al menos un símbolo (, . # @ ! etc.)';
+    }
+    return null;
+  }
+
   // ---------------------------------------------------------------------------
   // Helpers de UI
   // ---------------------------------------------------------------------------
@@ -159,8 +188,13 @@ class _RegistroState extends State<Registro> {
     required IconData icon,
     required String hint,
     Widget? suffixIcon,
+    String? helperText,
   }) {
     return InputDecoration(
+      helperText: helperText,
+      helperMaxLines: 2,
+      helperStyle: const TextStyle(fontSize: 12, color: Color(0xFF8C8C8C)),
+      errorMaxLines: 2,
       prefixIcon: Icon(
         icon,
         color: const Color.fromARGB(255, 135, 134, 134),
@@ -358,6 +392,8 @@ class _RegistroState extends State<Registro> {
                     decoration: _inputDecoration(
                       icon: Icons.lock_outline,
                       hint: "••••••••",
+                      helperText:
+                          "Mínimo 6 caracteres, con 1 mayúscula, 1 minúscula, 2 números y 1 símbolo",
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword
@@ -371,12 +407,7 @@ class _RegistroState extends State<Registro> {
                         },
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.length < 6) {
-                        return 'La contraseña debe tener al menos 6 caracteres';
-                      }
-                      return null;
-                    },
+                    validator: _validarContrasena,
                   ),
                   const SizedBox(height: 16),
 
@@ -408,6 +439,9 @@ class _RegistroState extends State<Registro> {
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Confirma tu contraseña';
+                      }
+                      if (value != _contrasenaController.text) {
+                        return 'Las contraseñas no coinciden';
                       }
                       return null;
                     },
