@@ -25,7 +25,35 @@ class AdminDrawer extends StatelessWidget {
   Future<void> _cerrarSesion(BuildContext context) async {
     // 1. Limpiar datos de sesión guardados en el dispositivo
     final prefs = await SharedPreferences.getInstance();
+    final nombreTienda = prefs.getString('config_tienda_nombre');
+    final direccionTienda = prefs.getString('config_tienda_direccion');
+    final telefonoTienda = prefs.getString('config_tienda_telefono');
+    final correoTienda = prefs.getString('config_tienda_correo');
+    final horarioTienda = prefs.getString('config_tienda_horario');
+    final recogidaTienda = prefs.getBool('config_tienda_recogida');
+    final domiciliosTienda = prefs.getBool('config_tienda_domicilios');
     await prefs.clear();
+    if (nombreTienda != null) {
+      await prefs.setString('config_tienda_nombre', nombreTienda);
+    }
+    if (direccionTienda != null) {
+      await prefs.setString('config_tienda_direccion', direccionTienda);
+    }
+    if (telefonoTienda != null) {
+      await prefs.setString('config_tienda_telefono', telefonoTienda);
+    }
+    if (correoTienda != null) {
+      await prefs.setString('config_tienda_correo', correoTienda);
+    }
+    if (horarioTienda != null) {
+      await prefs.setString('config_tienda_horario', horarioTienda);
+    }
+    if (recogidaTienda != null) {
+      await prefs.setBool('config_tienda_recogida', recogidaTienda);
+    }
+    if (domiciliosTienda != null) {
+      await prefs.setBool('config_tienda_domicilios', domiciliosTienda);
+    }
 
     if (!context.mounted) return;
 

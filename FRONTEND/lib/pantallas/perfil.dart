@@ -10,6 +10,7 @@ import 'package:frontend/pantallas/detalle_pedido.dart';
 import 'package:frontend/pantallas/inicio_sesion.dart';
 import 'package:frontend/pantallas/ubicacion_tienda.dart';
 
+import 'package:frontend/servicios/configuracion_tienda_service.dart';
 import 'package:frontend/servicios/perfil_service.dart';
 
 String _pesos(double valor) {
@@ -31,6 +32,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   final int _tab = 3; // Pestaña Cuenta seleccionada
 
   PerfilUsuario? _perfil;
+  DatosTienda _datosTienda = DatosTienda.predeterminada;
   bool _cargando = true;
   String? _errorCarga;
   bool _notificacionesActivas = true;
@@ -39,9 +41,24 @@ class _PerfilScreenState extends State<PerfilScreen> {
   void initState() {
     super.initState();
     _cargarPerfil();
+    _cargarDatosTienda();
   }
 
   // ---------- Datos ----------
+
+  Future<void> _cargarDatosTienda() async {
+    try {
+      final datos = await ConfiguracionTiendaService.cargar();
+      if (!mounted) return;
+      setState(() => _datosTienda = datos);
+    } catch (error) {
+      _mostrar('No se pudo cargar la información de la tienda: $error');
+    }
+  }
+
+  Future<void> _recargarDatos() async {
+    await Future.wait([_cargarPerfil(), _cargarDatosTienda()]);
+  }
 
   /// Carga los datos reales desde la base de datos (tabla usuarios).
   Future<void> _cargarPerfil() async {
@@ -228,7 +245,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
               )
             : RefreshIndicator(
                 color: ColoresApp.primary,
-                onRefresh: _cargarPerfil,
+                onRefresh: _recargarDatos,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.symmetric(
@@ -372,7 +389,8 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       _tarjetaOpcion(
                         icon: Icons.storefront_outlined,
                         titulo: 'Ubicación de la tienda',
-                        subtitulo: 'Garzón, Huila (Recogida en local)',
+                        subtitulo: _datosTienda.direccion,
+                        maxLines: 2,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -517,6 +535,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     required IconData icon,
     required String titulo,
     required String subtitulo,
+    int maxLines = 1,
     required VoidCallback onTap,
   }) {
     return InkWell(
@@ -555,7 +574,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   const SizedBox(height: 2),
                   Text(
                     subtitulo,
-                    maxLines: 1,
+                    maxLines: maxLines,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 12,

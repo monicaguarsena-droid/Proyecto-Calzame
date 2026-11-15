@@ -1,14 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/servicios/configuracion_tienda_service.dart';
 
-class UbicacionTiendaScreen extends StatelessWidget {
+class UbicacionTiendaScreen extends StatefulWidget {
   const UbicacionTiendaScreen({super.key});
+
+  @override
+  State<UbicacionTiendaScreen> createState() => _UbicacionTiendaScreenState();
+}
+
+class _UbicacionTiendaScreenState extends State<UbicacionTiendaScreen> {
+  DatosTienda _datosTienda = DatosTienda.predeterminada;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarDatosTienda();
+  }
+
+  Future<void> _cargarDatosTienda() async {
+    try {
+      final datos = await ConfiguracionTiendaService.cargar();
+      if (!mounted) return;
+      setState(() => _datosTienda = datos);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo cargar la información de la tienda: $error'),
+          backgroundColor: ColoresApp.error,
+        ),
+      );
+    }
+  }
 
   // Función para abrir Google Maps de forma externa con la ubicación exacta
   Future<void> _abrirGoogleMapsExterno() async {
     final Uri url = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=Calzado+Mar+and+Paz+Garzon+Huila',
+      'https://www.google.com/maps/search/?api=1&query=${Uri.encodeQueryComponent('${_datosTienda.nombre} ${_datosTienda.direccion}')}',
     );
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       debugPrint('No se pudo abrir el mapa externo');
@@ -67,12 +97,12 @@ class UbicacionTiendaScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Calzado Mar & Paz',
+                              _datosTienda.nombre,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -80,7 +110,7 @@ class UbicacionTiendaScreen extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'Punto de recogida en tienda (No hay domicilios)',
+                              _textoModalidadEntrega,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: ColoresApp.textSecondary,
@@ -92,14 +122,14 @@ class UbicacionTiendaScreen extends StatelessWidget {
                     ],
                   ),
                   const Divider(height: 24),
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.location_on, color: ColoresApp.primary, size: 20),
-                      SizedBox(width: 8),
+                      const Icon(Icons.location_on, color: ColoresApp.primary, size: 20),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Cra. 11 #5-55 Local 3, Garzón, Huila',
-                          style: TextStyle(
+                          _datosTienda.direccion,
+                          style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             color: Colors.black87,
@@ -109,19 +139,29 @@ class UbicacionTiendaScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.access_time_filled, color: ColoresApp.primary, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Lunes a Sábado: 8:00 AM - 7:00 PM',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: ColoresApp.textSecondary,
+                      const Icon(Icons.access_time_filled, color: ColoresApp.primary, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _datosTienda.horario,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: ColoresApp.textSecondary,
+                          ),
                         ),
                       ),
                     ],
                   ),
+                  if (_datosTienda.telefono.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _filaContacto(Icons.phone_outlined, _datosTienda.telefono),
+                  ],
+                  if (_datosTienda.correo.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _filaContacto(Icons.email_outlined, _datosTienda.correo),
+                  ],
                 ],
               ),
             ),
@@ -204,8 +244,8 @@ class UbicacionTiendaScreen extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            child: const Text(
-                              'Calzado Mar & Paz • Garzón, Huila',
+                            child: Text(
+                              _datosTienda.nombre,
                               style: TextStyle(
                                 color: ColoresApp.primary,
                                 fontWeight: FontWeight.bold,
@@ -285,6 +325,35 @@ class UbicacionTiendaScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  String get _textoModalidadEntrega {
+    if (_datosTienda.recogidaEnTienda && _datosTienda.domicilios) {
+      return 'Recogida en tienda y entregas a domicilio';
+    }
+    if (_datosTienda.recogidaEnTienda) {
+      return 'Punto de recogida en tienda (No hay domicilios)';
+    }
+    if (_datosTienda.domicilios) return 'Entregas a domicilio disponibles';
+    return 'Modalidades de entrega no configuradas';
+  }
+
+  Widget _filaContacto(IconData icono, String valor) {
+    return Row(
+      children: [
+        Icon(icono, color: ColoresApp.primary, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            valor,
+            style: const TextStyle(
+              fontSize: 13,
+              color: ColoresApp.textSecondary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

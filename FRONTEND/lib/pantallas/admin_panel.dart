@@ -5,6 +5,7 @@ import 'package:frontend/pantallas/adminpedido.dart';
 import 'package:frontend/pantallas/paneldeusuarios.dart';
 import 'package:frontend/pantallas/admincategorias.dart';
 import 'package:frontend/pantallas/reporte_ventas.dart';
+import 'package:frontend/pantallas/configuracion_tienda.dart';
 import 'package:frontend/servicios/reporte_service.dart';
 
 String _formatearCOP(num valor) {
@@ -178,7 +179,14 @@ class _AdminPanelState extends State<AdminPanel> {
                 _buildMenuCard(
                   icon: Icons.tune_outlined,
                   title: 'Configuración\nTienda',
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ConfiguracionTiendaScreen(),
+                      ),
+                    );
+                  },
                 ),
               ],
             ),
