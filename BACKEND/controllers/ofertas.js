@@ -1,4 +1,5 @@
 import { OfertaModel } from '../modelos/ofertas.js';
+import { parsearDescuento } from '../utils/descuentos.js';
 
 export const OfertaController = {
     async obtenerOfertas(req, res) {
@@ -18,11 +19,20 @@ export const OfertaController = {
             if (!req.body.titulo?.trim()) {
                 return res.status(400).json({ message: 'El título es obligatorio' });
             }
+            const productoId = Number(req.body.producto_id);
+            if (!Number.isInteger(productoId) || productoId < 1) {
+                return res.status(400).json({ message: 'Selecciona un calzado para la oferta' });
+            }
+            const descuento = parsearDescuento(req.body.descuento);
+            if (descuento === null) {
+                return res.status(400).json({ message: 'El descuento debe ser un número entre 1 y 100' });
+            }
 
             const oferta = await OfertaModel.create({
                 titulo: req.body.titulo.trim(),
-                descuento: req.body.descuento?.trim() ?? '',
-                etiqueta: req.body.tag?.trim() || 'OFERTA',
+                producto_id: productoId,
+                descuento: String(descuento),
+                tag: req.body.tag?.trim() || 'OFERTA',
                 descripcion: req.body.descripcion?.trim() ?? '',
                 imagen_url: req.file.path, // 👈 Sincronizado correctamente con Cloudinary y Supabase
                 estado: 'Activo'
@@ -41,12 +51,25 @@ export const OfertaController = {
 
             const cambios = {};
             if (req.body.titulo !== undefined) cambios.titulo = req.body.titulo.trim();
-            if (req.body.descuento !== undefined) cambios.descuento = req.body.descuento.trim();
+            if (req.body.descuento !== undefined) {
+                const descuento = parsearDescuento(req.body.descuento);
+                if (descuento === null) {
+                    return res.status(400).json({ message: 'El descuento debe ser un número entre 1 y 100' });
+                }
+                cambios.descuento = String(descuento);
+            }
+            if (req.body.producto_id !== undefined) {
+                const productoId = Number(req.body.producto_id);
+                if (!Number.isInteger(productoId) || productoId < 1) {
+                    return res.status(400).json({ message: 'Selecciona un calzado para la oferta' });
+                }
+                cambios.producto_id = productoId;
+            }
             if (req.body.descripcion !== undefined) cambios.descripcion = req.body.descripcion.trim();
             
             // 👇 Mapeo correcto del campo 'tag' que envía Flutter hacia la BD
             if (req.body.tag !== undefined) {
-                cambios.etiqueta = req.body.tag.trim() || 'OFERTA';
+                cambios.tag = req.body.tag.trim() || 'OFERTA';
             }
 
             if (req.file) {

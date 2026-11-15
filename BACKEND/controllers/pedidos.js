@@ -12,7 +12,9 @@ import {
     obtenerDetallesPorPedidos
 } from '../modelos/pedidos.js';
 import { obtenerCarritoPorUsuario, vaciarCarritoUsuario } from '../modelos/carrito.js';
+import { OfertaModel } from '../modelos/ofertas.js';
 import { enviarConfirmacionPedido } from '../utils/sendEmail.js';
+import { calcularPrecioConDescuento, parsearDescuento } from '../utils/descuentos.js';
 
 // Estados que puede tener un pedido (la tienda solo entrega en el local)
 export const ESTADOS_PEDIDO = ['Pendiente', 'Listo para recoger', 'Entregado', 'Cancelado'];
@@ -163,6 +165,24 @@ export const postPedido = async (req, res) => {
             return res.status(500).json({ error: 'Error al leer los productos', detalle: errorProductos.message });
         }
         const productosPorId = new Map((productos ?? []).map((p) => [String(p.id), p]));
+        let ofertasActivas;
+        try {
+            ofertasActivas = await OfertaModel.getActivasPorProductos(productoIds);
+        } catch (error) {
+            console.error('❌ Pedido: error leyendo las ofertas activas', error);
+            return res.status(500).json({ error: 'Error al consultar los descuentos', detalle: error.message });
+        }
+        const descuentosPorProducto = new Map();
+        for (const oferta of ofertasActivas) {
+            const descuento = parsearDescuento(oferta.descuento);
+            const productoId = String(oferta.producto_id);
+            if (
+                descuento !== null &&
+                descuento > (descuentosPorProducto.get(productoId) ?? 0)
+            ) {
+                descuentosPorProducto.set(productoId, descuento);
+            }
+        }
 
         const lineas = [];
         let total = 0;
@@ -171,7 +191,11 @@ export const postPedido = async (req, res) => {
             if (!producto) {
                 return res.status(400).json({ error: 'Un producto de tu carrito ya no está disponible' });
             }
-            const precio = Number(producto.Precio) || 0;
+            const precioOriginal = Number(producto.Precio) || 0;
+            const descuento = descuentosPorProducto.get(String(producto.id)) ?? 0;
+            const precio = descuento > 0
+                ? calcularPrecioConDescuento(precioOriginal, descuento)
+                : precioOriginal;
             const cantidad = Number(item.cantidad) || 1;
             const subtotal = precio * cantidad;
             total += subtotal;

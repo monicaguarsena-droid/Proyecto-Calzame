@@ -119,6 +119,13 @@ class _CarritoScreenState extends State<CarritoScreen> {
     );
   }
 
+  double get _ahorroTotal {
+    return CarritoService.itemsCarrito.fold(
+      0,
+      (sum, item) => sum + ((item.precioOriginal - item.precio) * item.cantidad),
+    );
+  }
+
   /// Abre el detalle con el producto real; si no se encontró, arma uno básico.
   void _abrirDetalle(ItemCarrito item) {
     final producto =
@@ -374,6 +381,30 @@ class _CarritoScreenState extends State<CarritoScreen> {
                         ),
                       ),
                       const SizedBox(height: 6),
+                      if (item.descuentoPorcentaje > 0) ...[
+                        Row(
+                          children: [
+                            Text(
+                              '\$${(item.precioOriginal * item.cantidad).toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: ColoresApp.textSecondary,
+                                decoration: TextDecoration.lineThrough,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${item.descuentoPorcentaje}% OFF',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: ColoresApp.success,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                      ],
                       Text(
                         '\$${(item.precio * item.cantidad).toStringAsFixed(0)}',
                         style: const TextStyle(
@@ -459,6 +490,30 @@ class _CarritoScreenState extends State<CarritoScreen> {
       ),
       child: Column(
         children: [
+          if (_ahorroTotal > 0) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Descuento aplicado:',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: ColoresApp.success,
+                  ),
+                ),
+                Text(
+                  '-\$${_ahorroTotal.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: ColoresApp.success,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

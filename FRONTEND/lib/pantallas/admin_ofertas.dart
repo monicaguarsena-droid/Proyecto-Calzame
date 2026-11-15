@@ -3,7 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/cors/colores.dart';
+import 'package:frontend/models/productoModel.dart';
 import 'package:frontend/servicios/ofertas_service.dart';
+import 'package:frontend/servicios/producto_service.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AdminOfertasScreen extends StatelessWidget {
@@ -46,12 +48,36 @@ late Future<List<dynamic>> _ofertasFuture;
     _ofertasFuture = OfertasService.listar();
   }
 
-  void _editarOferta({Map<String, dynamic>? oferta}) {
+  Future<void> _editarOferta({Map<String, dynamic>? oferta}) async {
+    late final List<ProductoModel> productos;
+    try {
+      productos = await ProductoService().obtenerProductos();
+    } catch (error) {
+      _mostrarMensaje(
+        'No se pudieron cargar los calzados: $error',
+        error: true,
+      );
+      return;
+    }
+    if (!mounted) return;
+    if (productos.isEmpty) {
+      _mostrarMensaje(
+        'Agrega calzados antes de crear una oferta.',
+        error: true,
+      );
+      return;
+    }
+
     final titulo = TextEditingController(text: oferta?['titulo']?.toString());
     final descuento = TextEditingController(text: oferta?['descuento']?.toString());
     final descripcion = TextEditingController(text: oferta?['descripcion']?.toString());
-    final tag = TextEditingController(text: oferta?['etiqueta']?.toString());
-    
+    final tag = TextEditingController(text: oferta?['tag']?.toString());
+    final productoIdActual = oferta?['producto_id']?.toString();
+    String? productoSeleccionado =
+        productos.any((producto) => producto.id == productoIdActual)
+        ? productoIdActual
+        : null;
+
     File? imagen;
     bool guardando = false;
     final formKey = GlobalKey<FormState>();
@@ -110,6 +136,35 @@ late Future<List<dynamic>> _ofertasFuture;
                   const SizedBox(height: 14),
                   _campo(titulo, 'Título de la oferta', obligatorio: true),
                   const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    initialValue: productoSeleccionado,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Calzado con descuento',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: productos
+                        .map(
+                          (producto) => DropdownMenuItem(
+                            value: producto.id,
+                            child: Text(
+                              producto.nombre,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (modalContext.mounted) {
+                        setModalState(() => productoSeleccionado = value);
+                      }
+                    },
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Selecciona el calzado de esta oferta'
+                        : null,
+                  ),
+                  const SizedBox(height: 10),
                   _campo(
                     descuento, 
                     'Descuento % (Ej. 20)', 
@@ -144,7 +199,9 @@ late Future<List<dynamic>> _ofertasFuture;
                                 setModalState(() {});
                                 return;
                               }
-                              
+                              final productoId = productoSeleccionado;
+                              if (productoId == null) return;
+
                               if (modalContext.mounted) {
                                 setModalState(() {
                                   guardando = true;
@@ -158,13 +215,16 @@ late Future<List<dynamic>> _ofertasFuture;
                                   campos: {
                                     'titulo': titulo.text.trim(),
                                     'descuento': descuento.text.trim(),
-                                    'etiqueta': tag.text.trim().isEmpty ? 'OFERTA' : tag.text.trim(),
+                                    'producto_id': productoId,
+                                    'tag': tag.text.trim().isEmpty
+                                        ? 'OFERTA'
+                                        : tag.text.trim(),
                                     'descripcion': descripcion.text.trim(),
                                   },
                                 );
 
                                 if (!mounted || !sheetContext.mounted) return;
-                                
+
                                 Navigator.pop(sheetContext);
                                 setState(() {
                                   _cargarOfertas();

@@ -75,6 +75,15 @@ class _CompraScreenState extends State<CompraScreen> {
     return widget.items.fold(0, (sum, item) => sum + item.cantidad);
   }
 
+  double get _subtotalOriginal {
+    return widget.items.fold(
+      0,
+      (sum, item) => sum + (item.precioOriginal * item.cantidad),
+    );
+  }
+
+  double get _descuentoTotal => _subtotalOriginal - widget.total;
+
   void _onItemTapped(int index) {
     if (index == 0) {
       Navigator.pushReplacement(
@@ -484,6 +493,30 @@ class _CompraScreenState extends State<CompraScreen> {
                             ),
                           ),
                           const SizedBox(height: 4),
+                          if (widget.items[i].descuentoPorcentaje > 0) ...[
+                            Row(
+                              children: [
+                                Text(
+                                  '\$${(widget.items[i].precioOriginal * widget.items[i].cantidad).toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: ColoresApp.textSecondary,
+                                    decoration: TextDecoration.lineThrough,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  '${widget.items[i].descuentoPorcentaje}% OFF',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: ColoresApp.success,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                          ],
                           Text(
                             '\$${(widget.items[i].precio * widget.items[i].cantidad).toStringAsFixed(0)}',
                             style: const TextStyle(
@@ -631,9 +664,15 @@ class _CompraScreenState extends State<CompraScreen> {
 
             // 4. Resumen de precios
             _buildCard([
-              _filaResumen('Subtotal', '\$${widget.total.toStringAsFixed(0)}'),
+              _filaResumen(
+                'Subtotal',
+                '\$${_subtotalOriginal.toStringAsFixed(0)}',
+              ),
               const SizedBox(height: 8),
-              _filaResumen('Descuento', '\$0'),
+              _filaResumen(
+                'Descuento',
+                '-\$${_descuentoTotal.toStringAsFixed(0)}',
+              ),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 10.0),
                 child: Divider(height: 1),

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:frontend/api_config.dart';
 import 'package:frontend/models/productoModel.dart';
+import 'package:frontend/servicios/ofertas_service.dart';
 import 'package:frontend/servicios/producto_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -17,6 +18,8 @@ class ItemCarrito {
   final String talla;
   final String color;
   int cantidad;
+  final double precioOriginal;
+  final int descuentoPorcentaje;
 
   /// Producto completo (si se pudo encontrar) para abrir su detalle real.
   final ProductoModel? producto;
@@ -32,7 +35,9 @@ class ItemCarrito {
     required this.color,
     required this.cantidad,
     this.producto,
-  });
+    double? precioOriginal,
+    this.descuentoPorcentaje = 0,
+  }) : precioOriginal = precioOriginal ?? precio;
 }
 
 class CarritoService {
@@ -74,6 +79,7 @@ class CarritoService {
     }
 
     final productos = await ProductoService().obtenerProductos();
+    final ofertas = await OfertasService.listar();
     final productosPorId = {
       for (final producto in productos) producto.id.toString(): producto,
     };
@@ -88,16 +94,20 @@ class CarritoService {
           (registro['producto_id'] ?? registro['productoId'])?.toString() ?? '';
       final producto = productosPorId[productoId];
       final color = registro['color']?.toString() ?? 'Único';
-      final precio = registro['precio'] ?? producto?.precio ?? 0;
+      final precioOriginal = _aDouble(producto?.precio ?? registro['precio']);
+      final descuento = _descuentoActivo(productoId, ofertas);
+      final precio = descuento == 0
+          ? precioOriginal
+          : (precioOriginal * (100 - descuento) / 100).roundToDouble();
       return ItemCarrito(
         id: registro['id']?.toString() ?? '',
         productoId: productoId,
         imagen: _imagenParaColor(producto, color),
         titulo: producto?.nombre ?? 'Producto',
         subtitulo: producto != null ? _subtituloDe(producto) : '',
-        precio: precio is num
-            ? precio.toDouble()
-            : double.tryParse(precio.toString()) ?? 0,
+        precio: precio,
+        precioOriginal: precioOriginal,
+        descuentoPorcentaje: descuento,
         talla: registro['talla']?.toString() ?? 'Única',
         color: color,
         cantidad: int.tryParse(registro['cantidad']?.toString() ?? '') ?? 1,
@@ -109,6 +119,31 @@ class CarritoService {
       ..clear()
       ..addAll(items);
     return items;
+  }
+
+  static double _aDouble(dynamic valor) {
+    if (valor is num) return valor.toDouble();
+    return double.tryParse(valor?.toString() ?? '') ?? 0;
+  }
+
+  static int _descuentoActivo(String productoId, List ofertas) {
+    var mayorDescuento = 0;
+    for (final oferta in ofertas) {
+      if (oferta['estado']?.toString().toLowerCase() != 'activo' ||
+          oferta['producto_id']?.toString() != productoId) {
+        continue;
+      }
+
+      final texto = oferta['descuento']?.toString().replaceAll('%', '').trim();
+      final descuento = int.tryParse(texto ?? '');
+      if (descuento != null &&
+          descuento >= 1 &&
+          descuento <= 100 &&
+          descuento > mayorDescuento) {
+        mayorDescuento = descuento;
+      }
+    }
+    return mayorDescuento;
   }
 
   // 2. Agregar un producto al carrito

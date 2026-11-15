@@ -11,6 +11,19 @@ export const OfertaModel = {
         return data;
     },
 
+    async getActivasPorProductos(productoIds) {
+        if (productoIds.length === 0) return [];
+
+        const { data, error } = await supabase
+            .from('ofertas')
+            .select('producto_id, descuento')
+            .eq('estado', 'Activo')
+            .in('producto_id', productoIds);
+
+        if (error) throw error;
+        return data ?? [];
+    },
+
     async create(ofertaData) {
         const { data, error } = await supabase
             .from('ofertas')
