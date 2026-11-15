@@ -1,6 +1,22 @@
 import { OfertaModel } from '../modelos/ofertas.js';
 import { parsearDescuento } from '../utils/descuentos.js';
 
+const responderErrorOferta = (res, error) => {
+    const mensaje = error?.message ?? 'Error al guardar la oferta';
+    const campoSinMigrar = ['producto_id', 'tag'].some((campo) =>
+        mensaje.includes(campo)
+    );
+    if (
+        campoSinMigrar &&
+        ['PGRST204', '42703'].includes(error?.code)
+    ) {
+        return res.status(503).json({
+            message: 'La base de datos necesita la migración BACKEND/migrations/20261114_ofertas_producto.sql antes de guardar ofertas.'
+        });
+    }
+    return res.status(500).json({ message: mensaje });
+};
+
 export const OfertaController = {
     async obtenerOfertas(req, res) {
         try {
@@ -39,7 +55,7 @@ export const OfertaController = {
             });
             return res.status(201).json(oferta);
         } catch (error) {
-            return res.status(500).json({ message: error.message });
+            return responderErrorOferta(res, error);
         }
     },
 
@@ -83,7 +99,7 @@ export const OfertaController = {
             const oferta = await OfertaModel.update(req.params.id, cambios);
             return res.status(200).json(oferta);
         } catch (error) {
-            return res.status(500).json({ message: error.message });
+            return responderErrorOferta(res, error);
         }
     },
 
