@@ -4,14 +4,42 @@ class ChatBurbuja extends StatelessWidget {
   final String texto;
   final bool esUsuario;
 
-  const ChatBurbuja({
-    super.key,
-    required this.texto,
-    required this.esUsuario,
-  });
+  const ChatBurbuja({super.key, required this.texto, required this.esUsuario});
+
+  List<Widget> _contenido(Color colorTexto) {
+    final imagenMarkdown = RegExp(r'^\s*!\[([^\]]*)\]\((https?://\S+)\)\s*$');
+    return texto.split('\n').map((linea) {
+      final coincidencia = imagenMarkdown.firstMatch(linea);
+      if (coincidencia == null) {
+        return Text(
+          linea,
+          style: TextStyle(color: colorTexto, fontSize: 14, height: 1.35),
+        );
+      }
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.network(
+            coincidencia.group(2)!,
+            width: 180,
+            height: 150,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => const SizedBox(
+              width: 180,
+              height: 48,
+              child: Center(child: Text('Imagen no disponible')),
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final colorTexto = esUsuario ? Colors.white : Colors.black87;
     return Align(
       alignment: esUsuario ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -29,13 +57,10 @@ class ChatBurbuja extends StatelessWidget {
             bottomRight: Radius.circular(esUsuario ? 4 : 16),
           ),
         ),
-        child: Text(
-          texto,
-          style: TextStyle(
-            color: esUsuario ? Colors.white : Colors.black87,
-            fontSize: 14,
-            height: 1.35,
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: _contenido(colorTexto),
         ),
       ),
     );

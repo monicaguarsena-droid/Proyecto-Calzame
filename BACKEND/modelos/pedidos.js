@@ -59,7 +59,6 @@ export const crearPedido = async (pedidoData) => {
 };
 
 // Todos los pedidos (admin) o solo los de una cédula.
-// soloVisibles: oculta los que el cliente quitó de su historial.
 export const obtenerPedidos = async ({ cedula, soloVisibles = false } = {}) => {
     let consulta = supabase
         .from('Pedidos')
