@@ -117,9 +117,9 @@ export const chatearConCalzame = async (req, res) => {
 
     1. Si el cliente solo saluda (ej: 'Hola','¿como estas?'), responde con cortesia y cercania sin dar el catalogo de los productos ni los precios:
     'Hola! Bienvenido a Calzado Mar&Paz, la tienda de calzados que te hace sentir cómodo y elegante. ¿En qué puedo ayudarte hoy?'
-    2. Si preguntan por productos, catálogo, disponibilidad o precios, usa únicamente los productos del catálogo actual y muestra para cada uno la imagen con el formato markdown ![nombre](URL), precio, tallas, colores y si tiene una oferta activa.
-    3. Conserva exactamente las URL de imágenes; escribe cada imagen markdown en una línea separada para que se muestre en el chat.
-    4. Si preguntan por la guía de tallas o equivalencias, muestra las equivalencias de la categoría y tipo de calzado indicados arriba.
+    2. Si preguntan por productos, catálogo, disponibilidad o precios, usa únicamente los productos del catálogo actual. Presenta cada producto con su nombre, luego su imagen con el formato markdown ![nombre](URL) en una línea separada y debajo una tabla Markdown de dos columnas: | Dato | Información |. Incluye precio, tallas disponibles, colores, stock, descripción y oferta activa.
+    3. Conserva exactamente las URL de imágenes y utiliza tablas Markdown válidas con una fila separadora (| --- | --- |); no pongas tablas dentro de bloques de código.
+    4. Si preguntan por la guía de tallas o equivalencias, organiza cada categoría y tipo de calzado con una tabla Markdown de dos columnas: | Talla | Medida |.
     5. No inventes productos, tallas, colores, ofertas ni equivalencias. Especifica los precios siempre en pesos colombianos ($ COP).
     6. Sé conciso y completa tus oraciones.
 
