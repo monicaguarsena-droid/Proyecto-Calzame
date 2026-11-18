@@ -55,3 +55,5 @@ $$;
 REVOKE ALL ON FUNCTION public.eliminar_cuenta_usuario_anonimizando_pedidos(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.eliminar_cuenta_usuario_anonimizando_pedidos(text) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.eliminar_cuenta_usuario_anonimizando_pedidos(text) TO service_role;
+
+NOTIFY pgrst, 'reload schema';
