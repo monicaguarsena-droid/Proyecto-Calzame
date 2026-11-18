@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/inicio_sesion.dart';
+import 'package:frontend/pantallas/home.dart';
+
 
 class PantallaInicio extends StatefulWidget {
   const PantallaInicio({super.key});
@@ -158,7 +159,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => Login()),
+                          MaterialPageRoute(builder: (context) => Home()),
                         );
                       },
                       style: ElevatedButton.styleFrom(

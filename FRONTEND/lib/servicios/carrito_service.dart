@@ -40,8 +40,32 @@ class ItemCarrito {
   }) : precioOriginal = precioOriginal ?? precio;
 }
 
+class _ItemInvitadoSincronizado {
+  final String id;
+  final int cantidadBase;
+
+  const _ItemInvitadoSincronizado({
+    required this.id,
+    required this.cantidadBase,
+  });
+}
+
 class CarritoService {
   static final List<ItemCarrito> itemsCarrito = [];
+  static bool _carritoInvitado = false;
+  static int _siguienteIdInvitado = 0;
+  static final Map<String, _ItemInvitadoSincronizado>
+      _itemsInvitadosSincronizados = {};
+
+  static void _iniciarCarritoInvitado() {
+    if (_carritoInvitado) return;
+    itemsCarrito.clear();
+    _itemsInvitadosSincronizados.clear();
+    _carritoInvitado = true;
+  }
+
+  static bool _mismaVariante(ItemCarrito a, ItemCarrito b) =>
+      a.productoId == b.productoId && a.talla == b.talla && a.color == b.color;
 
   /// Foto del color que el cliente eligió; si no existe, la principal.
   static String _imagenParaColor(ProductoModel? producto, String color) {
@@ -66,9 +90,26 @@ class CarritoService {
   }
 
   static Future<List<ItemCarrito>> cargarCarrito() async {
+    final headers = await _headersSiSesion();
+    if (headers == null) {
+      _iniciarCarritoInvitado();
+      return List.of(itemsCarrito);
+    }
+
+    if (_carritoInvitado) {
+      await _sincronizarCarritoInvitado(headers);
+      return List.of(itemsCarrito);
+    }
+
+    return _cargarCarritoServidor(headers);
+  }
+
+  static Future<List<ItemCarrito>> _cargarCarritoServidor(
+    Map<String, String> headers,
+  ) async {
     final response = await http.get(
       Uri.parse('${ApiConfig.baseUrl}/carrito'),
-      headers: await _headers(),
+      headers: headers,
     );
     final body = _decode(response);
     if (response.statusCode != 200) {
@@ -121,6 +162,69 @@ class CarritoService {
     return items;
   }
 
+  static Future<void> _sincronizarCarritoInvitado(
+    Map<String, String> headers,
+  ) async {
+    for (final item in List<ItemCarrito>.of(itemsCarrito)) {
+      final productoId = int.tryParse(item.productoId);
+      if (productoId == null) {
+        throw Exception('No se pudo identificar un producto del carrito.');
+      }
+
+      final sincronizado = _itemsInvitadosSincronizados[item.id];
+      if (sincronizado != null) {
+        final response = await http.put(
+          Uri.parse('${ApiConfig.baseUrl}/carrito/${sincronizado.id}'),
+          headers: headers,
+          body: jsonEncode({
+            'cantidad': sincronizado.cantidadBase + item.cantidad,
+          }),
+        );
+        final body = _decode(response);
+        if (response.statusCode != 200) {
+          throw Exception(_mensajeError(body, response.statusCode));
+        }
+        continue;
+      }
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/carrito/agregar'),
+        headers: headers,
+        body: jsonEncode({
+          'producto_id': productoId,
+          'cantidad': item.cantidad,
+          'talla': item.talla,
+          'color': item.color,
+        }),
+      );
+      final body = _decode(response);
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception(_mensajeError(body, response.statusCode));
+      }
+      if (body is! Map<String, dynamic> ||
+          body['item'] is! Map<String, dynamic>) {
+        throw Exception('El servidor no confirmó el producto sincronizado.');
+      }
+
+      final registro = body['item'] as Map<String, dynamic>;
+      final id = registro['id']?.toString() ?? '';
+      final cantidadServidor = int.tryParse(
+        registro['cantidad']?.toString() ?? '',
+      );
+      if (id.isEmpty || cantidadServidor == null) {
+        throw Exception('El servidor devolvió un producto inválido.');
+      }
+      _itemsInvitadosSincronizados[item.id] = _ItemInvitadoSincronizado(
+        id: id,
+        cantidadBase: cantidadServidor - item.cantidad,
+      );
+    }
+
+    _carritoInvitado = false;
+    _itemsInvitadosSincronizados.clear();
+    await _cargarCarritoServidor(headers);
+  }
+
   static double _aDouble(dynamic valor) {
     if (valor is num) return valor.toDouble();
     return double.tryParse(valor?.toString() ?? '') ?? 0;
@@ -164,12 +268,47 @@ class CarritoService {
       throw Exception('No se pudo identificar el producto o su precio.');
     }
 
-    // Convertimos el productoId a entero si la base de datos lo espera numérico
     final int? parsedProductoId = int.tryParse(productoId);
+    final sessionHeaders = await _headersSiSesion();
+    if (sessionHeaders == null) {
+      _iniciarCarritoInvitado();
+      final existente = itemsCarrito.where(
+        (item) =>
+            item.productoId == productoId &&
+            item.talla == talla &&
+            item.color == color,
+      );
+      if (existente.isNotEmpty) {
+        existente.first.cantidad++;
+        return;
+      }
+
+      itemsCarrito.add(
+        ItemCarrito(
+          id: 'invitado-${_siguienteIdInvitado++}',
+          productoId: productoId,
+          imagen: imagen,
+          titulo: titulo,
+          subtitulo: producto != null ? _subtituloDe(producto) : subtitulo,
+          precio: precio,
+          precioOriginal: precio,
+          talla: talla,
+          color: color,
+          cantidad: 1,
+          producto: producto,
+        ),
+      );
+      return;
+    }
+
+    if (_carritoInvitado) {
+      await _sincronizarCarritoInvitado(sessionHeaders);
+    }
+    final headers = await _headers();
 
     final response = await http.post(
       Uri.parse('${ApiConfig.baseUrl}/carrito/agregar'),
-      headers: await _headers(),
+      headers: headers,
       body: jsonEncode({
         'producto_id': parsedProductoId ?? productoId,
         'cantidad': 1,
@@ -222,9 +361,27 @@ class CarritoService {
 
   // 3. Actualizar la cantidad de un ítem
   static Future<void> actualizarCantidad(ItemCarrito item, int cantidad) async {
+    final headers = await _headersSiSesion();
+    if (headers == null) {
+      _iniciarCarritoInvitado();
+      item.cantidad = cantidad;
+      return;
+    }
+
+    if (_carritoInvitado) {
+      await _sincronizarCarritoInvitado(headers);
+      final indice = itemsCarrito.indexWhere(
+        (actual) => _mismaVariante(actual, item),
+      );
+      if (indice < 0) {
+        throw Exception('No se encontró el producto en el carrito.');
+      }
+      item = itemsCarrito[indice];
+    }
+
     final response = await http.put(
       Uri.parse('${ApiConfig.baseUrl}/carrito/${item.id}'),
-      headers: await _headers(),
+      headers: headers,
       body: jsonEncode({'cantidad': cantidad}),
     );
     final body = _decode(response);
@@ -236,9 +393,27 @@ class CarritoService {
 
   // 4. Eliminar un ítem individual
   static Future<void> eliminar(ItemCarrito item) async {
+    final headers = await _headersSiSesion();
+    if (headers == null) {
+      _iniciarCarritoInvitado();
+      itemsCarrito.removeWhere((registro) => registro.id == item.id);
+      return;
+    }
+
+    if (_carritoInvitado) {
+      await _sincronizarCarritoInvitado(headers);
+      final indice = itemsCarrito.indexWhere(
+        (actual) => _mismaVariante(actual, item),
+      );
+      if (indice < 0) {
+        throw Exception('No se encontró el producto en el carrito.');
+      }
+      item = itemsCarrito[indice];
+    }
+
     final response = await http.delete(
       Uri.parse('${ApiConfig.baseUrl}/carrito/${item.id}'),
-      headers: await _headers(),
+      headers: headers,
     );
     final body = _decode(response);
     if (response.statusCode != 200) {
@@ -249,26 +424,44 @@ class CarritoService {
 
   // 5. Vaciar todo el carrito
   static Future<void> vaciar() async {
+    final headers = await _headersSiSesion();
+    if (headers == null) {
+      _iniciarCarritoInvitado();
+      itemsCarrito.clear();
+      return;
+    }
+
+    if (_carritoInvitado) {
+      await _sincronizarCarritoInvitado(headers);
+    }
+
     final response = await http.delete(
       Uri.parse('${ApiConfig.baseUrl}/carrito/vaciar'),
-      headers: await _headers(),
+      headers: headers,
     );
     final body = _decode(response);
     if (response.statusCode != 200) {
       throw Exception(_mensajeError(body, response.statusCode));
     }
     itemsCarrito.clear();
+    _carritoInvitado = false;
+    _itemsInvitadosSincronizados.clear();
   }
 
-  // Métodos auxiliares privados para cabeceras y errores
-  static Future<Map<String, String>> _headers() async {
+  static Future<Map<String, String>?> _headersSiSesion() async {
     final preferences = await SharedPreferences.getInstance();
     final token =
         preferences.getString('token') ?? preferences.getString('jwt_token');
-    if (token == null || token.isEmpty) {
+    if (token == null || token.trim().isEmpty) return null;
+    return {...ApiConfig.headers, 'Authorization': 'Bearer $token'};
+  }
+
+  static Future<Map<String, String>> _headers() async {
+    final headers = await _headersSiSesion();
+    if (headers == null) {
       throw Exception('Inicia sesión para consultar y guardar tu carrito.');
     }
-    return {...ApiConfig.headers, 'Authorization': 'Bearer $token'};
+    return headers;
   }
 
   static dynamic _decode(http.Response response) {

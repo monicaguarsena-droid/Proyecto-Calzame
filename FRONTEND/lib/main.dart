@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:frontend/pantallas/splash.dart';
 import 'package:frontend/firebase_options.dart';
+import 'package:frontend/pantallas/splash.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {

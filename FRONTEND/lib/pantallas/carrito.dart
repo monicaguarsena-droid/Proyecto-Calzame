@@ -7,7 +7,9 @@ import 'package:frontend/pantallas/home.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/producto.dart';
+import 'package:frontend/pantallas/inicio_sesion.dart';
 import 'package:frontend/servicios/carrito_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 export 'package:frontend/servicios/carrito_service.dart';
 
@@ -124,6 +126,51 @@ class _CarritoScreenState extends State<CarritoScreen> {
       0,
       (sum, item) => sum + ((item.precioOriginal - item.precio) * item.cantidad),
     );
+  }
+
+  Future<Widget> _compraTrasIniciarSesion() async {
+    final items = await CarritoService.cargarCarrito();
+    if (items.isEmpty) {
+      throw Exception('Tu carrito está vacío.');
+    }
+
+    final total = items.fold<double>(
+      0,
+      (suma, item) => suma + item.precio * item.cantidad,
+    );
+    return CompraScreen(items: List.of(items), total: total);
+  }
+
+  Future<void> _procederAlPago() async {
+    if (CarritoService.itemsCarrito.isEmpty) return;
+
+    final preferencias = await SharedPreferences.getInstance();
+    final token =
+        preferencias.getString('token') ?? preferencias.getString('jwt_token');
+    if (!mounted) return;
+
+    if (token == null || token.trim().isEmpty) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Login(
+            paginaDespuesDeLogin: _compraTrasIniciarSesion,
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final pagina = await _compraTrasIniciarSesion();
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => pagina),
+      );
+    } catch (error) {
+      _mostrarError(error);
+    }
   }
 
   /// Abre el detalle con el producto real; si no se encontró, arma uno básico.
@@ -540,19 +587,7 @@ class _CarritoScreenState extends State<CarritoScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
-              onPressed: () {
-                if (CarritoService.itemsCarrito.isEmpty) return;
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => CompraScreen(
-                      items: List.of(CarritoService.itemsCarrito),
-                      total: _totalGeneral,
-                    ),
-                  ),
-                );
-              },
+              onPressed: _procederAlPago,
               style: ElevatedButton.styleFrom(
                 backgroundColor: ColoresApp.primary,
                 elevation: 0,

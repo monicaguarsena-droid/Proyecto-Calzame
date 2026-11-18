@@ -38,6 +38,13 @@ export const obtenerProductosPorIds = async (ids) => {
     return { data, error };
 };
 
+export const descontarStockPedido = async (items) => {
+    const { data, error } = await supabase.rpc('descontar_stock_pedido', {
+        p_items: items
+    });
+    return { data, error };
+};
+
 // ---------- Pedidos ----------
 
 export const crearPedido = async (pedidoData) => {

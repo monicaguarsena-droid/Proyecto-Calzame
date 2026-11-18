@@ -1,4 +1,5 @@
 import express from 'express';
+import { verificarToken } from '../middlewares/authmiddleware.js';
 import { 
     getUsuarios, 
     getUsuarioPorId, 
@@ -21,6 +22,6 @@ router.get('/:id', getUsuarioPorId);
 //ruta para actualizar un usuario
 router.put('/actualizar/:id', updateUsuario);
 //ruta para eliminar un usuario
-router.delete('/eliminar/:id', deleteUsuario);
+router.delete('/eliminar/:id', verificarToken, deleteUsuario);
 
 export default router;

@@ -8,7 +8,9 @@ import 'package:frontend/servicios/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
-  const Login({super.key});
+  final Future<Widget> Function()? paginaDespuesDeLogin;
+
+  const Login({super.key, this.paginaDespuesDeLogin});
 
   @override
   State<Login> createState() => _LoginState();
@@ -77,18 +79,9 @@ class _LoginState extends State<Login> {
 
       if (!mounted) return;
 
-      // Validar si el correo ingresado es el del administrador
-      if (emailIngresado.toLowerCase() == _adminEmail.toLowerCase()) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => AdminPanel()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => Home()),
-        );
-      }
+      await _navegarDespuesDeLogin(
+        esAdmin: emailIngresado.toLowerCase() == _adminEmail.toLowerCase(),
+      );
     } else {
       _showSnackBar(result['message'] ?? 'Error al iniciar sesión');
     }
@@ -113,16 +106,38 @@ void _handleGoogleLogin() async {
 
     if (!mounted) return;
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => esAdmin ? AdminPanel() : Home(),
-      ),
-    );
+    await _navegarDespuesDeLogin(esAdmin: esAdmin);
   } else {
     _showSnackBar(result['message'] ?? 'Error con Google');
   }
 }
+
+  Future<void> _navegarDespuesDeLogin({required bool esAdmin}) async {
+    final paginaDespuesDeLogin = widget.paginaDespuesDeLogin;
+    if (esAdmin || paginaDespuesDeLogin == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => esAdmin ? AdminPanel() : Home(),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final pagina = await paginaDespuesDeLogin();
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => pagina),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      _showSnackBar(error.toString().replaceFirst('Exception: ', ''));
+    }
+  }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -325,7 +340,10 @@ void _handleGoogleLogin() async {
                           : () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const Registro(),
+                                  builder: (context) => Registro(
+                                    paginaDespuesDeLogin:
+                                        widget.paginaDespuesDeLogin,
+                                  ),
                                 ),
                               ),
                       child: const Text(

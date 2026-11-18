@@ -89,6 +89,13 @@ export const updateUsuario = async (req,res)=>{
 export const deleteUsuario = async (req,res)=>{
     try{
         const {id} = req.params;
+        if (!req.usuario?.id) {
+            return res.status(401).json({ error: 'Debes iniciar sesión para eliminar una cuenta' });
+        }
+        if (String(req.usuario.id) !== String(id) && req.usuario.rol !== 'admin') {
+            return res.status(403).json({ error: 'No tienes permiso para eliminar esta cuenta' });
+        }
+
         const {data,error} = await eliminarUsuario(id);
         if(error){
             return res.status(500).json({

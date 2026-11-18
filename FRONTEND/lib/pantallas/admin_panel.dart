@@ -1,4 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:frontend/api_config.dart';
 import 'package:frontend/pantallas/admindrawer.dart';
 import 'package:frontend/pantallas/admininventario.dart';
 import 'package:frontend/pantallas/adminpedido.dart';
@@ -7,6 +12,8 @@ import 'package:frontend/pantallas/admincategorias.dart';
 import 'package:frontend/pantallas/reporte_ventas.dart';
 import 'package:frontend/pantallas/configuracion_tienda.dart';
 import 'package:frontend/servicios/reporte_service.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 String _formatearCOP(num valor) {
   final entero = valor.round().abs().toString();
@@ -34,6 +41,9 @@ class _AdminPanelState extends State<AdminPanel> {
   final Color _primaryColor = const Color(0xFF6B2D3C);
   final Color _backgroundColor = const Color(0xFFF7F4F0);
   final ReporteService _reporteService = ReporteService();
+  final FlutterLocalNotificationsPlugin _notificacionesLocales =
+      FlutterLocalNotificationsPlugin();
+  StreamSubscription<RemoteMessage>? _suscripcionMensajes;
   late final Future<ResumenAdminData> _resumenFuture;
 
   late final List<Widget> _paginas = [
@@ -47,6 +57,83 @@ class _AdminPanelState extends State<AdminPanel> {
   void initState() {
     super.initState();
     _resumenFuture = _reporteService.obtenerResumen();
+    _inicializarNotificacionesFCM();
+  }
+
+  @override
+  void dispose() {
+    _suscripcionMensajes?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _inicializarNotificacionesFCM() async {
+    try {
+      const canal = AndroidNotificationChannel(
+        'calzame_notifications',
+        'Notificaciones',
+        description: 'Notificaciones de CalzaMe',
+        importance: Importance.high,
+      );
+      await _notificacionesLocales.initialize(
+        const InitializationSettings(
+          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+        ),
+      );
+      await _notificacionesLocales
+          .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin>()
+          ?.createNotificationChannel(canal);
+
+      if (!mounted) return;
+      _suscripcionMensajes = FirebaseMessaging.onMessage.listen((mensaje) {
+        final notificacion = mensaje.notification;
+        if (notificacion == null) return;
+        _notificacionesLocales.show(
+          mensaje.hashCode,
+          notificacion.title,
+          notificacion.body,
+          const NotificationDetails(
+            android: AndroidNotificationDetails(
+              'calzame_notifications',
+              'Notificaciones',
+              channelDescription: 'Notificaciones de CalzaMe',
+              importance: Importance.high,
+              priority: Priority.high,
+            ),
+          ),
+        );
+      });
+
+      final settings = await FirebaseMessaging.instance.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      if (!mounted ||
+          settings.authorizationStatus != AuthorizationStatus.authorized) {
+        return;
+      }
+
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token == null) return;
+
+      final prefs = await SharedPreferences.getInstance();
+      final email = prefs.getString('email');
+      if (email == null || email.isEmpty) return;
+
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/usuarios/actualizar-token'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'fcm_token': token}),
+      );
+      if (response.statusCode != 200) {
+        debugPrint('No se pudo guardar el token FCM del administrador.');
+      }
+    } catch (error) {
+      debugPrint(
+        'Error al inicializar notificaciones del administrador: $error',
+      );
+    }
   }
 
   @override

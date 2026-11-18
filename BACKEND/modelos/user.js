@@ -35,6 +35,16 @@ export const obtenerPorEmail = async (email) => {
         .maybeSingle();
     return { data, error };
 };
+
+export const obtenerTokensAdministradores = async () => {
+    const { data, error } = await supabase
+        .from('usuarios')
+        .select('fcm_token')
+        .eq('rol', 'admin')
+        .not('fcm_token', 'is', null);
+    return { data, error };
+};
+
 export const obtenerPorDocumento = async (tipo_documento, cedula) => {
     const { data, error } = await supabase
         .from('usuarios')

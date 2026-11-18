@@ -41,6 +41,9 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final int _tab = 0;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey _asistenteBotonKey = GlobalKey();
+  Offset? _posicionAsistente;
   String _nombreUsuario = '';
 
   final ProductoService _productoService = ProductoService();
@@ -160,6 +163,57 @@ class _HomeState extends State<Home> {
     );
   }
 
+  void _iniciarArrastreAsistente(DragStartDetails details) {
+    final scaffoldContext = _scaffoldKey.currentContext;
+    final botonContext = _asistenteBotonKey.currentContext;
+    if (scaffoldContext == null || botonContext == null) return;
+
+    final scaffoldRenderObject = scaffoldContext.findRenderObject();
+    final botonRenderObject = botonContext.findRenderObject();
+    if (scaffoldRenderObject is! RenderBox || botonRenderObject is! RenderBox) {
+      return;
+    }
+
+    setState(() {
+      _posicionAsistente = scaffoldRenderObject.globalToLocal(
+        botonRenderObject.localToGlobal(Offset.zero),
+      );
+    });
+  }
+
+  void _moverAsistente(DragUpdateDetails details) {
+    final scaffoldContext = _scaffoldKey.currentContext;
+    final botonContext = _asistenteBotonKey.currentContext;
+    if (scaffoldContext == null || botonContext == null) return;
+
+    final scaffoldRenderObject = scaffoldContext.findRenderObject();
+    final botonRenderObject = botonContext.findRenderObject();
+    if (scaffoldRenderObject is! RenderBox || botonRenderObject is! RenderBox) {
+      return;
+    }
+
+    final posicion =
+        _posicionAsistente ??
+        scaffoldRenderObject.globalToLocal(
+          botonRenderObject.localToGlobal(Offset.zero),
+        );
+    final maxLeft =
+        (scaffoldRenderObject.size.width - botonRenderObject.size.width)
+        .clamp(0.0, scaffoldRenderObject.size.width)
+        .toDouble();
+    final maxTop =
+        (scaffoldRenderObject.size.height - botonRenderObject.size.height)
+        .clamp(0.0, scaffoldRenderObject.size.height)
+        .toDouble();
+
+    setState(() {
+      _posicionAsistente = Offset(
+        (posicion.dx + details.delta.dx).clamp(0.0, maxLeft).toDouble(),
+        (posicion.dy + details.delta.dy).clamp(0.0, maxTop).toDouble(),
+      );
+    });
+  }
+
   void _onItemTapped(int index) {
     if (index == _tab) return;
 
@@ -205,6 +259,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       backgroundColor: ColoresApp.background,
       body: SafeArea(
         child: RefreshIndicator(
@@ -214,7 +269,10 @@ class _HomeState extends State<Home> {
             children: [
               _header(),
               const SizedBox(height: 14),
-              _BannerAnimadoElegante(ofertasFuture: _ofertasFuture),
+              _BannerAnimadoElegante(
+                ofertasFuture: _ofertasFuture,
+                productosFuture: _productosFuture,
+              ),
               _seccion(
                 'Escoge tu Categoría',
                 _fila(context, const [
@@ -253,15 +311,22 @@ class _HomeState extends State<Home> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _abrirAsistenteIA(context),
-        backgroundColor: ColoresApp.primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        icon: const Icon(Icons.support_agent_rounded, size: 22),
-        label: const Text(
-          'Asistente IA',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+      floatingActionButtonLocation:
+          _PosicionFlotanteAsistente(_posicionAsistente),
+      floatingActionButton: GestureDetector(
+        key: _asistenteBotonKey,
+        onPanStart: _iniciarArrastreAsistente,
+        onPanUpdate: _moverAsistente,
+        child: FloatingActionButton.extended(
+          onPressed: () => _abrirAsistenteIA(context),
+          backgroundColor: ColoresApp.primary,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          icon: const Icon(Icons.support_agent_rounded, size: 22),
+          label: const Text(
+            'Asistente IA',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          ),
         ),
       ),
       bottomNavigationBar: _nav(),
@@ -307,7 +372,7 @@ class _HomeState extends State<Home> {
             MaterialPageRoute(builder: (context) => const CarritoScreen()),
           );
         },
-        child: const _Circ(Icons.shopping_bag_outlined, size: 40, bg: Colors.white24, fg: Colors.white),
+        child: const _Circ(Icons.help_outline_rounded, size: 40, bg: Colors.white24, fg: Colors.white),
       ),
     ],
   );
@@ -535,8 +600,12 @@ class _HomeState extends State<Home> {
 
 class _BannerAnimadoElegante extends StatefulWidget {
   final Future<List> ofertasFuture;
+  final Future<List<ProductoModel>> productosFuture;
 
-  const _BannerAnimadoElegante({required this.ofertasFuture});
+  const _BannerAnimadoElegante({
+    required this.ofertasFuture,
+    required this.productosFuture,
+  });
   @override
   State<_BannerAnimadoElegante> createState() => _BannerAnimadoEleganteState();
 }
@@ -670,6 +739,12 @@ class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
                             ],
                           ),
                         ),
+                        Positioned.fill(
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onTap: () => _abrirCalzadoDeOferta(promo),
+                          ),
+                        ),
                       ],
                     );
                   },
@@ -700,6 +775,45 @@ class _BannerAnimadoEleganteState extends State<_BannerAnimadoElegante> {
         );
       },
     );
+  }
+
+  Future<void> _abrirCalzadoDeOferta(Map promo) async {
+    final productoId = promo['producto_id']?.toString();
+    if (productoId == null || productoId.isEmpty) {
+      _mostrarError('Esta oferta no tiene un calzado asociado.');
+      return;
+    }
+
+    try {
+      final productos = await widget.productosFuture;
+      final indice = productos.indexWhere(
+        (producto) => producto.id == productoId,
+      );
+      if (indice < 0) {
+        _mostrarError('No se encontró el calzado de esta oferta.');
+        return;
+      }
+
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DetalleProductoScreen(producto: productos[indice]),
+        ),
+      );
+    } catch (error) {
+      _mostrarError(
+        'No se pudo abrir el calzado de la oferta: '
+        '${error.toString().replaceFirst('Exception: ', '')}',
+      );
+    }
+  }
+
+  void _mostrarError(String mensaje) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(mensaje)));
   }
 
   Widget _bannerVacio(String mensaje) => ClipRRect(
@@ -955,4 +1069,36 @@ class _Destacada extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _PosicionFlotanteAsistente extends FloatingActionButtonLocation {
+  final Offset? posicion;
+
+  const _PosicionFlotanteAsistente(this.posicion);
+
+  @override
+  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
+    final posicion = this.posicion;
+    if (posicion == null) {
+      return FloatingActionButtonLocation.endFloat.getOffset(
+        scaffoldGeometry,
+      );
+    }
+
+    final anchoDisponible =
+        (scaffoldGeometry.scaffoldSize.width -
+                scaffoldGeometry.floatingActionButtonSize.width)
+            .clamp(0.0, scaffoldGeometry.scaffoldSize.width)
+            .toDouble();
+    final altoDisponible =
+        (scaffoldGeometry.scaffoldSize.height -
+                scaffoldGeometry.floatingActionButtonSize.height)
+            .clamp(0.0, scaffoldGeometry.scaffoldSize.height)
+            .toDouble();
+
+    return Offset(
+      posicion.dx.clamp(0.0, anchoDisponible).toDouble(),
+      posicion.dy.clamp(0.0, altoDisponible).toDouble(),
+    );
+  }
 }

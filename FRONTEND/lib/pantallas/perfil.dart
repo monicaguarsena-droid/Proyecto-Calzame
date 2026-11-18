@@ -36,6 +36,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   bool _cargando = true;
   String? _errorCarga;
   bool _notificacionesActivas = true;
+  bool _eliminandoCuenta = false;
 
   @override
   void initState() {
@@ -150,6 +151,64 @@ class _PerfilScreenState extends State<PerfilScreen> {
       MaterialPageRoute(builder: (context) => const Login()),
       (route) => false,
     );
+  }
+
+  Future<void> _confirmarEliminarCuenta() async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Eliminar cuenta'),
+        content: const Text(
+          '¿Estás seguro de que deseas eliminar tu cuenta? '
+          'Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: TextButton.styleFrom(foregroundColor: ColoresApp.error),
+            child: const Text('Sí, eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true || !mounted) return;
+    setState(() => _eliminandoCuenta = true);
+
+    try {
+      await PerfilService.eliminarCuenta();
+
+      final prefs = await SharedPreferences.getInstance();
+      for (final clave in [
+        'token',
+        'jwt_token',
+        'email',
+        'nombre',
+        'cedula',
+        'telefono',
+        'tipo_documento',
+        'avatar',
+        'user_email',
+        'user_name',
+        'user_role',
+      ]) {
+        await prefs.remove(clave);
+      }
+
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Login()),
+        (route) => false,
+      );
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _eliminandoCuenta = false);
+      _mostrar(error.toString().replaceFirst('Exception: ', ''));
+    }
   }
 
   // ---------- Pedidos ----------
@@ -483,6 +542,38 @@ class _PerfilScreenState extends State<PerfilScreen> {
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
                             ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton.icon(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: ColoresApp.error,
+                            side: const BorderSide(color: ColoresApp.error),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: _eliminandoCuenta
+                              ? null
+                              : _confirmarEliminarCuenta,
+                          icon: _eliminandoCuenta
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Icon(Icons.delete_forever_outlined),
+                          label: Text(
+                            _eliminandoCuenta
+                                ? 'Eliminando cuenta...'
+                                : 'Eliminar cuenta',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),

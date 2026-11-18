@@ -119,3 +119,36 @@ export const putPerfil = async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
 };
+
+// DELETE /perfil → elimina únicamente la cuenta de la sesión autenticada
+export const deletePerfil = async (req, res) => {
+    try {
+        const id = req.usuario?.id;
+        if (id === undefined || id === null || id === '') {
+            return res.status(401).json({ error: 'No se pudo identificar al usuario desde el token' });
+        }
+
+        const { data, error } = await supabase
+            .from('usuarios')
+            .delete()
+            .eq('id', id)
+            .select('id')
+            .maybeSingle();
+
+        if (error) {
+            console.error('❌ Perfil: error al eliminar la cuenta', error);
+            return res.status(500).json({
+                error: 'No se pudo eliminar la cuenta',
+                detalle: error.message
+            });
+        }
+        if (!data) {
+            return res.status(404).json({ error: 'No se encontró la cuenta' });
+        }
+
+        return res.status(200).json({ message: 'Cuenta eliminada exitosamente' });
+    } catch (error) {
+        console.error('❌ Perfil: error inesperado al eliminar la cuenta', error);
+        return res.status(500).json({ error: 'No se pudo eliminar la cuenta' });
+    }
+};

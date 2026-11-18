@@ -100,4 +100,31 @@ class PerfilService {
         .timeout(const Duration(seconds: 60));
     return _leerRespuesta(response);
   }
+
+  /// Elimina la cuenta asociada al token de sesión actual.
+  static Future<void> eliminarCuenta() async {
+    final response = await http
+        .delete(
+          Uri.parse('${ApiConfig.baseUrl}/perfil'),
+          headers: await _headers(),
+        )
+        .timeout(const Duration(seconds: 60));
+
+    dynamic body;
+    try {
+      body = response.body.isEmpty ? null : jsonDecode(response.body);
+    } catch (_) {
+      body = null;
+    }
+
+    if (response.statusCode == 200) return;
+    if (body is Map) {
+      final mensaje =
+          (body['error'] ?? body['message'] ?? 'No se pudo eliminar la cuenta')
+              .toString();
+      final detalle = (body['detalle'] ?? '').toString();
+      throw Exception(detalle.isNotEmpty ? '$mensaje: $detalle' : mensaje);
+    }
+    throw Exception('Error del servidor (código ${response.statusCode})');
+  }
 }

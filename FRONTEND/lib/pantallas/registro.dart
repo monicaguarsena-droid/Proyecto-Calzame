@@ -8,7 +8,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/pantallas/admin_panel.dart';
 
 class Registro extends StatefulWidget {
-  const Registro({super.key});
+  final Future<Widget> Function()? paginaDespuesDeLogin;
+
+  const Registro({super.key, this.paginaDespuesDeLogin});
 
   @override
   State<Registro> createState() => _RegistroState();
@@ -38,6 +40,7 @@ class _RegistroState extends State<Registro> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  bool _aceptaTerminos = false;
 
   @override
   void dispose() {
@@ -54,6 +57,11 @@ class _RegistroState extends State<Registro> {
   // ---------------------------------------------------------------------------
 
   void _handleRegister() async {
+    if (!_aceptaTerminos) {
+      _showSnackBar('Debes aceptar los términos y condiciones');
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
     if (_contrasenaController.text.trim() !=
@@ -86,6 +94,7 @@ class _RegistroState extends State<Registro> {
       await prefs.setString('tipo_documento', _tipoDocumento);
 
       if (!mounted) return;
+      final paginaDespuesDeLogin = widget.paginaDespuesDeLogin;
 
       // Navegamos a la pantalla de VerificaciónCorreo
       Navigator.pushReplacement(
@@ -100,9 +109,14 @@ class _RegistroState extends State<Registro> {
               );
 
               if (verifResult['success']) {
+                if (!ctx.mounted) return;
                 Navigator.push(
                   ctx,
-                  MaterialPageRoute(builder: (context) => Login()),
+                  MaterialPageRoute(
+                    builder: (context) => Login(
+                      paginaDespuesDeLogin: paginaDespuesDeLogin,
+                    ),
+                  ),
                 );
               } else {
                 throw Exception(verifResult['message'] ?? 'Código incorrecto');
@@ -120,6 +134,11 @@ class _RegistroState extends State<Registro> {
   }
 
   void _handleGoogleRegister() async {
+  if (!_aceptaTerminos) {
+    _showSnackBar('Debes aceptar los términos y condiciones');
+    return;
+  }
+
   setState(() => _isLoading = true);
 
   final result = await _authService.loginWithGoogle();
@@ -135,19 +154,98 @@ class _RegistroState extends State<Registro> {
     final email = (usuario['email'] ?? '').toString().trim().toLowerCase();
     final rol = (usuario['rol'] ?? '').toString().toLowerCase();
     final esAdmin = email == 'monicaguarsena@gmail.com' || rol == 'admin';
+    Widget pagina = esAdmin ? AdminPanel() : Home();
+
+    if (!esAdmin && widget.paginaDespuesDeLogin != null) {
+      try {
+        pagina = await widget.paginaDespuesDeLogin!();
+      } catch (error) {
+        if (!mounted) return;
+        _showSnackBar(error.toString().replaceFirst('Exception: ', ''));
+        return;
+      }
+    }
 
     if (!mounted) return;
 
     // Limpia la pila para que "atrás" no vuelva al registro
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => esAdmin ? AdminPanel() : Home()),
+      MaterialPageRoute(builder: (context) => pagina),
       (route) => false,
     );
   } else {
     _showSnackBar(result['message'] ?? 'Error con Google');
   }
 }
+
+  void _mostrarTerminosYCondiciones() {
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text(
+          'Términos y condiciones',
+          style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+        ),
+        content: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.6,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                _TerminoSeccion(
+                  titulo: '1. Cuenta y registro',
+                  contenido:
+                      'Para crear una cuenta debes proporcionar información veraz y mantenerla actualizada. Eres responsable de cuidar tus credenciales y de la actividad realizada desde tu cuenta.',
+                ),
+                _TerminoSeccion(
+                  titulo: '2. Uso de la aplicación',
+                  contenido:
+                      'Te comprometes a usar Mar&Paz de forma lícita y a no realizar actividades fraudulentas, afectar el funcionamiento de la aplicación ni vulnerar los derechos de otras personas.',
+                ),
+                _TerminoSeccion(
+                  titulo: '3. Productos y pedidos',
+                  contenido:
+                      'La disponibilidad, descripción y precio de los productos se informan en la aplicación y pueden cambiar. Los pedidos están sujetos a disponibilidad y a la confirmación de la compra. Si ocurre un error que afecte tu pedido, te informaremos para ofrecerte una solución.',
+                ),
+                _TerminoSeccion(
+                  titulo: '4. Pagos y entregas',
+                  contenido:
+                      'Antes de confirmar una compra se mostrarán el valor total, los medios de pago disponibles y la información de entrega. Los tiempos de entrega son estimados y dependen de la dirección y del servicio de transporte.',
+                ),
+                _TerminoSeccion(
+                  titulo: '5. Cambios, garantías y protección al consumidor',
+                  contenido:
+                      'Las solicitudes relacionadas con cambios, garantías o retracto se atenderán conforme a las condiciones informadas para cada compra y a las normas de protección al consumidor que resulten aplicables.',
+                ),
+                _TerminoSeccion(
+                  titulo: '6. Datos personales',
+                  contenido:
+                      'El tratamiento de tus datos personales se realizará de acuerdo con la normativa aplicable y la política de privacidad de la aplicación.',
+                ),
+                _TerminoSeccion(
+                  titulo: '7. Aceptación y cambios',
+                  contenido:
+                      'Al marcar la casilla de aceptación y continuar con el registro, confirmas que leíste y aceptas estos términos. Si se actualizan, te informaremos cuando corresponda.',
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Cerrar',
+              style: TextStyle(color: primaryColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -464,6 +562,45 @@ class _RegistroState extends State<Registro> {
                   ),
                   const SizedBox(height: 24),
 
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Checkbox(
+                        value: _aceptaTerminos,
+                        activeColor: primaryColor,
+                        onChanged: (value) {
+                          setState(() => _aceptaTerminos = value ?? false);
+                        },
+                      ),
+                      Expanded(
+                        child: Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            const Text('He leído y acepto los '),
+                            TextButton(
+                              onPressed: _mostrarTerminosYCondiciones,
+                              style: TextButton.styleFrom(
+                                foregroundColor: primaryColor,
+                                padding: EdgeInsets.zero,
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Términos y condiciones',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                            const Text('.'),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
                   // Botón Crear cuenta
                   SizedBox(
                     width: double.infinity,
@@ -627,6 +764,31 @@ class _RegistroState extends State<Registro> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _TerminoSeccion extends StatelessWidget {
+  final String titulo;
+  final String contenido;
+
+  const _TerminoSeccion({required this.titulo, required this.contenido});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titulo,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          const SizedBox(height: 4),
+          Text(contenido),
+        ],
       ),
     );
   }

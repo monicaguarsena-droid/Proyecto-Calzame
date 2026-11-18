@@ -9,12 +9,15 @@ import {
     actualizarEstadoPedido,
     eliminarPedidoCompleto,
     crearDetallesPedido,
-    obtenerDetallesPorPedidos
+    obtenerDetallesPorPedidos,
+    descontarStockPedido
 } from '../modelos/pedidos.js';
 import { obtenerCarritoPorUsuario, vaciarCarritoUsuario } from '../modelos/carrito.js';
 import { OfertaModel } from '../modelos/ofertas.js';
 import { enviarConfirmacionPedido } from '../utils/sendEmail.js';
 import { calcularPrecioConDescuento, parsearDescuento } from '../utils/descuentos.js';
+import { obtenerTokensAdministradores } from '../modelos/user.js';
+import messaging from '../config/firebase.js';
 
 // Estados que puede tener un pedido (la tienda solo entrega en el local)
 export const ESTADOS_PEDIDO = ['Pendiente', 'Listo para recoger', 'Entregado', 'Cancelado'];
@@ -42,6 +45,55 @@ const imagenPara = (producto, color) => {
         (c) => String(c?.color ?? '').trim().toLowerCase() === buscado && c?.imagenUrl
     );
     return coincide?.imagenUrl || producto.Imagen || '';
+};
+
+const notificarStockBajo = async (productos) => {
+    const productosBajos = productos.filter(
+        (producto) => Number(producto.stockAnterior) >= 4 && Number(producto.stock) < 4
+    );
+    if (productosBajos.length === 0) return;
+
+    try {
+        const { data: administradores, error } = await obtenerTokensAdministradores();
+        if (error) {
+            console.error('❌ Stock bajo: no se pudieron consultar los administradores', error);
+            return;
+        }
+
+        const tokens = [...new Set(
+            (administradores ?? [])
+                .map((administrador) => administrador.fcm_token)
+                .filter((token) => typeof token === 'string' && token.length > 0)
+        )];
+        if (tokens.length === 0) {
+            console.warn('⚠️ Stock bajo: no hay administradores con notificaciones activas');
+            return;
+        }
+
+        for (const producto of productosBajos) {
+            const resultados = await Promise.allSettled(
+                tokens.map((token) => messaging.send({
+                    notification: {
+                        title: `Stock bajo: ${producto.nombre}`,
+                        body: `Quedan ${producto.stock} pares de este calzado.`
+                    },
+                    data: {
+                        tipo: 'stock_bajo',
+                        productoId: String(producto.id),
+                        ruta: '/admin/inventario'
+                    },
+                    token
+                }))
+            );
+            for (const resultado of resultados) {
+                if (resultado.status === 'rejected') {
+                    console.error('❌ Stock bajo: no se pudo enviar una notificación', resultado.reason);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('❌ Stock bajo: error al notificar a los administradores', error);
+    }
 };
 
 // Convierte los registros de la base de datos en el formato que usa la app
@@ -196,7 +248,10 @@ export const postPedido = async (req, res) => {
             const precio = descuento > 0
                 ? calcularPrecioConDescuento(precioOriginal, descuento)
                 : precioOriginal;
-            const cantidad = Number(item.cantidad) || 1;
+            const cantidad = Number(item.cantidad);
+            if (!Number.isInteger(cantidad) || cantidad < 1) {
+                return res.status(400).json({ error: 'La cantidad solicitada no es válida' });
+            }
             const subtotal = precio * cantidad;
             total += subtotal;
             lineas.push({
@@ -234,11 +289,49 @@ export const postPedido = async (req, res) => {
             return res.status(500).json({ error: 'Error al guardar los productos del pedido', detalle: errorDetalles.message });
         }
 
-        // 7. Vaciar el carrito del usuario
+        // 7. Descontar el inventario de forma atómica para evitar vender más del disponible
+        const cantidadesPorProducto = new Map();
+        for (const linea of lineas) {
+            const productoId = String(linea.Producto_Id);
+            cantidadesPorProducto.set(
+                productoId,
+                (cantidadesPorProducto.get(productoId) ?? 0) + linea.Cantidad
+            );
+        }
+        const { data: resultadoStock, error: errorStock } = await descontarStockPedido(
+            [...cantidadesPorProducto].map(([producto_id, cantidad]) => ({
+                producto_id,
+                cantidad
+            }))
+        );
+        if (errorStock || !resultadoStock) {
+            console.error('❌ Pedido: no se pudo descontar el inventario', errorStock);
+            const { error: errorEliminarPedido } = await eliminarPedidoCompleto(pedido.id);
+            if (errorEliminarPedido) {
+                console.error('❌ Pedido: no se pudo eliminar tras fallar el inventario', errorEliminarPedido);
+            }
+            return res.status(500).json({
+                error: 'No se pudo actualizar el inventario. Intenta de nuevo.',
+                detalle: errorStock?.message
+            });
+        }
+        if (resultadoStock.success !== true) {
+            const { error: errorEliminarPedido } = await eliminarPedidoCompleto(pedido.id);
+            if (errorEliminarPedido) {
+                console.error('❌ Pedido: no se pudo eliminar por stock insuficiente', errorEliminarPedido);
+            }
+            return res.status(409).json({
+                error: `${resultadoStock.producto_nombre}: solo quedan ${resultadoStock.stock_disponible} pares disponibles. Ajusta la cantidad del pedido.`
+            });
+        }
+
+        await notificarStockBajo(resultadoStock.productos ?? []);
+
+        // 8. Vaciar el carrito del usuario
         const { error: errorVaciar } = await vaciarCarritoUsuario(usuarioId);
         if (errorVaciar) console.error('⚠️ Pedido: no se pudo vaciar el carrito', errorVaciar);
 
-        // 8. Correo de confirmación: no bloquea la respuesta si tarda o falla
+        // 9. Correo de confirmación: no bloquea la respuesta si tarda o falla
         if (usuario.email) {
             Promise.resolve()
                 .then(() => enviarConfirmacionPedido(usuario.email, usuario.nombre, pedido.id, total))
