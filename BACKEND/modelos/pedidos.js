@@ -57,7 +57,8 @@ export const crearPedido = async (pedidoData) => {
                 Total: pedidoData.total,
                 Estado: pedidoData.estado,
                 Metodo_Pago: pedidoData.metodo_pago,
-                Nombre_Contacto: pedidoData.nombre_contacto
+                Nombre_Contacto: pedidoData.nombre_contacto,
+                Comprobante_Pago: pedidoData.comprobante_pago
             }
         ])
         .select();

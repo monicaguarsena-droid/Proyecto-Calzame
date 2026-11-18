@@ -8,6 +8,7 @@ import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/pedido.dart';
 import 'package:frontend/servicios/pedido_service.dart';
 import 'package:frontend/servicios/perfil_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class CompraScreen extends StatefulWidget {
   final List<ItemCarrito> items;
@@ -22,6 +23,7 @@ class CompraScreen extends StatefulWidget {
 class _CompraScreenState extends State<CompraScreen> {
   bool _isProcessing = false;
   final int _tab = 1; // Carrito / Proceso de compra activo
+  static const String _metodoPagoQr = 'Nequi / Bre-B (QR)';
 
   // Datos de contacto para la recogida: se cargan desde la base de datos
   // (tabla usuarios) del usuario que inició sesión.
@@ -33,8 +35,8 @@ class _CompraScreenState extends State<CompraScreen> {
       'Calzado Mar&paz - Calle Principal #12-34, Garzón, Huila';
 
   // Método de pago seleccionado
-  String _metodoPago = 'Nequi';
-  String _detallePago = 'Cuenta vinculada: 300 123 4567';
+  String _metodoPago = _metodoPagoQr;
+  String _detallePago = 'Escanea el código QR y adjunta el comprobante.';
 
   @override
   void initState() {
@@ -218,17 +220,18 @@ class _CompraScreenState extends State<CompraScreen> {
               const SizedBox(height: 12),
               RadioListTile<String>(
                 title: const Text(
-                  'Nequi',
+                  'Nequi / Bre-B (código QR)',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                subtitle: const Text('Pago instantáneo por celular'),
-                value: 'Nequi',
+                subtitle: const Text('Adjunta la captura para confirmar el pago'),
+                value: _metodoPagoQr,
                 groupValue: _metodoPago,
                 activeColor: ColoresApp.primary,
                 onChanged: (val) {
                   setState(() {
                     _metodoPago = val!;
-                    _detallePago = 'Cuenta vinculada: 300 123 4567';
+                    _detallePago =
+                        'Escanea el código QR y adjunta el comprobante.';
                   });
                   Navigator.pop(context);
                 },
@@ -274,7 +277,127 @@ class _CompraScreenState extends State<CompraScreen> {
     );
   }
 
-  void _procesarCompra() async {
+  Future<String?> _mostrarPagoQr() async {
+    String? comprobantePath;
+    String? comprobanteNombre;
+
+    return showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setModalState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Paga escaneando este código QR',
+                    style: TextStyle(
+                      color: ColoresApp.primary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Total a pagar: \$${widget.total.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      color: ColoresApp.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Después de realizar el pago, selecciona una captura de pantalla del comprobante.',
+                    style: TextStyle(color: ColoresApp.textSecondary),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Image.asset(
+                      'assets/img/qr_pago_nequi.png',
+                      height: 320,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      try {
+                        final imagen = await ImagePicker().pickImage(
+                          source: ImageSource.gallery,
+                          imageQuality: 85,
+                          maxWidth: 1600,
+                          maxHeight: 1600,
+                        );
+                        if (imagen != null) {
+                          setModalState(() {
+                            comprobantePath = imagen.path;
+                            comprobanteNombre = imagen.name;
+                          });
+                        }
+                      } catch (error) {
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'No se pudo seleccionar la captura: $error',
+                            ),
+                            backgroundColor: ColoresApp.error,
+                          ),
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.upload_file),
+                    label: Text(
+                      comprobanteNombre == null
+                          ? 'Subir captura de pago'
+                          : 'Cambiar captura',
+                    ),
+                  ),
+                  if (comprobanteNombre != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      'Comprobante seleccionado: $comprobanteNombre',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: ColoresApp.textSecondary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: comprobantePath == null
+                          ? null
+                          : () => Navigator.pop(sheetContext, comprobantePath),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: ColoresApp.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Enviar comprobante y confirmar pedido'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _procesarCompra() async {
     // No se puede pagar sin datos de contacto para la recogida
     if (_nombre.trim().isEmpty ||
         _cedula.trim().isEmpty ||
@@ -290,6 +413,16 @@ class _CompraScreenState extends State<CompraScreen> {
       return;
     }
 
+    String? comprobantePath;
+    if (_metodoPago == _metodoPagoQr) {
+      comprobantePath = await _mostrarPagoQr();
+      if (comprobantePath == null || !mounted) return;
+    }
+
+    await _registrarPedido(comprobantePath);
+  }
+
+  Future<void> _registrarPedido(String? comprobantePath) async {
     setState(() => _isProcessing = true);
 
     // Guardar el pedido en la base de datos (se arma con el carrito del servidor)
@@ -300,6 +433,7 @@ class _CompraScreenState extends State<CompraScreen> {
         cedula: _cedula,
         telefono: _telefono,
         metodoPago: _metodoPago,
+        comprobantePath: comprobantePath,
       );
       idPedidoServidor = id.toString();
     } catch (error) {
@@ -326,7 +460,7 @@ class _CompraScreenState extends State<CompraScreen> {
       direccion: _puntoRecogida,
       telefono: _telefono,
       nombreCliente: _nombre,
-      estado: 'Listo para recoger',
+      estado: comprobantePath == null ? 'Listo para recoger' : 'Pendiente',
     );
 
     HistorialPedidosService.agregarPedido(nuevoPedido);
@@ -348,8 +482,10 @@ class _CompraScreenState extends State<CompraScreen> {
               Text('¡Pedido registrado!'),
             ],
           ),
-          content: const Text(
-            'Tu pedido ha sido registrado con éxito. Acércate a la tienda para retirarlo.',
+          content: Text(
+            comprobantePath == null
+                ? 'Tu pedido ha sido registrado con éxito. Acércate a la tienda para retirarlo.'
+                : 'Recibimos tu comprobante. El administrador verificará el pago de tu pedido.',
             style: TextStyle(color: ColoresApp.textSecondary, fontSize: 14),
           ),
           actions: [

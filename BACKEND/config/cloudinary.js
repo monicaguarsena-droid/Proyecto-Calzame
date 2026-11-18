@@ -26,4 +26,21 @@ export const upload = multer({
         fileSize: 50 * 1024 * 1024
     }
 }); 
+
+const comprobanteStorage = new CloudinaryStorage({
+    cloudinary,
+    params: {
+        folder: 'Calzame/comprobantes',
+        resource_type: 'image',
+        allowed_formats: ['jpg', 'jpeg', 'png', 'webp']
+    }
+});
+
+export const uploadComprobante = multer({
+    storage: comprobanteStorage,
+    limits: {
+        fileSize: 10 * 1024 * 1024
+    }
+});
+
 export {cloudinary};

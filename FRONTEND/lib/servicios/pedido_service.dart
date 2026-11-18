@@ -51,6 +51,7 @@ class PedidoAdminModel {
   final String cedula;
   final String clienteNombre;
   final String clienteEmail;
+  final String comprobantePago;
   final List<PedidoDetalleAdmin> detalles;
 
   const PedidoAdminModel({
@@ -64,6 +65,7 @@ class PedidoAdminModel {
     required this.cedula,
     required this.clienteNombre,
     required this.clienteEmail,
+    this.comprobantePago = '',
     required this.detalles,
   });
 
@@ -93,6 +95,7 @@ class PedidoAdminModel {
       cedula: (json['cedula'] ?? '').toString(),
       clienteNombre: (cliente['nombre'] ?? '').toString(),
       clienteEmail: (cliente['email'] ?? '').toString(),
+      comprobantePago: (json['comprobantePago'] ?? '').toString(),
       detalles: detalles
           .whereType<Map>()
           .map((d) => PedidoDetalleAdmin.fromJson(Map<String, dynamic>.from(d)))
@@ -179,17 +182,66 @@ class PedidosService {
     required String cedula,
     required String telefono,
     required String metodoPago,
+    String? comprobantePath,
   }) async {
-    final body = await _enviar(
-      'POST',
-      '/crear',
-      cuerpo: {
-        'nombre': nombre,
-        'cedula': cedula,
-        'telefono': telefono,
-        'metodo_pago': metodoPago,
-      },
-    );
+    final campos = {
+      'nombre': nombre,
+      'cedula': cedula,
+      'telefono': telefono,
+      'metodo_pago': metodoPago,
+    };
+
+    final dynamic body;
+    if (comprobantePath == null) {
+      body = await _enviar('POST', '/crear', cuerpo: campos);
+    } else {
+      final request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${ApiConfig.baseUrl}/pedidos/crear'),
+      );
+      final headers = await _headers();
+      headers.remove('Content-Type');
+      request
+        ..headers.addAll(headers)
+        ..fields.addAll(campos)
+        ..files.add(
+          await http.MultipartFile.fromPath('comprobante', comprobantePath),
+        );
+
+      late http.Response response;
+      try {
+        response = await http.Response.fromStream(
+          await request.send().timeout(const Duration(seconds: 60)),
+        ).timeout(const Duration(seconds: 60));
+      } catch (_) {
+        throw Exception(
+          'No se pudo enviar el comprobante. Revisa tu conexión e intenta de nuevo.',
+        );
+      }
+
+      dynamic respuesta;
+      try {
+        respuesta = response.body.isEmpty ? null : jsonDecode(response.body);
+      } catch (_) {
+        respuesta = null;
+      }
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        if (respuesta is Map) {
+          final mensaje =
+              (respuesta['error'] ??
+                      respuesta['message'] ??
+                      'Error del servidor')
+                  .toString();
+          final detalle = (respuesta['detalle'] ?? '').toString();
+          throw Exception(
+            detalle.isNotEmpty ? '$mensaje: $detalle' : mensaje,
+          );
+        }
+        throw Exception('Error del servidor (código ${response.statusCode}).');
+      }
+      body = respuesta;
+    }
+
     final pedido = body is Map ? body['pedido'] : null;
     final id = pedido is Map ? int.tryParse(pedido['id'].toString()) : null;
     if (id == null) {

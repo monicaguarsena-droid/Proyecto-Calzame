@@ -130,6 +130,7 @@ const armarPedidos = async (pedidos) => {
             fecha: p.created_at ?? null,
             celular: p.Celular !== null && p.Celular !== undefined ? String(p.Celular) : '',
             metodoPago: p.Metodo_Pago ?? '',
+            comprobantePago: p.Comprobante_Pago ?? '',
             nombreContacto: p.Nombre_Contacto ?? '',
             cedula: p.Usuario_Cc !== null && p.Usuario_Cc !== undefined ? String(p.Usuario_Cc) : '',
             cliente: usuario ? { id: usuario.id, nombre: usuario.nombre, email: usuario.email } : null,
@@ -167,9 +168,13 @@ export const postPedido = async (req, res) => {
         const nombreContacto = String(req.body.nombre ?? '').trim();
         const celular = soloDigitos(req.body.telefono);
         const metodoPago = String(req.body.metodo_pago ?? '').trim();
+        const comprobantePago = req.file?.path ?? null;
 
         if (celular.length < 7) {
             return res.status(400).json({ error: 'Escribe un teléfono de contacto válido' });
+        }
+        if (metodoPago === 'Nequi / Bre-B (QR)' && !comprobantePago) {
+            return res.status(400).json({ error: 'Adjunta la captura del pago para continuar' });
         }
 
         // 1. Usuario
@@ -271,7 +276,8 @@ export const postPedido = async (req, res) => {
             total,
             estado: 'Pendiente',
             metodo_pago: metodoPago,
-            nombre_contacto: nombreContacto || usuario.nombre
+            nombre_contacto: nombreContacto || usuario.nombre,
+            comprobante_pago: comprobantePago
         });
         if (errorPedido || !pedidoCreado || pedidoCreado.length === 0) {
             console.error('❌ Pedido: no se pudo crear', errorPedido);
@@ -344,7 +350,8 @@ export const postPedido = async (req, res) => {
                 id: pedido.id,
                 estado: pedido.Estado ?? 'Pendiente',
                 total,
-                fecha: pedido.created_at
+                fecha: pedido.created_at,
+                comprobantePago
             }
         });
     } catch (error) {

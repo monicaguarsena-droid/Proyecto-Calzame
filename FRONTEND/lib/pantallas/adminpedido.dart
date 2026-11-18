@@ -549,6 +549,26 @@ class _PedidosAdminState extends State<PedidosAdmin> {
             if (pedido.clienteEmail.isNotEmpty)
               _fila('Correo', pedido.clienteEmail),
             _fila('Pago', pedido.metodoPago),
+            if (pedido.comprobantePago.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _titulo('Comprobante de pago'),
+              InkWell(
+                onTap: () => _verComprobante(pedido.comprobantePago),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    pedido.comprobantePago,
+                    height: 190,
+                    width: double.infinity,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text('No se pudo cargar el comprobante.'),
+                    ),
+                  ),
+                ),
+              ),
+            ],
             _fila('Entrega', 'Recoge en la tienda'),
             const SizedBox(height: 16),
             _titulo('Productos (${pedido.articulos})'),
@@ -590,6 +610,21 @@ class _PedidosAdminState extends State<PedidosAdmin> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  void _verComprobante(String url) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.9,
+          height: MediaQuery.of(context).size.height * 0.75,
+          child: InteractiveViewer(
+            child: Image.network(url, fit: BoxFit.contain),
+          ),
         ),
       ),
     );

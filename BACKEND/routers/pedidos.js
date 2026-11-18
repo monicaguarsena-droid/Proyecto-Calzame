@@ -8,6 +8,7 @@ import {
     deletePedido
 } from '../controllers/pedidos.js';
 import { verificarToken, verificarAdmin } from '../middlewares/authmiddleware.js';
+import { uploadComprobante } from '../config/cloudinary.js';
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ const router = express.Router();
 router.use(verificarToken);
 
 // Cliente
-router.post('/crear', postPedido);
+router.post('/crear', uploadComprobante.single('comprobante'), postPedido);
 router.get('/mis-pedidos', getMisPedidos);
 router.put('/:id/ocultar', putOcultarPedido);
 
