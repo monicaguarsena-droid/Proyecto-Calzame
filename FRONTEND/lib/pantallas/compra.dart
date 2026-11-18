@@ -34,10 +34,6 @@ class _CompraScreenState extends State<CompraScreen> {
   final String _puntoRecogida =
       'Calzado Mar&paz - Calle Principal #12-34, Garzón, Huila';
 
-  // Método de pago seleccionado
-  String _metodoPago = _metodoPagoQr;
-  String _detallePago = 'Escanea el código QR y adjunta el comprobante.';
-
   @override
   void initState() {
     super.initState();
@@ -195,88 +191,6 @@ class _CompraScreenState extends State<CompraScreen> {
     );
   }
 
-  // Modal para seleccionar método de pago
-  void _seleccionarPagoModal() {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Selecciona el medio de pago',
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: ColoresApp.primary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              RadioListTile<String>(
-                title: const Text(
-                  'Nequi / Bre-B (código QR)',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text('Adjunta la captura para confirmar el pago'),
-                value: _metodoPagoQr,
-                groupValue: _metodoPago,
-                activeColor: ColoresApp.primary,
-                onChanged: (val) {
-                  setState(() {
-                    _metodoPago = val!;
-                    _detallePago =
-                        'Escanea el código QR y adjunta el comprobante.';
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text(
-                  'Daviplata',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text('Transferencia rápida'),
-                value: 'Daviplata',
-                groupValue: _metodoPago,
-                activeColor: ColoresApp.primary,
-                onChanged: (val) {
-                  setState(() {
-                    _metodoPago = val!;
-                    _detallePago = 'Cuenta vinculada: 300 123 4567';
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-              RadioListTile<String>(
-                title: const Text(
-                  'Tarjeta de Crédito / Débito',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: const Text('Visa terminada en •••• 4242'),
-                value: 'Tarjeta',
-                groupValue: _metodoPago,
-                activeColor: ColoresApp.primary,
-                onChanged: (val) {
-                  setState(() {
-                    _metodoPago = val!;
-                    _detallePago = 'Visa terminada en •••• 4242';
-                  });
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Future<String?> _mostrarPagoQr() async {
     String? comprobantePath;
     String? comprobanteNombre;
@@ -398,6 +312,9 @@ class _CompraScreenState extends State<CompraScreen> {
   }
 
   Future<void> _procesarCompra() async {
+    final comprobantePath = await _mostrarPagoQr();
+    if (comprobantePath == null || !mounted) return;
+
     // No se puede pagar sin datos de contacto para la recogida
     if (_nombre.trim().isEmpty ||
         _cedula.trim().isEmpty ||
@@ -413,12 +330,6 @@ class _CompraScreenState extends State<CompraScreen> {
       return;
     }
 
-    String? comprobantePath;
-    if (_metodoPago == _metodoPagoQr) {
-      comprobantePath = await _mostrarPagoQr();
-      if (comprobantePath == null || !mounted) return;
-    }
-
     await _registrarPedido(comprobantePath);
   }
 
@@ -432,7 +343,7 @@ class _CompraScreenState extends State<CompraScreen> {
         nombre: _nombre,
         cedula: _cedula,
         telefono: _telefono,
-        metodoPago: _metodoPago,
+        metodoPago: _metodoPagoQr,
         comprobantePath: comprobantePath,
       );
       idPedidoServidor = id.toString();
@@ -456,11 +367,11 @@ class _CompraScreenState extends State<CompraScreen> {
       fechaHora: DateTime.now(),
       items: List.from(widget.items),
       total: totalGeneral,
-      metodoPago: _metodoPago,
+      metodoPago: _metodoPagoQr,
       direccion: _puntoRecogida,
       telefono: _telefono,
       nombreCliente: _nombre,
-      estado: comprobantePath == null ? 'Listo para recoger' : 'Pendiente',
+      estado: 'Pendiente',
     );
 
     HistorialPedidosService.agregarPedido(nuevoPedido);
@@ -483,9 +394,7 @@ class _CompraScreenState extends State<CompraScreen> {
             ],
           ),
           content: Text(
-            comprobantePath == null
-                ? 'Tu pedido ha sido registrado con éxito. Acércate a la tienda para retirarlo.'
-                : 'Recibimos tu comprobante. El administrador verificará el pago de tu pedido.',
+            'Recibimos tu comprobante. El administrador verificará el pago de tu pedido.',
             style: TextStyle(color: ColoresApp.textSecondary, fontSize: 14),
           ),
           actions: [
@@ -678,7 +587,6 @@ class _CompraScreenState extends State<CompraScreen> {
             // 2. Información de Recogida en Tienda
             _buildCard([
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const Row(
                     children: [
@@ -760,26 +668,11 @@ class _CompraScreenState extends State<CompraScreen> {
                       ),
                     ],
                   ),
-                  TextButton(
-                    onPressed: _seleccionarPagoModal,
-                    style: TextButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      minimumSize: Size.zero,
-                    ),
-                    child: const Text(
-                      'Cambiar',
-                      style: TextStyle(
-                        color: ColoresApp.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                _metodoPago,
+                _metodoPagoQr,
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -787,8 +680,8 @@ class _CompraScreenState extends State<CompraScreen> {
                 ),
               ),
               const SizedBox(height: 2),
-              Text(
-                _detallePago,
+              const Text(
+                'Paga con el código QR y adjunta la captura del pago.',
                 style: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF4A4A4A),

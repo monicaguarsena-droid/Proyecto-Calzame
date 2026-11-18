@@ -106,3 +106,5 @@ $$;
 REVOKE ALL ON FUNCTION public.descontar_stock_pedido(jsonb) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.descontar_stock_pedido(jsonb) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.descontar_stock_pedido(jsonb) TO service_role;
+
+NOTIFY pgrst, 'reload schema';
