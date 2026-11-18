@@ -128,12 +128,10 @@ export const deletePerfil = async (req, res) => {
             return res.status(401).json({ error: 'No se pudo identificar al usuario desde el token' });
         }
 
-        const { data, error } = await supabase
-            .from('usuarios')
-            .delete()
-            .eq('id', id)
-            .select('id')
-            .maybeSingle();
+        const { data: eliminada, error } = await supabase.rpc(
+            'eliminar_cuenta_usuario_anonimizando_pedidos',
+            { p_usuario_id: String(id) }
+        );
 
         if (error) {
             console.error('❌ Perfil: error al eliminar la cuenta', error);
@@ -142,7 +140,7 @@ export const deletePerfil = async (req, res) => {
                 detalle: error.message
             });
         }
-        if (!data) {
+        if (eliminada !== true) {
             return res.status(404).json({ error: 'No se encontró la cuenta' });
         }
 

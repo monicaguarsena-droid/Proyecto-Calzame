@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:15702634721:android:97a4ddab504870c48847a0",
+        "android_client_info": {
+          "package_name": "com.MaryPaz.apps"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSOCpjrm-IlijecsDKX55mSNBkK4SnnXg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:15702634721:android:27d0b79fafdf73648847a0",
         "android_client_info": {
           "package_name": "com.example.calzame"
