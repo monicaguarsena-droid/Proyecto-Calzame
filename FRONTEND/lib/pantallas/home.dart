@@ -8,6 +8,7 @@ import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
 import 'package:frontend/pantallas/carrito.dart';
+import 'package:frontend/pantallas/manual_usuario.dart';
 import 'package:frontend/pantallas/categoriacaballero.dart';
 import 'package:frontend/pantallas/categoriadama.dart';
 import 'package:frontend/pantallas/categoriainfantil.dart';
@@ -369,7 +370,7 @@ class _HomeState extends State<Home> {
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const CarritoScreen()),
+            MaterialPageRoute(builder: (context) => const ManualUsuarioScreen()),
           );
         },
         child: const _Circ(Icons.help_outline_rounded, size: 40, bg: Colors.white24, fg: Colors.white),

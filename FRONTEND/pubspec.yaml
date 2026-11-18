@@ -50,6 +50,7 @@ dependencies:
   firebase_core: ^3.10.6
   firebase_messaging: ^15.2.2
   flutter_local_notifications: ^17.2.4
+  pdfrx: 3.0.0
   
 
 
@@ -79,6 +80,7 @@ flutter:
   assets:
     - assets/img/
     - assets/video/
+    - assets/manual/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
