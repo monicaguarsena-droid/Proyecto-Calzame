@@ -7,6 +7,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:frontend/cors/colores.dart';
 import 'package:frontend/pantallas/favoritos.dart';
 import 'package:frontend/pantallas/perfil.dart';
+import 'package:frontend/pantallas/inicio_sesion.dart';
 import 'package:frontend/pantallas/carrito.dart';
 import 'package:frontend/pantallas/manual_usuario.dart';
 import 'package:frontend/pantallas/categoriacaballero.dart';
@@ -215,7 +216,7 @@ class _HomeState extends State<Home> {
     });
   }
 
-  void _onItemTapped(int index) {
+  Future<void> _onItemTapped(int index) async {
     if (index == _tab) return;
 
     if (index == 1) {
@@ -229,9 +230,17 @@ class _HomeState extends State<Home> {
         MaterialPageRoute(builder: (context) => const FavoritosScreen()),
       );
     } else if (index == 3) {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      final token =
+          (prefs.getString('token') ?? prefs.getString('jwt_token') ?? '')
+              .trim();
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const PerfilScreen()),
+        MaterialPageRoute(
+          builder: (context) =>
+              token.isEmpty ? const Login() : const PerfilScreen(),
+        ),
       );
     }
   }

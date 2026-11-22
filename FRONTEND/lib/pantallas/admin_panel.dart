@@ -44,7 +44,7 @@ class _AdminPanelState extends State<AdminPanel> {
   final FlutterLocalNotificationsPlugin _notificacionesLocales =
       FlutterLocalNotificationsPlugin();
   StreamSubscription<RemoteMessage>? _suscripcionMensajes;
-  late final Future<ResumenAdminData> _resumenFuture;
+  late Future<ResumenAdminData> _resumenFuture;
 
   late final List<Widget> _paginas = [
     _buildInicioAdmin(),
@@ -64,6 +64,17 @@ class _AdminPanelState extends State<AdminPanel> {
   void dispose() {
     _suscripcionMensajes?.cancel();
     super.dispose();
+  }
+
+  Future<void> _abrirPantallaYActualizar(Widget pantalla) async {
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute<void>(builder: (_) => pantalla),
+    );
+    if (!mounted) return;
+    setState(() {
+      _resumenFuture = _reporteService.obtenerResumen();
+    });
   }
 
   Future<void> _inicializarNotificacionesFCM() async {
@@ -232,14 +243,14 @@ class _AdminPanelState extends State<AdminPanel> {
                   icon: Icons.local_offer_outlined,
                   title: 'Inventario de Productos',
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const InventarioAdminPage()));
+                    _abrirPantallaYActualizar(const InventarioAdminPage());
                   },
                 ),
                 _buildMenuCard(
                   icon: Icons.shopping_bag_outlined,
                   title: 'Pedidos de Clientes',
                   onTap: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => const PedidosAdmin()));
+                    _abrirPantallaYActualizar(const PedidosAdmin());
                   },
                 ),
                 _buildMenuCard(
