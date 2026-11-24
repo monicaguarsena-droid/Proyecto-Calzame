@@ -1,8 +1,6 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:frontend/api_config.dart';
 import 'package:frontend/pantallas/admindrawer.dart';
 import 'package:frontend/pantallas/admininventario.dart';
@@ -41,9 +39,6 @@ class _AdminPanelState extends State<AdminPanel> {
   final Color _primaryColor = const Color(0xFF6B2D3C);
   final Color _backgroundColor = const Color(0xFFF7F4F0);
   final ReporteService _reporteService = ReporteService();
-  final FlutterLocalNotificationsPlugin _notificacionesLocales =
-      FlutterLocalNotificationsPlugin();
-  StreamSubscription<RemoteMessage>? _suscripcionMensajes;
   late Future<ResumenAdminData> _resumenFuture;
 
   late final List<Widget> _paginas = [
@@ -60,12 +55,6 @@ class _AdminPanelState extends State<AdminPanel> {
     _inicializarNotificacionesFCM();
   }
 
-  @override
-  void dispose() {
-    _suscripcionMensajes?.cancel();
-    super.dispose();
-  }
-
   Future<void> _abrirPantallaYActualizar(Widget pantalla) async {
     await Navigator.push<void>(
       context,
@@ -77,44 +66,18 @@ class _AdminPanelState extends State<AdminPanel> {
     });
   }
 
+  Future<void> _actualizarResumen() async {
+    final resumen = _reporteService.obtenerResumen();
+    setState(() => _resumenFuture = resumen);
+    try {
+      await resumen;
+    } catch (error) {
+      debugPrint('No se pudo actualizar el resumen administrativo: $error');
+    }
+  }
+
   Future<void> _inicializarNotificacionesFCM() async {
     try {
-      const canal = AndroidNotificationChannel(
-        'calzame_notifications',
-        'Notificaciones',
-        description: 'Notificaciones de CalzaMe',
-        importance: Importance.high,
-      );
-      await _notificacionesLocales.initialize(
-        const InitializationSettings(
-          android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-        ),
-      );
-      await _notificacionesLocales
-          .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
-          ?.createNotificationChannel(canal);
-
-      if (!mounted) return;
-      _suscripcionMensajes = FirebaseMessaging.onMessage.listen((mensaje) {
-        final notificacion = mensaje.notification;
-        if (notificacion == null) return;
-        _notificacionesLocales.show(
-          mensaje.hashCode,
-          notificacion.title,
-          notificacion.body,
-          const NotificationDetails(
-            android: AndroidNotificationDetails(
-              'calzame_notifications',
-              'Notificaciones',
-              channelDescription: 'Notificaciones de CalzaMe',
-              importance: Importance.high,
-              priority: Priority.high,
-            ),
-          ),
-        );
-      });
-
       final settings = await FirebaseMessaging.instance.requestPermission(
         alert: true,
         badge: true,
@@ -164,11 +127,14 @@ class _AdminPanelState extends State<AdminPanel> {
 
   Widget _buildInicioAdmin() {
     return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      child: RefreshIndicator(
+        onRefresh: _actualizarResumen,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -289,6 +255,7 @@ class _AdminPanelState extends State<AdminPanel> {
               ],
             ),
           ],
+        ),
         ),
       ),
     );

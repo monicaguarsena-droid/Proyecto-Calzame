@@ -618,13 +618,27 @@ class _DetalleProductoScreenState extends State<DetalleProductoScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      index == 0 ? items[index].$2 : items[index].$1,
-                      size: 21,
-                      color: index == 0
-                          ? ColoresApp.primary
-                          : ColoresApp.textSecondary,
-                    ),
+                    index == 1
+                        ? Badge(
+                            isLabelVisible: CarritoService.cantidadTotal > 0,
+                            label: Text('${CarritoService.cantidadTotal}'),
+                            backgroundColor: ColoresApp.primary,
+                            textColor: Colors.white,
+                            child: Icon(
+                              index == 0 ? items[index].$2 : items[index].$1,
+                              size: 21,
+                              color: index == 0
+                                  ? ColoresApp.primary
+                                  : ColoresApp.textSecondary,
+                            ),
+                          )
+                        : Icon(
+                            index == 0 ? items[index].$2 : items[index].$1,
+                            size: 21,
+                            color: index == 0
+                                ? ColoresApp.primary
+                                : ColoresApp.textSecondary,
+                          ),
                     const SizedBox(height: 2),
                     Text(
                       items[index].$3,

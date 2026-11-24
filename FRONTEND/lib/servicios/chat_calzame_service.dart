@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:frontend/servicios/configuracion_tienda_service.dart';
 // Asegúrate de importar tu archivo de configuración donde tengas tu baseUrl (ej: localhost o Render)
 import '../api_config.dart'; 
 
@@ -9,6 +10,7 @@ class ChatCalzameService {
 
   static Future<String> enviarMensaje(String mensaje) async {
     try {
+      final tienda = await ConfiguracionTiendaService.cargar();
       final url = Uri.parse('${ApiConfig.baseUrl}/chat'); // Endpoint en tu backend Node.js
       
       final response = await http.post(
@@ -18,6 +20,7 @@ class ChatCalzameService {
           'mensaje': mensaje,
           'sesionId': _sesionIdActual, // Si es nulo, el backend generará uno nuevo
           'usuarioId': null,           // Opcional: pásalo si manejas ID de usuario autenticado
+          'ubicacionTienda': tienda.direccion,
         }),
       );
 
@@ -29,7 +32,7 @@ class ChatCalzameService {
           _sesionIdActual = data['sesionId'];
         }
 
-        return data['respuesta'] ?? '¡Hola! Bienvenido a Calzame.';
+        return data['respuesta'] ?? '¡Hola! Bienvenido a Calzado Mar&Paz.';
       } else {
         return 'Lo siento, ocurrió un error al procesar tu consulta en el servidor.';
       }

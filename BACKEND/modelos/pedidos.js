@@ -5,7 +5,25 @@ import { supabase } from '../config/supabase.js';
 export const obtenerUsuarioParaPedido = async (id) => {
     const { data, error } = await supabase
         .from('usuarios')
-        .select('id, nombre, email, cedula')
+        .select('id, nombre, email, cedula, fcm_token')
+        .eq('id', id)
+        .maybeSingle();
+    return { data, error };
+};
+
+export const obtenerTokenUsuarioPorCedula = async (cedula) => {
+    const { data, error } = await supabase
+        .from('usuarios')
+        .select('fcm_token')
+        .eq('cedula', cedula)
+        .maybeSingle();
+    return { data, error };
+};
+
+export const obtenerPedidoParaActualizar = async (id) => {
+    const { data, error } = await supabase
+        .from('Pedidos')
+        .select('id, Usuario_Cc, Estado')
         .eq('id', id)
         .maybeSingle();
     return { data, error };

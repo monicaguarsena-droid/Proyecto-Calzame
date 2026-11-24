@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:frontend/servicios/pedido_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/cors/colores.dart';
@@ -32,6 +36,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
   final int _tab = 3; // Pestaña Cuenta seleccionada
 
   PerfilUsuario? _perfil;
+  Uint8List? _fotoPerfil;
   DatosTienda _datosTienda = DatosTienda.predeterminada;
   bool _cargando = true;
   String? _errorCarga;
@@ -72,15 +77,20 @@ class _PerfilScreenState extends State<PerfilScreen> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('nombre', perfil.nombre);
       await prefs.setString('email', perfil.email);
+      final fotoGuardada = prefs.getString(_claveFotoPerfil(perfil.email));
       if (!mounted) return;
       setState(() {
         _perfil = perfil;
+        _fotoPerfil = _decodificarFoto(fotoGuardada);
         _cargando = false;
       });
     } catch (error) {
       // Si no hay conexión mostramos lo último que se guardó en el teléfono
       final prefs = await SharedPreferences.getInstance();
       if (!mounted) return;
+      final fotoGuardada = prefs.getString(
+        _claveFotoPerfil(prefs.getString('email') ?? ''),
+      );
       setState(() {
         _perfil = PerfilUsuario(
           nombre: prefs.getString('nombre') ?? '',
@@ -88,9 +98,49 @@ class _PerfilScreenState extends State<PerfilScreen> {
           telefono: '',
           email: prefs.getString('email') ?? '',
         );
+        _fotoPerfil = _decodificarFoto(fotoGuardada);
         _cargando = false;
         _errorCarga = error.toString().replaceFirst('Exception: ', '');
       });
+    }
+  }
+
+  Uint8List? _decodificarFoto(String? fotoGuardada) {
+    if (fotoGuardada == null) return null;
+    try {
+      return base64Decode(fotoGuardada);
+    } on FormatException {
+      _mostrar(
+        'La foto de perfil guardada no es válida. Selecciona una nueva.',
+      );
+      return null;
+    }
+  }
+
+  String _claveFotoPerfil(String email) => email.trim().isEmpty
+      ? 'foto_perfil'
+      : 'foto_perfil_${email.trim().toLowerCase()}';
+
+  Future<void> _seleccionarFotoPerfil() async {
+    try {
+      final seleccion = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 512,
+        maxHeight: 512,
+      );
+      if (seleccion == null) return;
+
+      final bytes = await seleccion.readAsBytes();
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _claveFotoPerfil(_perfil?.email ?? ''),
+        base64Encode(bytes),
+      );
+      if (!mounted) return;
+      setState(() => _fotoPerfil = bytes);
+    } catch (error) {
+      _mostrar('No se pudo guardar la foto de perfil: $error');
     }
   }
 
@@ -345,18 +395,67 @@ class _PerfilScreenState extends State<PerfilScreen> {
                         ],
                       ),
                       const SizedBox(height: 20),
-                      Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: ColoresApp.primary, width: 2),
-                          color: const Color(0xFFEFE6EE),
-                        ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 50,
-                          color: ColoresApp.primary,
+                      Tooltip(
+                        message: 'Agregar o cambiar foto de perfil',
+                        child: InkWell(
+                          onTap: _seleccionarFotoPerfil,
+                          customBorder: const CircleBorder(),
+                          child: SizedBox(
+                            width: 90,
+                            height: 90,
+                            child: Stack(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: ColoresApp.primary,
+                                      width: 2,
+                                    ),
+                                    color: const Color(0xFFEFE6EE),
+                                  ),
+                                  child: ClipOval(
+                                    child: _fotoPerfil == null
+                                        ? const Center(
+                                            child: Icon(
+                                              Icons.person,
+                                              size: 50,
+                                              color: ColoresApp.primary,
+                                            ),
+                                          )
+                                        : Image.memory(
+                                            _fotoPerfil!,
+                                            width: 90,
+                                            height: 90,
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (_, _, _) =>
+                                                const Icon(
+                                                  Icons.person,
+                                                  size: 50,
+                                                  color: ColoresApp.primary,
+                                                ),
+                                          ),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(5),
+                                    decoration: const BoxDecoration(
+                                      color: ColoresApp.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt,
+                                      size: 15,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -712,13 +811,27 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        _tab == i ? items[i].$2 : items[i].$1,
-                        size: 22,
-                        color: _tab == i
-                            ? ColoresApp.primary
-                            : ColoresApp.textSecondary,
-                      ),
+                      i == 1
+                          ? Badge(
+                              isLabelVisible: CarritoService.cantidadTotal > 0,
+                              label: Text('${CarritoService.cantidadTotal}'),
+                              backgroundColor: ColoresApp.primary,
+                              textColor: Colors.white,
+                              child: Icon(
+                                _tab == i ? items[i].$2 : items[i].$1,
+                                size: 22,
+                                color: _tab == i
+                                    ? ColoresApp.primary
+                                    : ColoresApp.textSecondary,
+                              ),
+                            )
+                          : Icon(
+                              _tab == i ? items[i].$2 : items[i].$1,
+                              size: 22,
+                              color: _tab == i
+                                  ? ColoresApp.primary
+                                  : ColoresApp.textSecondary,
+                            ),
                       const SizedBox(height: 2),
                       Text(
                         items[i].$3,

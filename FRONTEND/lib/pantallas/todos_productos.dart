@@ -349,13 +349,27 @@ class _TodosProductosScreenState extends State<TodosProductosScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        _tab == i ? items[i].$2 : items[i].$1,
-                        size: 22,
-                        color: _tab == i
-                            ? ColoresApp.primary
-                            : ColoresApp.textSecondary,
-                      ),
+                      i == 1
+                          ? Badge(
+                              isLabelVisible: CarritoService.cantidadTotal > 0,
+                              label: Text('${CarritoService.cantidadTotal}'),
+                              backgroundColor: ColoresApp.primary,
+                              textColor: Colors.white,
+                              child: Icon(
+                                _tab == i ? items[i].$2 : items[i].$1,
+                                size: 22,
+                                color: _tab == i
+                                    ? ColoresApp.primary
+                                    : ColoresApp.textSecondary,
+                              ),
+                            )
+                          : Icon(
+                              _tab == i ? items[i].$2 : items[i].$1,
+                              size: 22,
+                              color: _tab == i
+                                  ? ColoresApp.primary
+                                  : ColoresApp.textSecondary,
+                            ),
                       const SizedBox(height: 2),
                       Text(
                         items[i].$3,

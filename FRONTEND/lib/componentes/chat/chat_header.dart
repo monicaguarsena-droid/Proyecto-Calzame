@@ -30,11 +30,11 @@ class ChatHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: const [
                   Text(
-                    'Asesor Calzame',
+                    'Calzado Mar&Paz',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   Text(
-                    'En línea - Respuestas al instante',
+                    'Asistente virtual de la tienda',
                     style: TextStyle(color: Colors.green, fontSize: 12),
                   ),
                 ],

@@ -13,9 +13,20 @@ class AdminCategorias extends StatefulWidget {
 
 class _AdminCategoriasState extends State<AdminCategorias> {
   int _tabIndex = 0;
+  final _ofertasKey = GlobalKey<AdminOfertasPageState>();
 
   List<dynamic> _categorias = [];
   bool _isLoadingList = false;
+
+  Future<void> _actualizarDatos() async {
+    if (_tabIndex == 0) {
+      await _cargarCategorias();
+      return;
+    }
+
+    final ofertas = _ofertasKey.currentState;
+    if (ofertas != null) await ofertas.recargar();
+  }
 
   String _obtenerImagenUrl(String? urlParcial) {
     if (urlParcial == null || urlParcial.isEmpty) return '';
@@ -44,13 +55,14 @@ class _AdminCategoriasState extends State<AdminCategorias> {
     setState(() => _isLoadingList = true);
     try {
       final resultado = await CategoriaService.listar();
+      if (!mounted) return;
       setState(() {
         _categorias = resultado;
         _isLoadingList = false;
       });
     } catch (e) {
-      setState(() => _isLoadingList = false);
       if (!mounted) return;
+      setState(() => _isLoadingList = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al cargar categorías: $e'), backgroundColor: Colors.red),
       );
@@ -140,11 +152,14 @@ class _AdminCategoriasState extends State<AdminCategorias> {
     return Scaffold(
       backgroundColor: ColoresApp.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: _actualizarDatos,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // 1. Cabecera con botón Atrás
               Row(
                 children: [
@@ -514,8 +529,9 @@ class _AdminCategoriasState extends State<AdminCategorias> {
                                 );
                               },
                             ))
-                      : const AdminOfertasPage()),
-            ],
+                      : AdminOfertasPage(key: _ofertasKey)),
+              ],
+            ),
           ),
         ),
       ),

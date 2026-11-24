@@ -8,35 +8,48 @@ import 'package:frontend/servicios/ofertas_service.dart';
 import 'package:frontend/servicios/producto_service.dart';
 import 'package:image_picker/image_picker.dart';
 
-class AdminOfertasScreen extends StatelessWidget {
+class AdminOfertasScreen extends StatefulWidget {
   const AdminOfertasScreen({super.key});
 
   @override
+  State<AdminOfertasScreen> createState() => _AdminOfertasScreenState();
+}
+
+class _AdminOfertasScreenState extends State<AdminOfertasScreen> {
+  final _ofertasKey = GlobalKey<AdminOfertasPageState>();
+
+  @override
   Widget build(BuildContext context) => Scaffold(
-        backgroundColor: ColoresApp.background,
-        appBar: AppBar(
-          title: const Text('Ofertas y banners'),
-          foregroundColor: ColoresApp.primary,
-          backgroundColor: ColoresApp.background,
+    backgroundColor: ColoresApp.background,
+    appBar: AppBar(
+      title: const Text('Ofertas y banners'),
+      foregroundColor: ColoresApp.primary,
+      backgroundColor: ColoresApp.background,
+    ),
+    body: SafeArea(
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await _ofertasKey.currentState?.recargar();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          child: AdminOfertasPage(key: _ofertasKey),
         ),
-        body: const SafeArea(
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(20),
-            child: AdminOfertasPage(),
-          ),
-        ),
-      );
+      ),
+    ),
+  );
 }
 
 class AdminOfertasPage extends StatefulWidget {
   const AdminOfertasPage({super.key});
 
   @override
-  State<AdminOfertasPage> createState() => _AdminOfertasPageState();
+  State<AdminOfertasPage> createState() => AdminOfertasPageState();
 }
 
-class _AdminOfertasPageState extends State<AdminOfertasPage> {
-late Future<List<dynamic>> _ofertasFuture;
+class AdminOfertasPageState extends State<AdminOfertasPage> {
+  late Future<List<dynamic>> _ofertasFuture;
 
   @override
   void initState() {
@@ -46,6 +59,16 @@ late Future<List<dynamic>> _ofertasFuture;
 
   void _cargarOfertas() {
     _ofertasFuture = OfertasService.listar();
+  }
+
+  Future<void> recargar() async {
+    final ofertas = OfertasService.listar();
+    setState(() => _ofertasFuture = ofertas);
+    try {
+      await ofertas;
+    } catch (error) {
+      debugPrint('No se pudieron actualizar las ofertas administrativas: $error');
+    }
   }
 
   Future<void> _editarOferta({Map<String, dynamic>? oferta}) async {

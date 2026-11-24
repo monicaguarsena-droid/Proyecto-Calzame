@@ -91,11 +91,14 @@ class _ClientesAdminPageState extends State<ClientesAdminPage> {
           ),
         ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: _cargarUsuarios,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Barra de Búsqueda
               Container(
                 decoration: BoxDecoration(
@@ -212,6 +215,7 @@ class _ClientesAdminPageState extends State<ClientesAdminPage> {
               const SizedBox(height: 20),
             ],
           ),
+        ),
         ),
       ),
     );

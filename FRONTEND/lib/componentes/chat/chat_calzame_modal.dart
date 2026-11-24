@@ -18,7 +18,7 @@ class _ChatCalzameModalState extends State<ChatCalzameModal> {
   final List<Map<String, String>> _mensajes = [
     {
       'role': 'bot',
-      'text': '¡Hola! Bienvenido a Calzame. ¿Qué zapatos, estilos o tallas te gustaría conocer hoy?'
+      'text': '¡Hola! Soy Calzado Mar&Paz. Puedo ayudarte con nuestros productos, tallas, precios, disponibilidad y ubicación. ¿Qué te gustaría saber?'
     }
   ];
 
@@ -105,7 +105,7 @@ class _ChatCalzameModalState extends State<ChatCalzameModal> {
                     child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFE91E63)),
                   ),
                   SizedBox(width: 8),
-                  Text('El asesor está respondiendo...', style: TextStyle(color: Colors.black45, fontSize: 12)),
+                  Text('Calzado Mar&Paz está respondiendo...', style: TextStyle(color: Colors.black45, fontSize: 12)),
                 ],
               ),
             ),

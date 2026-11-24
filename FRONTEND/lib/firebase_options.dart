@@ -20,9 +20,9 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
+    static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCSOCpjrm-IlijecsDKX55mSNBkK4SnnXg',
-    appId: '1:15702634721:android:27d0b79fafdf73648847a0',
+    appId: '1:15702634721:android:97a4ddab504870c48847a0',
     messagingSenderId: '15702634721',
     projectId: 'calzado-marypaz',
     storageBucket: 'calzado-marypaz.firebasestorage.app',

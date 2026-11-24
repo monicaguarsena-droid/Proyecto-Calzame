@@ -52,6 +52,8 @@ class _ItemInvitadoSincronizado {
 
 class CarritoService {
   static final List<ItemCarrito> itemsCarrito = [];
+  static int get cantidadTotal =>
+      itemsCarrito.fold(0, (total, item) => total + item.cantidad);
   static bool _carritoInvitado = false;
   static int _siguienteIdInvitado = 0;
   static final Map<String, _ItemInvitadoSincronizado>

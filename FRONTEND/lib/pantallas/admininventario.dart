@@ -95,11 +95,14 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: RefreshIndicator(
+          onRefresh: _cargarProductos,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -432,6 +435,7 @@ class _InventarioAdminPageState extends State<InventarioAdminPage> {
                     ),
             ],
           ),
+        ),
         ),
       ),
     );

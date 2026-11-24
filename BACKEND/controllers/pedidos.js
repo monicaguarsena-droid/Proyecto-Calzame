@@ -1,5 +1,7 @@
 import {
     obtenerUsuarioParaPedido,
+    obtenerTokenUsuarioPorCedula,
+    obtenerPedidoParaActualizar,
     guardarCedulaUsuario,
     obtenerUsuariosPorCedulas,
     obtenerProductosPorIds,
@@ -93,6 +95,39 @@ const notificarStockBajo = async (productos) => {
         }
     } catch (error) {
         console.error('❌ Stock bajo: error al notificar a los administradores', error);
+    }
+};
+
+const notificarClientePedido = async (token, pedidoId, estado, nuevoPedido = false) => {
+    if (!token) {
+        console.warn(`⚠️ Pedido #${pedidoId}: el cliente no tiene un token FCM registrado`);
+        return;
+    }
+
+    const mensajesPorEstado = {
+        'Pendiente': 'Hemos recibido tu pedido y pronto comenzaremos a prepararlo.',
+        'Listo para recoger': 'Tu pedido está listo para recoger.',
+        'Entregado': 'Tu pedido ha sido entregado.',
+        'Cancelado': 'Tu pedido fue cancelado.'
+    };
+
+    try {
+        await messaging.send({
+            notification: {
+                title: nuevoPedido ? `Pedido recibido · #${pedidoId}` : `Pedido #${pedidoId}: ${estado}`,
+                body: mensajesPorEstado[estado] ?? `El estado de tu pedido cambió a ${estado}.`
+            },
+            data: {
+                tipo: nuevoPedido ? 'pedido_recibido' : 'estado_pedido',
+                pedidoId: String(pedidoId),
+                estado,
+                click_action: 'FLUTTER_NOTIFICATION_CLICK',
+                route: '/pedidos'
+            },
+            token
+        });
+    } catch (error) {
+        console.error(`❌ Pedido #${pedidoId}: no se pudo enviar la notificación`, error);
     }
 };
 
@@ -333,6 +368,13 @@ export const postPedido = async (req, res) => {
 
         await notificarStockBajo(resultadoStock.productos ?? []);
 
+        void notificarClientePedido(
+            usuario.fcm_token,
+            pedido.id,
+            pedido.Estado ?? 'Pendiente',
+            true
+        );
+
         // 8. Vaciar el carrito del usuario
         const { error: errorVaciar } = await vaciarCarritoUsuario(usuarioId);
         if (errorVaciar) console.error('⚠️ Pedido: no se pudo vaciar el carrito', errorVaciar);
@@ -429,6 +471,18 @@ export const putEstadoPedido = async (req, res) => {
             return res.status(400).json({ error: `Estado inválido. Usa: ${ESTADOS_PEDIDO.join(', ')}` });
         }
 
+        const { data: pedidoActual, error: errorPedidoActual } =
+            await obtenerPedidoParaActualizar(id);
+        if (errorPedidoActual) {
+            return res.status(500).json({
+                error: 'Error al consultar el pedido',
+                detalle: errorPedidoActual.message
+            });
+        }
+        if (!pedidoActual) {
+            return res.status(404).json({ error: 'No se encontró el pedido' });
+        }
+
         const { data, error } = await actualizarEstadoPedido(id, estado);
         if (error) {
             return res.status(500).json({ error: 'Error al actualizar el estado', detalle: error.message });
@@ -436,6 +490,17 @@ export const putEstadoPedido = async (req, res) => {
         if (!data || data.length === 0) {
             return res.status(404).json({ error: 'No se encontró el pedido' });
         }
+
+        if (pedidoActual.Estado !== estado) {
+            const { data: usuario, error: errorUsuario } =
+                await obtenerTokenUsuarioPorCedula(pedidoActual.Usuario_Cc);
+            if (errorUsuario) {
+                console.error(`❌ Pedido #${id}: no se pudo consultar el token FCM`, errorUsuario);
+            } else {
+                void notificarClientePedido(usuario?.fcm_token, id, estado);
+            }
+        }
+
         return res.status(200).json({ message: 'Estado actualizado', estado });
     } catch (error) {
         return res.status(500).json({ error: error.message });

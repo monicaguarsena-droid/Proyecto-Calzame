@@ -117,11 +117,14 @@ class _ConfiguracionTiendaScreenState extends State<ConfiguracionTiendaScreen> {
               child: CircularProgressIndicator(color: ColoresApp.primary),
             )
           : SafeArea(
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  padding: const EdgeInsets.all(20),
-                  children: [
+              child: RefreshIndicator(
+                onRefresh: _cargarConfiguracion,
+                child: Form(
+                  key: _formKey,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(20),
+                    children: [
                     _encabezado(),
                     const SizedBox(height: 24),
                     _tituloSeccion('Información del negocio'),
@@ -205,7 +208,8 @@ class _ConfiguracionTiendaScreenState extends State<ConfiguracionTiendaScreen> {
                         ),
                       ),
                     ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
