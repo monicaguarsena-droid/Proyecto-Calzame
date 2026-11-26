@@ -10,7 +10,7 @@ class AuthService {
 
 final GoogleSignIn _googleSignIn = GoogleSignIn(
   scopes: ['email', 'profile'],
-  serverClientId: '742610687711-r2e85bn7109d54s1c54vsa28ltbdifd3.apps.googleusercontent.com',
+  serverClientId: '15702634721-jq0cojmatha1rphuh325n6s7tommekbs.apps.googleusercontent.com',
 );
   // Iniciar sesión con Correo y Contraseña
   Future<Map<String, dynamic>> loginWithEmail(String email, String contrasena) async {

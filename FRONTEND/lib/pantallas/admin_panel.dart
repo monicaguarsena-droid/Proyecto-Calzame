@@ -216,7 +216,9 @@ class _AdminPanelState extends State<AdminPanel> {
                   icon: Icons.shopping_bag_outlined,
                   title: 'Pedidos de Clientes',
                   onTap: () {
-                    _abrirPantallaYActualizar(const PedidosAdmin());
+                    _abrirPantallaYActualizar(
+                      PedidosAdmin(onPedidoActualizado: _actualizarResumen),
+                    );
                   },
                 ),
                 _buildMenuCard(

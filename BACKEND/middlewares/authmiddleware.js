@@ -20,7 +20,8 @@ export const verificarToken = (req, res, next) => {
 
 // Solo deja pasar si el usuario tiene rol de admin
 export const verificarAdmin = (req, res, next) => {
-    if (req.usuario?.rol !== 'admin') {
+    const rol = String(req.usuario?.rol ?? '').trim().toLowerCase();
+    if (rol !== 'admin' && rol !== 'administrador') {
         return res.status(403).json({ error: 'No tienes permisos de administrador.' });
     }
     next();

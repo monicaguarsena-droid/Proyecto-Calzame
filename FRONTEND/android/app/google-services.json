@@ -14,6 +14,22 @@
       },
       "oauth_client": [
         {
+          "client_id": "15702634721-d7h2rfqj6t3abhb5ttc8pht2s9vepfqa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.MaryPaz.apps",
+            "certificate_hash": "d1ff2d0153017b8541d4042d25f5df2e9306d167"
+          }
+        },
+        {
+          "client_id": "15702634721-egm53ptgs7g8jg6f113ij4se0vru29cn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.MaryPaz.apps",
+            "certificate_hash": "a66db7c199b9ee5b35e4ea1bb9687bf4533308ad"
+          }
+        },
+        {
           "client_id": "15702634721-jq0cojmatha1rphuh325n6s7tommekbs.apps.googleusercontent.com",
           "client_type": 3
         }

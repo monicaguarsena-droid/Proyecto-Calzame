@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:frontend/servicios/pedido_service.dart';
 
 class PedidosAdmin extends StatefulWidget {
-  const PedidosAdmin({Key? key}) : super(key: key);
+  final VoidCallback? onPedidoActualizado;
+
+  const PedidosAdmin({Key? key, this.onPedidoActualizado}) : super(key: key);
 
   @override
   State<PedidosAdmin> createState() => _PedidosAdminState();
@@ -111,6 +113,7 @@ class _PedidosAdminState extends State<PedidosAdmin> {
 
     try {
       await PedidosService.actualizarEstado(pedido.id, nuevo);
+      widget.onPedidoActualizado?.call();
       _mostrar('Estado actualizado a "$nuevo"', error: false);
       await _cargarPedidos(spinner: false);
     } catch (e) {

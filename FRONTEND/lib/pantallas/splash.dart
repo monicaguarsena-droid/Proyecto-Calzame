@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:frontend/pantallas/admin_panel.dart';
 import 'package:frontend/pantallas/home.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class PantallaInicio extends StatefulWidget {
@@ -18,6 +20,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
   @override
   void initState() {
     super.initState();
+    _verificarSesionGuardada();
     _timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
       if (_currentPage < 1) {
         _currentPage++;
@@ -32,6 +35,22 @@ class _PantallaInicioState extends State<PantallaInicio> {
         );
       }
     });
+  }
+
+  Future<void> _verificarSesionGuardada() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = (prefs.getString('token') ?? prefs.getString('jwt_token') ?? '').trim();
+    if (token.isEmpty || !mounted) return;
+
+    final rol = (prefs.getString('user_role') ?? '').trim().toLowerCase();
+    final esAdmin = rol == 'admin' || rol == 'administrador';
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => esAdmin ? AdminPanel() : Home(),
+      ),
+    );
   }
 
   @override

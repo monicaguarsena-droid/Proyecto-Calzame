@@ -26,8 +26,6 @@ class _LoginState extends State<Login> {
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  final String _adminEmail = "monicaguarsena@gmail.com";
-
   @override
   void dispose() {
     _emailController.dispose();
@@ -59,6 +57,12 @@ class _LoginState extends State<Login> {
         await prefs.setString('token', tokenReal);
       }
 
+      final rol = (result['data']?['usuario']?['rol'] ?? '')
+          .toString()
+          .trim()
+          .toLowerCase();
+      await prefs.setString('user_role', rol);
+
       // Guardar el correo
       await prefs.setString('email', emailIngresado);
 
@@ -80,7 +84,7 @@ class _LoginState extends State<Login> {
       if (!mounted) return;
 
       await _navegarDespuesDeLogin(
-        esAdmin: emailIngresado.toLowerCase() == _adminEmail.toLowerCase(),
+        esAdmin: rol == 'admin' || rol == 'administrador',
       );
     } else {
       _showSnackBar(result['message'] ?? 'Error al iniciar sesión');
@@ -100,9 +104,8 @@ void _handleGoogleLogin() async {
     await _authService.guardarSesion(data);
 
     final usuario = data['usuario'] is Map ? data['usuario'] : {};
-    final email = (usuario['email'] ?? '').toString().trim().toLowerCase();
     final rol = (usuario['rol'] ?? '').toString().toLowerCase();
-    final esAdmin = email == _adminEmail.toLowerCase() || rol == 'admin';
+    final esAdmin = rol == 'admin' || rol == 'administrador';
 
     if (!mounted) return;
 
